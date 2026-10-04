@@ -1,0 +1,12 @@
+# Archivos locales que no se suben
+_archivo_local/
+
+# Metadatos de Unity copiados junto con el código
+Codigo/**/*.meta
+
+# Archivos temporales de Office y del sistema
+~$*
+*.tmp
+Thumbs.db
+desktop.ini
+.DS_Store
