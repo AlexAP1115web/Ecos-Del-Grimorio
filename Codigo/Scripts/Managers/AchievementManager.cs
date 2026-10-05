@@ -26,9 +26,7 @@ public class Logro
     public Sprite icono;
 }
 
-// Sistema de logros de la sección 2.15. Funciona como observador: escucha los eventos
-// que ya existen (hechizos, combos, jefes, ítems, niveles) y desbloquea cada logro una vez.
-// Los logros se guardan con PlayerPrefs y no se borran al empezar una partida nueva.
+// logros, escucha los eventos del juego y los guarda en PlayerPrefs
 public class AchievementManager : MonoBehaviour
 {
     [SerializeField] private Logro[] logros = new Logro[0];

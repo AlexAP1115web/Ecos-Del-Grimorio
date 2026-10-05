@@ -1,7 +1,6 @@
 using UnityEngine;
 
-// Carámbano del Ala de Hielo: cuelga debajo de una plataforma y, cuando Lira pasa
-// por abajo, tiembla un momento y cae. Se rompe al tocar el suelo.
+// carambano que cae cuando Lira pasa abajo (ala de hielo)
 public class Carambano : MonoBehaviour
 {
     [SerializeField] private float dano = 15f;

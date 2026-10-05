@@ -1,7 +1,6 @@
 using UnityEngine;
 
-// Plataforma que va y viene entre dos puntos (Ala de Viento).
-// Lira se mueve con ella porque PlayerController suma su velocidad.
+// plataforma que va y viene, Lira se mueve con ella
 [RequireComponent(typeof(Rigidbody2D))]
 public class MovingPlatform : MonoBehaviour
 {

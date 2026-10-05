@@ -13,7 +13,7 @@ public enum TipoItem
     PaginaPerdida   // 3 escondidas en cada ala: cada una da +5 de vida máxima
 }
 
-// Datos de un ítem de la tabla 2.13 (Cristal de Maná, Poción de Vida, etc.)
+// datos de un item de la tabla 2.13
 [CreateAssetMenu(fileName = "NuevoItem", menuName = "Ecos del Grimorio/Item")]
 public class ItemData : ScriptableObject
 {

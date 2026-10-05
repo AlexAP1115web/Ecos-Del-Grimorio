@@ -1,8 +1,6 @@
 using UnityEngine;
 
-// Clase base de todos los enemigos. Aquí va lo que comparten:
-// referencia al jugador, daño por contacto, ralentización, aturdimiento, empuje y botín.
-// Cada tipo de enemigo hereda y solo implementa su comportamiento en Think().
+// base de todos los enemigos, cada uno hace su comportamiento en Think()
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Health))]
 public abstract class EnemyBase : MonoBehaviour
@@ -65,7 +63,7 @@ public abstract class EnemyBase : MonoBehaviour
         if (!(this is BossController)) CreateHealthBar();
     }
 
-    // Barra de vida pequeña encima del enemigo; solo aparece después de recibir daño
+    // barra de vida pequeña encima del enemigo, solo aparece despues de recibir daño
     void CreateHealthBar()
     {
         if (spriteRenderer == null) return;
@@ -115,7 +113,7 @@ public abstract class EnemyBase : MonoBehaviour
     {
         if (spriteRenderer != null)
         {
-            // Destello rojo al recibir daño, azul si está ralentizado, gris si está aturdido
+            // destello rojo al recibir daño, azul si esta ralentizado, gris si esta aturdido
             if (Time.time - health.LastHitTime < 0.1f) spriteRenderer.color = new Color(1f, 0.45f, 0.45f, 1f);
             else if (IsStunned) spriteRenderer.color = baseColor * new Color(0.6f, 0.6f, 0.6f, 1f);
             else if (Time.time < slowUntil) spriteRenderer.color = baseColor * new Color(0.6f, 0.8f, 1f, 1f);
@@ -144,10 +142,10 @@ public abstract class EnemyBase : MonoBehaviour
         Think();
     }
 
-    // Comportamiento propio de cada enemigo
+    // comportamiento propio de cada enemigo
     protected abstract void Think();
 
-    // Respira en reposo y se "aplasta" un momento al recibir un golpe
+    // respira en reposo y se "aplasta" un momento al recibir un golpe
     void AnimateVisual()
     {
         if (visual == null) return;
@@ -196,7 +194,7 @@ public abstract class EnemyBase : MonoBehaviour
 
         playerHealth.TakeDamage(contactDamage);
 
-        // Empuja a Lira hacia atrás para que el golpe se sienta
+        // empuja a Lira hacia atras para que el golpe se sienta
         var controller = playerHealth.GetComponent<PlayerController>();
         float dir = Mathf.Sign(playerHealth.transform.position.x - transform.position.x);
         if (controller != null) controller.Push(new Vector2(dir * 9f, 6f));

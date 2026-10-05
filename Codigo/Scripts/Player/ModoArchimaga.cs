@@ -2,8 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Código secreto de la sección 2.16: F-H-V-A + Intro (o L1 + R1 + Triángulo en el control).
-// Durante 60 segundos da maná ilimitado y quita el cooldown de los hechizos.
+// truco: F H V A + Enter, 60 seg de mana infinito
 public class ModoArchimaga : MonoBehaviour
 {
     [SerializeField] private float duration = 60f;
@@ -45,10 +44,10 @@ public class ModoArchimaga : MonoBehaviour
         var kb = Keyboard.current;
         if (kb == null) return;
 
-        // Si pasa mucho tiempo entre letras se reinicia el código
+        // si pasa mucho tiempo entre letras se reinicia el codigo
         if (progress > 0 && Time.unscaledTime - lastKeyTime > 4f) progress = 0;
 
-        // Solo cuentan las teclas del código: moverse, saltar o lanzar mientras se escribe no lo reinicia
+        // solo cuentan las teclas del codigo: moverse, saltar o lanzar mientras se escribe no lo reinicia
         foreach (var key in codeKeys)
         {
             bool pressed = kb[key].wasPressedThisFrame || (key == Key.Enter && kb.numpadEnterKey.wasPressedThisFrame);

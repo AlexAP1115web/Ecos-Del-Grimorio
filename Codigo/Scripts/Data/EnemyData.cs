@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Stats reutilizables por tipo de enemigo. Varios prefabs pueden compartir el mismo asset.
+// stats reutilizables por tipo de enemigo. Varios prefabs pueden compartir el mismo asset
 [CreateAssetMenu(fileName = "NuevoEnemigo", menuName = "Ecos del Grimorio/Enemigo")]
 public class EnemyData : ScriptableObject
 {

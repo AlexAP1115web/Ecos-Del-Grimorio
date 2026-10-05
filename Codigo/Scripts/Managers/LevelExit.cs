@@ -1,7 +1,6 @@
 using UnityEngine;
 
-// Salida del nivel. Si tiene asignado un enemigo obligatorio (ej. el Espectro Mayor),
-// no se abre hasta que ese enemigo sea derrotado.
+// salida del nivel, no abre hasta vencer al enemigo asignado
 [RequireComponent(typeof(Collider2D))]
 public class LevelExit : MonoBehaviour
 {

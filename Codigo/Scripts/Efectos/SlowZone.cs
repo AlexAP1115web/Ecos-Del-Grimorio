@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Zona de suelo congelado (ataque de Isolde): ralentiza a Lira mientras está encima.
+// zona de suelo congelado: ralentiza a Lira mientras esta encima
 [RequireComponent(typeof(BoxCollider2D))]
 public class SlowZone : MonoBehaviour
 {

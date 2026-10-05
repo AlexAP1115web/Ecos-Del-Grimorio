@@ -2,21 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Todas las entradas del juego en un solo lugar: teclado y control (PS4 / Xbox).
-// El Input System reconoce el DualShock 4 por USB o Bluetooth sin instalar nada.
-//
-//  Acción              Teclado            Control PS4
-//  Moverse             A/D o flechas      Stick izquierdo o cruceta
-//  Saltar              Espacio / W        X
-//  Agacharse           S / flecha abajo   Stick o cruceta abajo
-//  Hechizo 1, 2, 3     1, 2, 3 (J/clic)   Cuadrado, R1, L1
-//  Apuntar             Flechas / mouse    Stick derecho (360°) o stick izq. arriba/abajo
-//  Combo rápido        C                  L2
-//  Cambiar hechizo     Q                  R2
-//  Esquive             Shift / K          Círculo
-//  Hablar / abrir      E                  Triángulo
-//  Pausa               Esc                Options
-//  Modo Archimaga      F H V A + Enter    L1 + R1 + Triángulo (en cualquier orden)
+// todos los controles juntos (teclado y control de PS4)
 public static class Controles
 {
     static Keyboard Kb => Keyboard.current;
@@ -50,7 +36,7 @@ public static class Controles
         (Kb != null && (Kb.upArrowKey.isPressed)) ||
         (Pad != null && (Pad.leftStick.y.ReadValue() > 0.6f || Pad.dpad.up.isPressed));
 
-    // Stick derecho para apuntar en cualquier dirección (cero si no se está usando)
+    // stick derecho para apuntar en cualquier direccion
     public static Vector2 ApuntarStick
     {
         get
@@ -61,7 +47,7 @@ public static class Controles
         }
     }
 
-    // Posición del mouse en pantalla (para apuntar con el clic)
+    // posicion del mouse en pantalla (para apuntar con el clic)
     public static Vector2 PosicionMouse => Mouse != null ? Mouse.position.ReadValue() : Vector2.zero;
     public static bool ClicMouse => Mouse != null && Mouse.leftButton.wasPressedThisFrame;
 
@@ -69,7 +55,7 @@ public static class Controles
         (Kb != null && (Kb.sKey.isPressed || Kb.downArrowKey.isPressed)) ||
         (Pad != null && (Pad.leftStick.y.ReadValue() < -0.6f || Pad.dpad.down.isPressed));
 
-    // Truco con el control: L1 + R1 + Triángulo juntos, en cualquier orden
+    // truco con el control: L1 + R1 + Triangulo juntos, en cualquier orden
     public static bool TrucoControl =>
         Pad != null && Pad.leftShoulder.isPressed && Pad.rightShoulder.isPressed && Pad.buttonNorth.isPressed &&
         (Pad.leftShoulder.wasPressedThisFrame || Pad.rightShoulder.wasPressedThisFrame || Pad.buttonNorth.wasPressedThisFrame);
@@ -82,17 +68,17 @@ public static class Controles
         (Kb != null && (Kb.spaceKey.isPressed || Kb.wKey.isPressed)) ||
         (Pad != null && Pad.buttonSouth.isPressed);
 
-    // Avanza diálogos (y en el teclado lanza el hechizo seleccionado)
+    // avanza dialogos (y en el teclado lanza el hechizo seleccionado)
     public static bool LanzarPresionado =>
         (Kb != null && Kb.jKey.wasPressedThisFrame) ||
         (Mouse != null && Mouse.leftButton.wasPressedThisFrame) ||
         (Pad != null && Pad.buttonWest.wasPressedThisFrame);
 
-    // J o clic: lanza el hechizo del espacio seleccionado
+    // j o clic: lanza el hechizo del espacio seleccionado
     public static bool LanzarSeleccionado =>
         (Kb != null && Kb.jKey.wasPressedThisFrame) || ClicMouse;
 
-    // Cada espacio tiene su propio botón para poder encadenar combos rápido:
+    // cada espacio tiene su propio boton para poder encadenar combos rapido:
     // teclado 1, 2, 3 / control Cuadrado, R1, L1
     public static bool EspacioPresionado(int slot)
     {
@@ -105,7 +91,7 @@ public static class Controles
         }
     }
 
-    // Combo rápido: lanza el combo de dos hechizos equipados con un solo botón
+    // combo rapido: lanza el combo de dos hechizos equipados con un solo boton
     public static bool ComboRapido =>
         (Kb != null && Kb.cKey.wasPressedThisFrame) ||
         (Pad != null && Pad.leftTrigger.wasPressedThisFrame);
@@ -135,11 +121,11 @@ public static class Controles
         (Kb != null && (Kb.enterKey.wasPressedThisFrame || Kb.numpadEnterKey.wasPressedThisFrame)) ||
         (Pad != null && Pad.buttonSouth.wasPressedThisFrame);
 
-    // Texto de ayuda según lo que esté usando el jugador
+    // texto de ayuda segun lo que este usando el jugador
     public static string TextoInteractuar => HayControl ? "Triángulo" : "E";
     public static string TextoAceptar => HayControl ? "X" : "Enter";
 
-    // ---------- Vibración del control ----------
+    // vibracion del control
 
     static VibracionControl runner;
 

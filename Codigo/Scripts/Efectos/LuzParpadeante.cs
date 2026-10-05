@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Antorchas y cristales: la luz parpadea un poco para que el escenario se sienta vivo.
+// antorchas y cristales: la luz parpadea un poco para que el escenario se sienta vivo
 public class LuzParpadeante : MonoBehaviour
 {
     [SerializeField] private float intensidadBase = 1f;

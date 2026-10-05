@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Piedra de Reaparición: al tocarla, Lira reaparece aquí si cae en combate.
+// piedra de Reaparicion: al tocarla, Lira reaparece aqui si cae en combate
 [RequireComponent(typeof(Collider2D))]
 public class Checkpoint : MonoBehaviour
 {

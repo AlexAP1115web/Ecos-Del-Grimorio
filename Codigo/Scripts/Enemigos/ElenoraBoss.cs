@@ -1,9 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-// Eco de la Archimaga Elenora (jefe final, Nivel 5).
-// Cuatro fases elementales (Fuego, Hielo, Viento, Arcano) y una fase final que combina
-// los cuatro tipos de daño. En cada fase resiste el elemento que está usando.
+// jefe final: una fase por elemento y fase final mezclando todo
 public class ElenoraBoss : BossController
 {
     [Header("Elenora")]
@@ -40,7 +38,7 @@ public class ElenoraBoss : BossController
 
         if (IsFinalPhase)
         {
-            // Fase final: combina dos ataques de elementos distintos
+            // fase final: combina dos ataques de elementos distintos
             int a = Random.Range(0, 4);
             int b = (a + Random.Range(1, 4)) % 4;
             Attack(phaseElements[a]);
@@ -65,12 +63,12 @@ public class ElenoraBoss : BossController
         switch (element)
         {
             case Elemento.Fuego:
-                // Abanico de bolas de fuego
+                // abanico de bolas de fuego
                 for (int i = -2; i <= 2; i++) ShootAtPlayer(8f, projectileDamage, Elemento.Fuego, i * 12f);
                 break;
 
             case Elemento.Hielo:
-                // Lluvia de esquirlas y suelo congelado
+                // lluvia de esquirlas y suelo congelado
                 for (int i = 0; i < 6; i++)
                 {
                     float x = player.position.x + Random.Range(-4f, 4f);
@@ -80,7 +78,7 @@ public class ElenoraBoss : BossController
                 break;
 
             case Elemento.Viento:
-                // Ráfaga que empuja a Lira y proyectiles horizontales
+                // rafaga que empuja a Lira y proyectiles horizontales
                 float dir = Mathf.Sign(player.position.x - transform.position.x);
                 var controller = player.GetComponent<PlayerController>();
                 if (controller != null) controller.Push(new Vector2(dir * 12f, 5f));
@@ -89,7 +87,7 @@ public class ElenoraBoss : BossController
                 break;
 
             case Elemento.Arcano:
-                // Estallido de proyectiles en círculo
+                // estallido de proyectiles en circulo
                 for (int i = 0; i < 10; i++)
                 {
                     float angle = i * 36f * Mathf.Deg2Rad;

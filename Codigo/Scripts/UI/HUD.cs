@@ -1,8 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-// HUD del documento (sección 2.6): barra de vida, barra de maná, hechizos equipados
-// y contador de Fragmentos de grimorio. Cuando un jefe se activa aparece su barra de vida.
+// HUD: vida, mana, hechizos, fragmentos y barra del jefe
 public class HUD : MonoBehaviour
 {
     [SerializeField] private Health playerHealth;

@@ -1,9 +1,6 @@
 using UnityEngine;
 
-// Enemigo aéreo. Flota de forma errática alrededor de su punto de origen y,
-// cuando ve a Lira, se lanza en picada contra ella.
-// - Aves de Tormenta / Golems de Piedra Suspendida: embestida y regreso.
-// - Motas Corruptas: activar explodeOnContact (explotan y dañan en área).
+// enemigos que vuelan: aves, golems y motas (las motas explotan)
 public class FlyingEnemyAI : EnemyBase
 {
     [Header("Vuelo")]
@@ -64,7 +61,7 @@ public class FlyingEnemyAI : EnemyBase
         if (seesPlayer && driftTowardsPlayer)
             homePosition = Vector2.MoveTowards(homePosition, player.position, moveSpeed * SpeedMultiplier * Time.deltaTime);
 
-        // Movimiento errático con ruido de Perlin alrededor del punto de origen
+        // movimiento erratico con ruido de Perlin alrededor del punto de origen
         float t = Time.time * hoverSpeed;
         Vector2 offset = new Vector2(Mathf.PerlinNoise(seed, t) - 0.5f, Mathf.PerlinNoise(t, seed) - 0.5f) * 2f * hoverRadius;
         Vector2 target = homePosition + offset;

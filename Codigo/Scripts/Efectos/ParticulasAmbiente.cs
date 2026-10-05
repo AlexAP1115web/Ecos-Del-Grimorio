@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Partículas de ambiente alrededor de la cámara: polvo, brasas, nieve, hojas o motas arcanas.
+// particulas de ambiente alrededor de la camara: polvo, brasas, nieve, hojas o motas arcanas
 public class ParticulasAmbiente : MonoBehaviour
 {
     [SerializeField] private Color color = new Color(1f, 0.9f, 0.6f, 0.5f);

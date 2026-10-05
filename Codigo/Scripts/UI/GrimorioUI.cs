@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Pantalla "Grimorio" del menú de pausa: muestra los hechizos, los combos, las mejoras
-// y las armas de los enemigos. Lo que todavía no se consigue aparece apagado.
+// pantalla del grimorio en la pausa
 public class GrimorioUI : MonoBehaviour
 {
     [SerializeField] private Font font;
@@ -33,7 +32,7 @@ public class GrimorioUI : MonoBehaviour
 
         float izq = -340f, der = 340f;
 
-        // ---- Hechizos
+        // hechizos
         Titulo("HECHIZOS", izq, 320f);
         for (int i = 0; i < hechizos.Length; i++)
         {
@@ -44,7 +43,7 @@ public class GrimorioUI : MonoBehaviour
             Fila(s.icon, s.spellName, detalle, izq, 255f - i * 72f, ok);
         }
 
-        // ---- Mejoras y habilidades
+        // mejoras y habilidades
         Titulo("MEJORAS Y HABILIDADES", izq, -45f);
         Fila(esquive, "Esquive", "Shift o Círculo: un instante sin recibir daño", izq, -105f, true);
         string[] efectos = { "+30% de daño con Fuego", "Recibes menos daño de fuego", "Saltas más alto" };
@@ -56,7 +55,7 @@ public class GrimorioUI : MonoBehaviour
             Fila(m.icon, m.itemName, ok ? efectos[i] : "Recompensa de un guardián", izq, -170f - i * 62f, ok);
         }
 
-        // ---- Combos
+        // combos
         Titulo("COMBOS", der, 320f);
         var pares = new (Elemento a, Elemento b, string nombre, string efecto)[]
         {
@@ -72,7 +71,7 @@ public class GrimorioUI : MonoBehaviour
         }
         Texto($"Lanza los dos hechizos seguidos, o usa el combo rápido ({Controles.TextoCombo})", der, -22f, 620f, 22, Dorado);
 
-        // ---- Armas de los enemigos
+        // armas de los enemigos
         Titulo("ARMAS DE LOS ENEMIGOS", der, -70f);
         string[] nombres = { "Garras de Tinta Corrosiva", "Lanza Incandescente", "Embestida Rocosa", "Esquirlas de Hielo" };
         string[] quien = { "Espectros de tinta: zarpazo de cerca", "Centinelas de Ceniza: estocada de fuego",
@@ -80,7 +79,7 @@ public class GrimorioUI : MonoBehaviour
         for (int i = 0; i < nombres.Length; i++)
             Fila(i < armas.Length ? armas[i] : null, nombres[i], quien[i], der, -130f - i * 62f, true);
 
-        // ---- Resumen
+        // resumen
         if (gm != null && player != null)
         {
             var h = player.GetComponent<Health>();

@@ -1,7 +1,6 @@
 using UnityEngine;
 
-// Cofre secreto del Ala de Aprendizaje: se abre con la Llave Rúnica (E)
-// y da una mejora cosmética: la capa de Lira toma un tono dorado.
+// cofre del nivel 1 que se abre con la Llave Runica
 public class SecretChest : MonoBehaviour
 {
     [SerializeField] private float openRange = 1.8f;
@@ -16,7 +15,7 @@ public class SecretChest : MonoBehaviour
         var p = GameObject.FindGameObjectWithTag("Player");
         if (p != null) player = p.transform;
 
-        // Si ya se abrió en una partida anterior se aplica el tono directamente
+        // si ya se abrio en una partida anterior se aplica el tono directamente
         if (GameManager.Instance != null && GameManager.Instance.HasCollectible("Capa dorada"))
         {
             opened = true;

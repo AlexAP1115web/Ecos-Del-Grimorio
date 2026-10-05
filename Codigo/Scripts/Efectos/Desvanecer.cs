@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Desvanece un sprite y luego lo destruye (la roca que tapa una sala secreta).
+// desvanece un sprite y luego lo destruye
 public class Desvanecer : MonoBehaviour
 {
     [SerializeField] private float duracion = 0.8f;

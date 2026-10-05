@@ -15,9 +15,7 @@ public enum GameState
     Creditos
 }
 
-// Controla los estados del juego (sección 2.5) y guarda el progreso entre niveles:
-// nivel alcanzado, hechizos, mejoras, fragmentos y coleccionables.
-// El progreso se guarda con PlayerPrefs para la opción "Continuar" del menú.
+// estados del juego y guardado con PlayerPrefs (para Continuar)
 public class GameManager : MonoBehaviour
 {
     public const string MenuScene = "MenuPrincipal";
@@ -121,7 +119,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        // Fin de la pausa breve de impacto
+        // fin de la pausa breve de impacto
         if (hitStopUntil > 0f && Time.unscaledTime >= hitStopUntil)
         {
             hitStopUntil = 0f;
@@ -134,7 +132,7 @@ public class GameManager : MonoBehaviour
         else if (State == GameState.Pausa) Resume();
     }
 
-    // Congela el juego una fracción de segundo para dar peso a un golpe
+    // congela el juego una fraccion de segundo para dar peso a un golpe
     public void HitStop(float seconds)
     {
         if (State != GameState.Jugando || Time.timeScale == 0f) return;
@@ -191,7 +189,7 @@ public class GameManager : MonoBehaviour
         PotionsUsedInBossFight = 0;
     }
 
-    // ---------- Partida ----------
+    // partida
 
     public void NewGame()
     {
@@ -213,8 +211,7 @@ public class GameManager : MonoBehaviour
     public bool GameCompleted => PlayerPrefs.GetInt("eg_terminado", 0) == 1;
     private bool finishing;
 
-    // Se llama al derrotar al Eco de Elenora (después de su diálogo final):
-    // pantalla de victoria, recompensas, epílogo y créditos.
+    // al vencer a Elenora: victoria, recompensas, epilogo y creditos
     public void FinishGame()
     {
         if (finishing) return;
@@ -236,7 +233,7 @@ public class GameManager : MonoBehaviour
             if (h != null) h.SetInvulnerable(60f);
         }
 
-        // Las recompensas del jefe final se entregan aunque Lira no haya alcanzado a recogerlas
+        // las recompensas del jefe final se entregan aunque Lira no haya alcanzado a recogerlas
         foreach (var p in FindObjectsByType<Pickup>())
             if (p.Item != null && (p.Item.itemName == "Fragmento de Grimorio V" || p.Item.itemName == "Grimorio Completo"))
                 Destroy(p.gameObject);
@@ -280,7 +277,7 @@ public class GameManager : MonoBehaviour
 
     public void AddCollectible(string itemName) => collectibles.Add(itemName);
 
-    // Páginas Perdidas: el id incluye la escena para poder contarlas por ala
+    // paginas Perdidas: el id incluye la escena para poder contarlas por ala
     public bool AddPage(string id)
     {
         if (!pages.Add(id)) return false;
@@ -310,7 +307,7 @@ public class GameManager : MonoBehaviour
         ShowMessage("Punto de reaparición activado");
     }
 
-    // Porcentaje de coleccionables: 5 fragmentos + diario + nota + grimorio completo + llave
+    // porcentaje de coleccionables: 5 fragmentos + diario + nota + grimorio completo + llave
     public float CompletionPercent
     {
         get
@@ -323,7 +320,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Se llama al llegar a la salida de un nivel
+    // se llama al llegar a la salida de un nivel
     public void CompleteLevel(string nextScene, Elemento spellToUnlock, bool unlocksSpell)
     {
         string current = SceneManager.GetActiveScene().name;
@@ -353,7 +350,7 @@ public class GameManager : MonoBehaviour
         SetState(GameState.NivelCompletado);
     }
 
-    // ---------- Guardado ----------
+    // guardado
 
     void Save()
     {
@@ -383,7 +380,7 @@ public class GameManager : MonoBehaviour
         HasRunicKey = PlayerPrefs.GetInt("eg_llave", 0) == 1;
     }
 
-    // ---------- Mensajes (los muestra UIManager) ----------
+    // mensajes (los muestra UIManager)
 
     public void ShowMessage(string text, float seconds = 3f)
     {

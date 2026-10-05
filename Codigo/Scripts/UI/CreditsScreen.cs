@@ -2,8 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-// Créditos / Epílogo: se muestra al derrotar al Eco de la Archimaga Elenora.
-// El texto del final cambia según el porcentaje de coleccionables obtenidos.
+// creditos, el final cambia segun los coleccionables
 public class CreditsScreen : MonoBehaviour
 {
     [SerializeField] private RectTransform scrollingText;
@@ -38,7 +37,7 @@ public class CreditsScreen : MonoBehaviour
                 $"Coleccionables: {Mathf.RoundToInt(percent * 100f)}%\n\n\n" +
                 "ECOS DEL GRIMORIO\n\n" +
                 "Diseño, programación y documentación\nPérez Alcántara Alejandro\n\n" +
-                "Creación de Videojuegos — 10° D\nUniversidad Tecnológica de Puebla\n\n" +
+                "Creación de Videojuegos, 10° D\nUniversidad Tecnológica de Puebla\n\n" +
                 "Docente\nJosé Francisco Espinosa Garita\n\n" +
                 "Música, voces y efectos de sonido\nOriginales, creados por síntesis de audio\n\n" +
                 "Motor\nUnity 6\n\n\n" +
@@ -51,7 +50,7 @@ public class CreditsScreen : MonoBehaviour
         if (scrollingText != null && scrollingText.anchoredPosition.y < endY)
             scrollingText.anchoredPosition += Vector2.up * scrollSpeed * Time.deltaTime;
 
-        // Los primeros segundos no se pueden saltar (para no perderse el final por presionar X)
+        // los primeros segundos no se pueden saltar
         if (Time.unscaledTime - inicio > 3f && (Controles.AceptarPresionado || Controles.PausaPresionado))
             SceneManager.LoadScene(GameManager.MenuScene);
     }

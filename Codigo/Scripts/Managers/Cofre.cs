@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Cofre de madera escondido en los niveles. Se abre con E / Triángulo y suelta su contenido.
+// cofre de madera escondido en los niveles. Se abre con E / Triangulo y suelta su contenido
 public class Cofre : MonoBehaviour
 {
     [SerializeField] private GameObject[] contenido = new GameObject[0];

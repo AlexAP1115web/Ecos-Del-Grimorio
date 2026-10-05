@@ -3,11 +3,11 @@ using UnityEngine;
 
 public enum TipoGolpe { Zarpazo, Estocada, Embestida }
 
-// Arma de un enemigo (armas del documento de diseño): cuando Lira está cerca, el enemigo
-// la usa. El arte del arma aparece frente a él y daña lo que esté en esa zona.
-//   Garras de Tinta Corrosiva -> Espectros de tinta (zarpazo)
-//   Lanza Incandescente       -> Centinelas de Ceniza (estocada)
-//   Embestida Rocosa          -> Golems de Piedra Suspendida (embestida)
+// arma de un enemigo: cuando Lira esta cerca, el enemigo
+// la usa. El arte del arma aparece frente a el y daña lo que este en esa zona
+// garras de Tinta Corrosiva -> Espectros de tinta (zarpazo)
+// lanza Incandescente       -> Centinelas de Ceniza (estocada)
+// embestida Rocosa          -> Golems de Piedra Suspendida (embestida)
 [RequireComponent(typeof(EnemyBase))]
 public class ArmaEnemigo : MonoBehaviour
 {
@@ -50,7 +50,7 @@ public class ArmaEnemigo : MonoBehaviour
     {
         atacando = true;
 
-        // Aviso: un destello del color del arma
+        // aviso: un destello del color del arma
         Particula.Rafaga((Vector2)transform.position + new Vector2(dir * 0.5f, 0.3f), new Color(1f, 0.9f, 0.7f, 0.8f), 5, 1.5f, 0.08f, aviso);
         yield return new WaitForSeconds(aviso);
         if (vida == null || vida.IsDead) yield break;

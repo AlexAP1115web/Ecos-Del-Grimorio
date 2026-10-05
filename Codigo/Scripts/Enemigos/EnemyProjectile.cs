@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Proyectil de enemigo (esquirlas de hielo, brasas, etc.). Solo daña a Lira.
+// proyectil de enemigo. Solo daña a Lira
 [RequireComponent(typeof(Rigidbody2D))]
 public class EnemyProjectile : MonoBehaviour
 {

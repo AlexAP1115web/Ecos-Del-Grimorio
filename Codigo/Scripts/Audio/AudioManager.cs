@@ -14,7 +14,7 @@ public enum Sfx
 
 public enum VozLira { Dano, Esfuerzo, Caida }
 
-// Voz de un personaje: sílabas cortas que suenan mientras aparece su texto en los diálogos
+// voz de un personaje: silabas cortas que suenan mientras aparece su texto en los dialogos
 [Serializable]
 public class VozPersonaje
 {
@@ -23,10 +23,10 @@ public class VozPersonaje
     [Range(0f, 1f)] public float volumen = 0.6f;
 }
 
-// Música y efectos de sonido. Vive en el prefab del GameManager, así que pasa de una
-// escena a otra sin cortarse. Cada escena tiene su tema; al activarse un jefe cambia
-// a la música de combate y al derrotarlo regresa la del nivel (con un fundido).
-// También tiene las voces de los personajes y los quejidos de Lira.
+// musica y efectos de sonido. Vive en el prefab del GameManager, asi que pasa de una
+// escena a otra sin cortarse. Cada escena tiene su tema, al activarse un jefe cambia
+// a la musica de combate y al derrotarlo regresa la del nivel
+// tambien tiene las voces de los personajes y los quejidos de Lira
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
@@ -80,7 +80,7 @@ public class AudioManager : MonoBehaviour
 
     void Awake()
     {
-        // El GameManager duplicado se destruye solo; aquí solo evitamos inicializarlo
+        // el GameManager duplicado se destruye solo, aqui solo evitamos inicializarlo
         if (Instance != null && Instance != this) { enabled = false; return; }
         Instance = this;
 
@@ -107,7 +107,7 @@ public class AudioManager : MonoBehaviour
         voz.playOnAwake = false;
         voz.ignoreListenerPause = true;
 
-        // Sin un AudioListener no se escucha nada: el AudioManager lleva el suyo
+        // sin un AudioListener no se escucha nada: el AudioManager lleva el suyo
         gameObject.AddComponent<AudioListener>();
 
         SceneManager.sceneLoaded += OnSceneLoaded;
@@ -133,7 +133,7 @@ public class AudioManager : MonoBehaviour
 
     void Update()
     {
-        // Baja la música en pausa y en Game Over
+        // baja la musica en pausa y en Game Over
         if (GameManager.Instance != null)
         {
             var st = GameManager.Instance.State;
@@ -147,11 +147,11 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // ---------- Música ----------
+    // musica
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Solo debe haber un AudioListener: se quitan los de las cámaras
+        // solo debe haber un AudioListener: se quitan los de las camaras
         foreach (var cam in Camera.allCameras)
         {
             var l = cam.GetComponent<AudioListener>();
@@ -217,9 +217,9 @@ public class AudioManager : MonoBehaviour
         fundidoActual = null;
     }
 
-    // ---------- Voces ----------
+    // voces
 
-    // Una sílaba de la voz de quien habla (se llama mientras se escribe el diálogo)
+    // una silaba de la voz de quien habla
     public static void Hablar(string personaje, float tono = 1f)
     {
         if (Instance != null) Instance.HablarInternal(personaje, tono);
@@ -273,9 +273,9 @@ public class AudioManager : MonoBehaviour
         voz.PlayOneShot(clip, volumenVoces);
     }
 
-    // ---------- Efectos ----------
+    // efectos
 
-    // Se puede llamar desde cualquier script aunque no haya AudioManager en la escena
+    // se puede llamar desde cualquier script aunque no haya AudioManager en la escena
     public static void Play(Sfx sfx, float volume = 1f, float pitch = 1f)
     {
         if (Instance != null) Instance.PlayInternal(sfx, volume, pitch);
@@ -286,7 +286,7 @@ public class AudioManager : MonoBehaviour
         int i = (int)sfx;
         if (efectos == null || i >= efectos.Length || efectos[i] == null) return;
 
-        // Evita que el mismo sonido se encime muchas veces en el mismo instante
+        // evita que el mismo sonido se encime muchas veces en el mismo instante
         if (i < ultimoSonido.Length)
         {
             if (Time.unscaledTime - ultimoSonido[i] < 0.04f) return;

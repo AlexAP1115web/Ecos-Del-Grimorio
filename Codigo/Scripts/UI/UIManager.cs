@@ -5,10 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-// Interfaz de los niveles hecha con UGUI: mensajes, título del nivel, diálogos con retrato,
-// menú de pausa, pantalla de logros, Game Over y aviso de logro desbloqueado.
-// Se puede navegar con teclado, mouse o control.
-// En los diálogos, una línea que empieza con "Nombre: " cambia de personaje y de retrato.
+// interfaz de los niveles: mensajes, dialogos, pausa, logros y game over
 [Serializable]
 public class RetratoPersonaje
 {
@@ -60,7 +57,7 @@ public class UIManager : MonoBehaviour
     private readonly Queue<Logro> toasts = new Queue<Logro>();
     private float toastUntil;
 
-    // Diálogo actual
+    // dialogo actual
     private string[] lines;
     private int lineIndex;
     private int visibleChars;
@@ -136,7 +133,7 @@ public class UIManager : MonoBehaviour
         if (EventSystem.current != null && go != null) EventSystem.current.SetSelectedGameObject(go);
     }
 
-    // Título grande que se queda en pantalla (victoria)
+    // titulo grande que se queda en pantalla (victoria)
     public void ShowBigTitle(string title, string subtitle)
     {
         if (titleGroup == null) return;
@@ -173,7 +170,7 @@ public class UIManager : MonoBehaviour
         UpdateDialogue(dt);
     }
 
-    // ---------- Mensajes ----------
+    // mensajes
 
     public void ShowMessage(string text, float seconds)
     {
@@ -194,7 +191,7 @@ public class UIManager : MonoBehaviour
         if (promptText != null) promptText.enabled = false;
     }
 
-    // ---------- Logros ----------
+    // logros
 
     void OnAchievement(Logro logro) => toasts.Enqueue(logro);
 
@@ -213,7 +210,7 @@ public class UIManager : MonoBehaviour
         toastGroup.alpha = Mathf.MoveTowards(toastGroup.alpha, Time.unscaledTime < toastUntil ? 1f : 0f, dt * 3f);
     }
 
-    // ---------- Diálogos ----------
+    // dialogos
 
     public void StartDialogue(string speaker, Sprite portrait, string[] dialogueLines, Action onEnd)
     {
@@ -235,7 +232,7 @@ public class UIManager : MonoBehaviour
         Time.timeScale = 0f; // el mundo se detiene mientras se lee
     }
 
-    // Si la línea empieza con el nombre de un personaje conocido, cambia quién habla
+    // si la linea empieza con el nombre de un personaje conocido, cambia quien habla
     void PrepareLine()
     {
         string raw = lines[lineIndex];
@@ -279,7 +276,7 @@ public class UIManager : MonoBehaviour
             typeTimer -= 1f;
             visibleChars++;
 
-            // Voz del personaje: una sílaba cada pocas letras
+            // voz del personaje: una silaba cada pocas letras
             char ch = line[visibleChars - 1];
             if (char.IsLetter(ch) && Time.unscaledTime >= nextVoiceTime)
             {
@@ -317,7 +314,7 @@ public class UIManager : MonoBehaviour
         callback?.Invoke();
     }
 
-    // ---------- Pausa / Game Over ----------
+    // pausa / Game Over
 
     void OnStateChanged(GameState state)
     {

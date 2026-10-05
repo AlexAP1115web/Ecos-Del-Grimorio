@@ -1,7 +1,6 @@
 using UnityEngine;
 
-// Partículas ligeras hechas con sprites: chispas al golpear, polvo al aterrizar,
-// estallido al morir un enemigo, estela de los hechizos y fantasmas del esquive.
+// particulas simples con sprites (chispas, polvo, fantasmas del esquive)
 public class Particula : MonoBehaviour
 {
     Vector2 velocity;
@@ -50,8 +49,8 @@ public class Particula : MonoBehaviour
         return p;
     }
 
-    // Copia del sprite que se desvanece (esquive de Lira)
-    // Silueta de un sprite completo (para el esquive de Lira, que está hecha por partes)
+    // copia del sprite que se desvanece (esquive de Lira)
+    // silueta de un sprite completo
     public static void Fantasma(Sprite sprite, Vector3 posicion, Vector3 escala, bool voltear, int orden, Color tinte, float vida)
     {
         if (sprite == null) return;

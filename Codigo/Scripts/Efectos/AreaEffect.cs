@@ -1,7 +1,6 @@
 using UnityEngine;
 
-// Círculo que aparece y se desvanece. Se usa para los combos y las explosiones
-// mientras no tengamos los sprites finales de cada efecto.
+// circulo que aparece y se desvanece (combos y explosiones)
 public class AreaEffect : MonoBehaviour
 {
     private static Sprite circleSprite;
@@ -30,7 +29,7 @@ public class AreaEffect : MonoBehaviour
         return Spawn(position, radius, color, duration, null);
     }
 
-    // Con sprite: usa el arte del hechizo en lugar del círculo
+    // con sprite: usa el arte del hechizo en lugar del circulo
     public static AreaEffect Spawn(Vector2 position, float radius, Color color, float duration, Sprite sprite)
     {
         var go = new GameObject("Efecto");
@@ -49,8 +48,8 @@ public class AreaEffect : MonoBehaviour
         return effect;
     }
 
-    // Aplica daño a todo lo que tenga Health dentro del radio.
-    // Devuelve cuántos objetivos golpeó.
+    // aplica daño a todo lo que tenga Health dentro del radio
+    // devuelve cuantos objetivos golpeo
     public static int Damage(Vector2 center, float radius, float damage, Elemento? element, bool hitsPlayer)
     {
         int hits = 0;

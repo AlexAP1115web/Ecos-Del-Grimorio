@@ -4,16 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-// Maná, hechizos equipados y combos elementales.
-// Según la mecánica del documento, Lira equipa hasta 3 hechizos:
-//   1, 2, 3 / Cuadrado, R1, L1 -> lanza el hechizo del espacio 1, 2 o 3
-//   J / clic -> lanza el espacio seleccionado (con el clic apunta hacia el mouse)
-//   C / L2 -> combo rápido con dos de los hechizos equipados
-//   Q / R2 -> cambia el hechizo del espacio seleccionado por otro desbloqueado
-//   Stick derecho -> apunta en cualquier dirección (360°)
-//   Arriba / abajo (en el aire) -> lanza en diagonal o en vertical
-//   Agachada -> el hechizo sale a ras de suelo (para enemigos pequeños)
-// Si se lanzan dos elementos distintos seguidos (dentro de comboWindow) se forma un combo.
+// mana, 3 hechizos equipados y combos
+// dos elementos distintos seguidos = combo
 public class SpellCaster : MonoBehaviour
 {
     [Header("Maná")]
@@ -68,7 +60,7 @@ public class SpellCaster : MonoBehaviour
         foreach (var e in startUnlocked) AddUnlocked(e);
     }
 
-    // Registra el hechizo y lo equipa si queda algún espacio libre
+    // registra el hechizo y lo equipa si queda algun espacio libre
     void AddUnlocked(Elemento element)
     {
         if (!unlocked.Add(element)) return;
@@ -81,7 +73,7 @@ public class SpellCaster : MonoBehaviour
 
     void Start()
     {
-        // Si ya se habían desbloqueado hechizos en niveles anteriores
+        // si ya se habian desbloqueado hechizos en niveles anteriores
         if (GameManager.Instance != null)
             foreach (var e in GameManager.Instance.UnlockedSpells) AddUnlocked(e);
 
@@ -121,7 +113,7 @@ public class SpellCaster : MonoBehaviour
         TryCast(equipped[slot]);
     }
 
-    // Cambia el hechizo del espacio seleccionado por el siguiente desbloqueado que no esté equipado
+    // cambia el hechizo del espacio seleccionado por el siguiente desbloqueado que no este equipado
     public void SwapSelectedSlot()
     {
         if (equipped.Count == 0) return;
@@ -234,7 +226,7 @@ public class SpellCaster : MonoBehaviour
         return TipoCombo.Ninguno;
     }
 
-    // Primer par de hechizos equipados que forma un combo (el combo rápido usa este)
+    // primer par de hechizos equipados que forma un combo
     public TipoCombo QuickCombo
     {
         get
@@ -280,10 +272,9 @@ public class SpellCaster : MonoBehaviour
 
     Vector2 Facing => controller == null || controller.FacingRight ? Vector2.right : Vector2.left;
 
-    // Dirección de disparo: al frente, o en diagonal hacia arriba si se mantiene arriba
     bool Crouching => controller != null && controller.IsCrouching;
 
-    // Dirección de disparo: stick derecho (360°), mouse, arriba/abajo o al frente
+    // direccion de disparo: stick derecho, mouse, arriba/abajo o al frente
     Vector2 AimDirection
     {
         get
@@ -319,7 +310,7 @@ public class SpellCaster : MonoBehaviour
         get
         {
             var dir = AimDirection;
-            // Al apuntar hacia arriba o abajo el hechizo sale del centro de Lira
+            // al apuntar hacia arriba o abajo el hechizo sale del centro de Lira
             float x = Mathf.Abs(dir.x) > 0.5f ? castOffset.x * Mathf.Sign(dir.x) : dir.x * castOffset.x;
             float y = castOffset.y - (Crouching ? crouchCastDrop : 0f) + dir.y * 0.6f;
             return (Vector2)transform.position + new Vector2(x, y);
@@ -359,7 +350,7 @@ public class SpellCaster : MonoBehaviour
         {
             case TipoCombo.ExplosionArcana:
             {
-                // Explosión de área de alto daño frente a Lira
+                // explosion de area de alto daño frente a Lira
                 Vector2 center = (Vector2)transform.position + AimDirection * 2f;
                 AreaEffect.Spawn(center, 2.5f, Color.white, 0.6f, ComboSprite(combo));
                 AreaEffect.Damage(center, 2.5f, 40f, Elemento.Fuego, false);
@@ -367,7 +358,7 @@ public class SpellCaster : MonoBehaviour
             }
             case TipoCombo.VaporCegador:
             {
-                // Nube de vapor que "ciega" (aturde) a los enemigos cercanos
+                // nube de vapor que "ciega" (aturde) a los enemigos cercanos
                 AreaEffect.Spawn(transform.position, 3f, new Color(1f, 1f, 1f, 0.85f), 1.2f, ComboSprite(combo));
                 foreach (var col in Physics2D.OverlapCircleAll(transform.position, 3f))
                 {
@@ -379,7 +370,7 @@ public class SpellCaster : MonoBehaviour
             }
             case TipoCombo.GranizoCortante:
             {
-                // Proyectil de hielo que atraviesa enemigos en línea recta
+                // proyectil de hielo que atraviesa enemigos en linea recta
                 var ice = GetSpell(Elemento.Hielo);
                 if (ice != null) FireProjectile(ice, GetDamage(ice) * 2.5f, true, 1.5f);
                 AreaEffect.Spawn(CastPoint + Facing, 1.2f, Color.white, 0.4f, ComboSprite(combo));
@@ -399,7 +390,7 @@ public class SpellCaster : MonoBehaviour
 
     IEnumerator EmberStorm()
     {
-        // Ascuas alrededor de Lira: tres golpes de daño seguidos
+        // ascuas alrededor de Lira: tres golpes de daño seguidos
         for (int i = 0; i < 3; i++)
         {
             AreaEffect.Spawn(transform.position, 3.5f, new Color(1f, 1f, 1f, 0.8f), 0.4f, ComboSprite(TipoCombo.TormentaDeAscuas));

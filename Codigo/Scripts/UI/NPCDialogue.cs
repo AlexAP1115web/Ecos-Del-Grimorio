@@ -2,8 +2,8 @@ using UnityEngine;
 
 public enum Bendicion { Ninguna, Vida, Mana, VidaMaxima }
 
-// Diálogo de un personaje (Maestra Sable) o de un jefe antes del combate.
-// Con autoStart se inicia solo al acercarse (jefes); si no, aparece el aviso para hablar.
+// dialogo de un personaje o de un jefe antes del combate
+// con autoStart se inicia solo al acercarse, si no, aparece el aviso para hablar
 public class NPCDialogue : MonoBehaviour
 {
     [SerializeField] private string speakerName = "Maestra Sable";

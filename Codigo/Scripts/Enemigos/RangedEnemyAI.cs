@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Enemigo inmóvil que dispara a distancia (Cristales Vivientes: esquirlas de hielo).
+// enemigo inmovil que dispara a distancia
 public class RangedEnemyAI : EnemyBase
 {
     [SerializeField] private GameObject projectilePrefab;
@@ -27,7 +27,7 @@ public class RangedEnemyAI : EnemyBase
         if (Time.time >= nextFireTime)
         {
             Fire();
-            // Si está ralentizado dispara más lento
+            // si esta ralentizado dispara mas lento
             nextFireTime = Time.time + fireRate / SpeedMultiplier;
         }
     }

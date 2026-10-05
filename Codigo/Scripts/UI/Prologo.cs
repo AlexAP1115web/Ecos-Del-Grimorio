@@ -3,8 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-// Prólogo (al empezar una partida nueva) y epílogo (al terminar el juego): varias escenas
-// con imagen y texto que se escribe poco a poco. Se avanza con Enter / X y se salta con Esc / Options.
+// prologo y epilogo con imagenes y texto
 [Serializable]
 public class EscenaPrologo
 {
