@@ -22,4 +22,6 @@ public class ItemData : ScriptableObject
     public float amount = 25f;
     public Sprite icon;
     [TextArea] public string description;
+    [Tooltip("Texto de historia que se muestra al recogerlo (fragmentos, diario, nota)")]
+    [TextArea(2, 5)] public string[] lore = new string[0];
 }

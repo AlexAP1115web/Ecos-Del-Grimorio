@@ -46,11 +46,13 @@ public class Pickup : MonoBehaviour
 
         taken = true;
         var gm = GameManager.Instance;
-        if (gm != null)
-        {
-            if (IsUnique) gm.MarkPickupTaken(Id);
+        if (gm != null && IsUnique) gm.MarkPickupTaken(Id);
+
+        // Los fragmentos, la nota y el diario cuentan parte de la historia de Elenora
+        if (item.lore != null && item.lore.Length > 0 && UIManager.Instance != null)
+            UIManager.Instance.StartDialogue(item.itemName, item.icon, item.lore, null);
+        else if (gm != null)
             gm.ShowMessage(string.IsNullOrEmpty(item.description) ? item.itemName : $"{item.itemName}: {item.description}");
-        }
         Collected?.Invoke(item);
         Particula.Rafaga(transform.position, new Color(1f, 0.9f, 0.5f, 1f), 14, 4f, 0.14f, 0.5f);
         Destroy(gameObject);

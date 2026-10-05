@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour
     public const string MenuScene = "MenuPrincipal";
     public const string FirstLevel = "Nivel1_AlaDeAprendizaje";
     public const string CreditsScene = "Creditos";
+    public const string PrologueScene = "Prologo";
 
     public static GameManager Instance { get; private set; }
 
@@ -91,6 +92,8 @@ public class GameManager : MonoBehaviour
         if (scene.name == MenuScene) { SetState(GameState.MenuPrincipal); return; }
         if (scene.name == CreditsScene) { SetState(GameState.Creditos); return; }
 
+        if (GameObject.FindGameObjectWithTag("Player") == null) { SetState(GameState.MenuPrincipal); return; }
+
         SetState(GameState.Jugando);
         levelStartTime = Time.time;
         tookDamageThisLevel = false;
@@ -116,7 +119,8 @@ public class GameManager : MonoBehaviour
         if (hitStopUntil > 0f && Time.unscaledTime >= hitStopUntil)
         {
             hitStopUntil = 0f;
-            if (State == GameState.Jugando) Time.timeScale = 1f;
+            bool reading = UIManager.Instance != null && UIManager.Instance.InDialogue;
+            if (State == GameState.Jugando && !reading) Time.timeScale = 1f;
         }
 
         if (!Controles.PausaPresionado) return;
@@ -127,7 +131,7 @@ public class GameManager : MonoBehaviour
     // Congela el juego una fracción de segundo para dar peso a un golpe
     public void HitStop(float seconds)
     {
-        if (State != GameState.Jugando) return;
+        if (State != GameState.Jugando || Time.timeScale == 0f) return;
         Time.timeScale = 0.05f;
         hitStopUntil = Time.unscaledTime + seconds;
     }
@@ -146,7 +150,8 @@ public class GameManager : MonoBehaviour
 
     public void Resume()
     {
-        Time.timeScale = 1f;
+        bool reading = UIManager.Instance != null && UIManager.Instance.InDialogue;
+        Time.timeScale = reading ? 0f : 1f;
         hitStopUntil = 0f;
         SetState(GameState.Jugando);
     }
@@ -193,7 +198,7 @@ public class GameManager : MonoBehaviour
         checkpointScene = null;
         PlayerPrefs.SetString("eg_nivel", FirstLevel);
         Save();
-        SceneManager.LoadScene(FirstLevel);
+        SceneManager.LoadScene(Application.CanStreamedLevelBeLoaded(PrologueScene) ? PrologueScene : FirstLevel);
     }
 
     public bool HasSavedGame => PlayerPrefs.HasKey("eg_nivel");

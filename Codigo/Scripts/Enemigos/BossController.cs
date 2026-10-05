@@ -24,6 +24,11 @@ public abstract class BossController : EnemyBase
     [SerializeField] protected GameObject[] rewards = new GameObject[0];
     [SerializeField] protected Vector2 rewardPosition;
 
+    [Header("Historia")]
+    [SerializeField] protected Sprite portrait;
+    [TextArea(2, 4)]
+    [SerializeField] protected string[] defeatLines = new string[0];
+
     public static event Action<BossController> BossActivated;
     public static event Action<string> BossDefeated;
     public event Action<int> PhaseChanged;
@@ -122,5 +127,8 @@ public abstract class BossController : EnemyBase
         }
 
         BossDefeated?.Invoke(bossName);
+
+        if (defeatLines != null && defeatLines.Length > 0 && UIManager.Instance != null)
+            UIManager.Instance.StartDialogue(bossName, portrait, defeatLines, null);
     }
 }

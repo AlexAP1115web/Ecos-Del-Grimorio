@@ -46,6 +46,14 @@
   - Escenarios con texturas que se repiten, fondo con parallax, columnas o nubes, luces 2D (antorchas, lava, portal) y partículas de ambiente por cada ala.
   - Interfaz nueva con UGUI: diálogos con retrato, menú de pausa, Game Over, logros, avisos y título de cada nivel.
 
+- Historia dentro del juego:
+  - Prólogo con imágenes al empezar una partida nueva.
+  - La Escena 1 del guion (Lira y Maestra Sable) al inicio del Ala de Aprendizaje.
+  - Pensamientos de Lira al entrar a cada ala y susurros de los ecos en el camino.
+  - Diálogo de cada jefe antes y después del combate.
+  - Los Fragmentos de Grimorio, la Nota cifrada y el Diario revelan la historia de Elenora.
+- Textos de la interfaz más grandes y diálogos con varios personajes y retratos.
+
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
 - Subir capturas a `Evidencias`.

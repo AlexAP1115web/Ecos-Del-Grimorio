@@ -37,6 +37,7 @@ public static class CrearJuego
 
             var escenas = new List<string>();
             EditorUtility.DisplayProgressBar("Ecos del Grimorio", "Menú principal", 0.2f); escenas.Add(CrearMenu());
+            EditorUtility.DisplayProgressBar("Ecos del Grimorio", "Prólogo", 0.25f); escenas.Add(CrearPrologo());
             EditorUtility.DisplayProgressBar("Ecos del Grimorio", "Nivel 1", 0.3f); escenas.Add(Nivel1());
             EditorUtility.DisplayProgressBar("Ecos del Grimorio", "Nivel 2", 0.45f); escenas.Add(Nivel2());
             EditorUtility.DisplayProgressBar("Ecos del Grimorio", "Nivel 3", 0.6f); escenas.Add(Nivel3());
@@ -104,15 +105,30 @@ public static class CrearJuego
         Item("Poción Menor de Vida", TipoItem.Vida, 35, "Items/Poción de Vida.png", "Restaura parte de la vida.");
         Item("Poción Mayor de Vida", TipoItem.Vida, 100, "Items/Poción Mayor de Vida.png", "Restaura toda la vida.");
         string[] romanos = { "I", "II", "III", "IV", "V" };
-        foreach (var r in romanos)
-            Item("Fragmento de Grimorio " + r, TipoItem.FragmentoGrimorio, 1, "Items/Fragmento de Grimorio.png", "Revela el pasado de la Archimaga Elenora.");
+        string[] fragmentos =
+        {
+            "«Los cuatro elementos no deberían pelear entre sí. Si logro unirlos en un solo grimorio, la Torre nunca volverá a temerle a la magia.» — Elenora",
+            "«Elegí a cuatro aprendices para custodiar cada elemento. Kaelor guardará el fuego: es terco, pero leal.» — Elenora",
+            "«Isolde y Threnody aprenden rápido. Pero el grimorio empieza a responder solo... escucho ecos de mi propia voz entre las páginas.» — Elenora",
+            "«Si el grimorio se rompe, cada elemento buscará un guardián. No puedo permitir que mis aprendices paguen por mi error.» — Elenora",
+            "«Voy a sellarme dentro del grimorio. Si alguien lo abre algún día, que sea alguien que quiera entender y no solo tener poder.» — Elenora"
+        };
+        for (int i = 0; i < romanos.Length; i++)
+            Item("Fragmento de Grimorio " + romanos[i], TipoItem.FragmentoGrimorio, 1, "Items/Fragmento de Grimorio.png",
+                "Revela el pasado de la Archimaga Elenora.", fragmentos[i]);
         Item("Núcleo de Ascua", TipoItem.NucleoDeAscua, 0, "Items/Núcleo de Ascua.png", "Tu hechizo de Fuego hace más daño.");
         Item("Anillo de Escarcha", TipoItem.AnilloDeEscarcha, 0, "Items/Anillo de Escarcha.png", "Recibes menos daño de fuego.");
         Item("Pluma Ligera", TipoItem.PlumaLigera, 0, "Items/Pluma Ligera.png", "Saltas más alto.");
         Item("Llave Rúnica", TipoItem.LlaveRunica, 0, "Items/Llave Rúnica.png", "Abre el cofre sellado del Ala de Aprendizaje.");
-        Item("Nota cifrada de Elenora", TipoItem.Coleccionable, 0, "Items/Fragmento de Grimorio.png", "Primer indicio del plan de la Archimaga.");
-        Item("Diario de la Archimaga Elenora", TipoItem.Coleccionable, 0, "Items/Diario de la Archimaga Elenora.png", "Las últimas palabras de Elenora.");
-        Item("Grimorio Completo", TipoItem.Coleccionable, 0, "Items/Grimorio Completo.png", "El grimorio vuelve a estar completo.");
+        Item("Nota cifrada de Elenora", TipoItem.Coleccionable, 0, "Items/Fragmento de Grimorio.png", "Primer indicio del plan de la Archimaga.",
+            "Las letras están desordenadas, pero se alcanza a leer una frase:",
+            "«El equilibrio no se impone. Se escucha.»");
+        Item("Diario de la Archimaga Elenora", TipoItem.Coleccionable, 0, "Items/Diario de la Archimaga Elenora.png", "Las últimas palabras de Elenora.",
+            "Última entrada del diario:",
+            "«Mis aprendices me odiarán por esconderme. Sable, si algún día lees esto, cuida a quien se atreva a abrir el grimorio.»",
+            "Lira: ¿Sable...? La maestra conocía a Elenora desde el principio.");
+        Item("Grimorio Completo", TipoItem.Coleccionable, 0, "Items/Grimorio Completo.png", "El grimorio vuelve a estar completo.",
+            "Las páginas perdidas vuelven a su lugar. El grimorio brilla con los cuatro colores al mismo tiempo.");
 
         foreach (var pair in items)
         {
@@ -163,6 +179,20 @@ public static class CrearJuego
         Set(P["Threnody"].GetComponent<ThrenodyBoss>(), "minionPrefab", P["Ave"]);
         P["Elenora"] = Boss("Eco de la Archimaga Elenora", "Enemies/Eco_Archimaga_Elenora.png", 3.3f, typeof(ElenoraBoss), 600, 20, 3f, true,
             new[] { 0.8f, 0.6f, 0.4f, 0.2f }, new[] { P["Fragmento de Grimorio V"], P["Grimorio Completo"] });
+
+        Derrota("Kaelor", "Enemies/Kaelor.png",
+            "Kaelor: Tienes la misma mirada que ella... la de Elenora.",
+            "Kaelor: Sigue subiendo, aprendiz. Isolde no será tan paciente como yo.");
+        Derrota("Isolde", "Enemies/Isolde.png",
+            "Isolde: Elenora no desapareció. Se escondió de lo que ella misma creó.",
+            "Isolde: Busca su diario en el Ala de Viento. Ahí está lo que nosotros no quisimos ver.");
+        Derrota("Threnody", "Enemies/Threnody.png",
+            "Threnody: Los cuatro guardianes fuimos sus aprendices. Cuando sus hechizos se salieron de control, juramos proteger cada ala.",
+            "Threnody: En el corazón del grimorio te espera un guardián que copia todo lo que haces. No repitas el mismo hechizo.");
+        Derrota("Elenora", "Enemies/Eco_Archimaga_Elenora.png",
+            "Elenora: Por fin... el grimorio vuelve a estar en equilibrio.",
+            "Elenora: Quise unir los cuatro elementos y terminé dividida en ecos. Gracias por escucharme, aprendiz.",
+            "Lira: Descanse, Archimaga. Yo cuidaré lo que queda de su grimorio.");
 
         P["Lira"] = LiraPrefab();
         P["GameManager"] = GameManagerPrefab();
@@ -226,7 +256,7 @@ public static class CrearJuego
         return SavePrefab(go, $"{Prefabs}/{name}.prefab");
     }
 
-    static void Item(string name, TipoItem type, float amount, string sprite, string description)
+    static void Item(string name, TipoItem type, float amount, string sprite, string description, params string[] lore)
     {
         var item = LoadOrCreate<ItemData>($"{Data}/Items/{FileName(name)}.asset");
         item.itemName = name;
@@ -234,6 +264,7 @@ public static class CrearJuego
         item.amount = amount;
         item.icon = LoadSprite(Sprites + sprite);
         item.description = description;
+        item.lore = lore;
         EditorUtility.SetDirty(item);
         items[name] = item;
     }
@@ -350,6 +381,14 @@ public static class CrearJuego
         Set(boss, "projectilePrefab", type == typeof(IsoldeBoss) ? P["ProyEsquirla"] : P["ProyEnemigo"]);
         SetArray(boss, "rewards", rewards);
         return SavePrefab(go, $"{Prefabs}/Jefes/{FileName(name)}.prefab");
+    }
+
+    static void Derrota(string jefe, string retrato, params string[] lineas)
+    {
+        var boss = P[jefe].GetComponent<BossController>();
+        Set(boss, "portrait", LoadSprite(Sprites + retrato));
+        SetStrings(boss, "defeatLines", lineas);
+        PrefabUtility.SavePrefabAsset(P[jefe]);
     }
 
     static GameObject LiraPrefab()
@@ -762,6 +801,10 @@ public static class CrearJuego
         Set(d, "autoStart", automatico);
     }
 
+    // Diálogo automático al pasar por un punto (pensamientos de Lira o susurros de los ecos)
+    static void Narracion(Nivel n, float x, params string[] lineas) =>
+        Dialogo(n, x, "Lira", "Characters/Lira.png", false, true, lineas);
+
     static GameObject Jefe(Nivel n, string prefab, float x, float y, float arenaMin, float arenaMax, float hover)
     {
         var go = Poner(n, prefab, x, y, n.enemigos);
@@ -804,10 +847,24 @@ public static class CrearJuego
         Plat(n, 30, -2, 4); Plat(n, 35, 0, 3); Plat(n, 40, 2, 3); Plat(n, 44.5f, 4, 2.5f);
         Antorchas(n, -9, 1, 12, 20, 28, 38, 48, 57);
 
+        // Escena 1 del guion (sección 2.14)
+        Narracion(n, -7f,
+            "Lira: ¿Cuánto tiempo llevas aquí abajo...?",
+            "Maestra Sable: Aléjate de eso.",
+            "Lira: Maestra, estaba en el baúl de los materiales viejos, pensé que...",
+            "Maestra Sable: Ese grimorio perteneció a alguien que intentó ir más allá de lo permitido. Ten cuidado con lo que despiertas, Lira.",
+            "Lira: ¿Alguien? ¿Quién?",
+            "Maestra Sable: Alguien que ya no está. Suéltalo.",
+            "Lira: Solo quiero entender qué le pasó. ¿No merece eso saberse?",
+            "Maestra Sable: ...Ciérralo. Los ecos ya despertaron y están llenando la sala de práctica.",
+            "Maestra Sable: Empecemos por lo básico. Repite conmigo el primer sello arcano y saca a esos espectros de la biblioteca.");
         Dialogo(n, -10f, "Maestra Sable", "Characters/Maestra Sable.png", true, false,
-            "Ese grimorio perteneció a alguien que intentó ir más allá de lo permitido. Ten cuidado con lo que despiertas, Lira.",
-            "Empecemos por lo básico. Repite conmigo el primer sello arcano.",
-            "Muévete con A/D o el stick, salta con Espacio o X, lanza el hechizo con J o Cuadrado y esquiva con Shift o Círculo.");
+            "Muévete con A/D o el stick y salta con Espacio o X.",
+            "Lanza el hechizo con J o Cuadrado. Mantén arriba para lanzarlo en diagonal.",
+            "Si un enemigo se acerca demasiado, esquiva con Shift o Círculo: durante el esquive nada te toca.",
+            "Y Lira... si encuentras páginas sueltas del grimorio, léelas con cuidado.");
+        Narracion(n, 19f, "Eco: ...Elenora... ¿dónde estás...?", "Lira: ¿Esa voz salió del grimorio?");
+        Narracion(n, 46f, "Lira: Esa sombra es más grande que las demás. Debe ser la que mantiene sellada la salida.");
 
         var cofre = new GameObject("Cofre_Secreto");
         cofre.transform.SetParent(n.items, false);
@@ -840,7 +897,11 @@ public static class CrearJuego
         Lava(n, 15, 18); Lava(n, 40, 43);
         Plat(n, 8, -2, 3); Plat(n, 24, -2, 3); Plat(n, 28, 0, 3); Plat(n, 32, -2, 3); Plat(n, 52, -2, 3);
         Antorchas(n, -6, 4, 22, 35, 48, 58, 68, 78, 88);
-
+        Narracion(n, -7f,
+            "Lira: El Ala de Fuego... la forja antigua sigue encendida después de tantos años.",
+            "Lira: Ahora tengo el hechizo de Fuego. Si lo lanzo justo después del Arcano, tal vez logre una explosión.",
+            "Lira: (2 o R1 para cambiar de hechizo, y lanzar rápido uno después del otro)");
+        Narracion(n, 30f, "Eco: El fuego fue robado... robado de su laboratorio...");
         Enemigo(n, "Centinela", 5, G, 2); Enemigo(n, "Salamandra", 12); Enemigo(n, "Centinela", 22, G, 2);
         Enemigo(n, "Salamandra", 35); Enemigo(n, "Centinela", 47, G, 2); Enemigo(n, "Salamandra", 55);
 
@@ -864,7 +925,10 @@ public static class CrearJuego
         Suelo(n, -12, 20); Suelo(n, 23, 45); Suelo(n, 48, 92);
         Plat(n, 6, -2, 3); Plat(n, 10, 0, 3); Plat(n, 30, -2, 3); Plat(n, 34, 0, 3); Plat(n, 38, 2, 3);
         Antorchas(n, -6, 8, 18, 28, 40, 55, 70, 85);
-
+        Narracion(n, -7f,
+            "Lira: Hace tanto frío que el tiempo parece detenido.",
+            "Lira: Fuego y Hielo juntos deberían crear vapor. Con eso podría cegar a los enemigos.");
+        Narracion(n, 33f, "Eco: Ella escribía de noche... notas que nadie podía leer...");
         Enemigo(n, "Escarchado", 4); Enemigo(n, "Cristal", 16); Enemigo(n, "Escarchado", 27);
         Enemigo(n, "Cristal", 43); Enemigo(n, "Escarchado", 52); Enemigo(n, "Cristal", 57);
 
@@ -893,7 +957,10 @@ public static class CrearJuego
         PlatMovil(n, 50.5f, G, 3, new Vector2(6f, 0f), 2.5f);
         Plat(n, 22, -2, 3); Plat(n, 42, -2, 3); Plat(n, 45, 0, 3);
         Plat(n, 78, -2, 3); Plat(n, 86, -1, 3); Plat(n, 94, -2, 3);
-
+        Narracion(n, -7f,
+            "Lira: El Ala de Viento está abierta al cielo... las plataformas flotan sobre las corrientes.",
+            "Lira: Ya tengo cuatro hechizos pero solo puedo llevar tres. Con Q o R2 cambio el que tengo equipado.");
+        Narracion(n, 40f, "Eco: Sus aprendices la buscaron... pero nunca miraron dentro del libro...");
         Volador(n, "Ave", 6, 0); Volador(n, "Ave", 23, 1); Volador(n, "Golem", 33, 0);
         Volador(n, "Ave", 43, 2); Volador(n, "Golem", 53, 0); Volador(n, "Ave", 62, 1);
 
@@ -920,9 +987,14 @@ public static class CrearJuego
         Plat(n, 66, -2, 3); Plat(n, 74, 0, 3); Plat(n, 82, -2, 3);
         Antorchas(n, -8, 4, 14, 26, 36, 46, 58, 70, 84);
 
+        Narracion(n, -6f,
+            "Lira: Maestra Sable... ¿usted sabía todo esto?",
+            "Maestra Sable: Lo supe desde el día en que Elenora desapareció. Quise protegerte de su grimorio.",
+            "Maestra Sable: Pero ya no hay vuelta atrás. Su eco te espera en el corazón del grimorio.");
         Dialogo(n, -9.5f, "Maestra Sable", "Characters/Maestra Sable.png", true, false,
-            "Lira, el eco de Elenora te espera en el corazón del grimorio.",
-            "Ella dominaba los cuatro elementos y resiste el que está usando. Combínalos como te enseñé.");
+            "Elenora dominaba los cuatro elementos y resiste el que está usando en cada momento.",
+            "Cambia de hechizo y combínalos como te enseñé. Y no le tengas miedo: ella también fue aprendiz alguna vez.");
+        Narracion(n, 34f, "Eco: Lo que lances... volverá a ti...");
 
         Enemigo(n, "Eco", 6); Enemigo(n, "Eco", 16, 0, 1); Enemigo(n, "Eco", 30); Enemigo(n, "Espejo", 40); Enemigo(n, "Eco", 48);
 
@@ -1042,7 +1114,7 @@ public static class CrearJuego
         colors.disabledColor = new Color(0.2f, 0.2f, 0.2f, 0.6f);
         colors.colorMultiplier = 1f;
         btn.colors = colors;
-        Txt("Texto", img.transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(440, 74), texto, 32, TextAnchor.MiddleCenter);
+        Txt("Texto", img.transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(440, 74), texto, 38, TextAnchor.MiddleCenter);
         UnityEventTools.AddPersistentListener(btn.onClick, accion);
         return btn;
     }
@@ -1097,14 +1169,14 @@ public static class CrearJuego
             frames[i] = Img("Espacio_" + (i + 1), t, tl, pos, new Vector2(82, 82), square, new Color(0, 0, 0, 0.5f));
             icons[i] = Img("Icono_" + (i + 1), frames[i].transform, c, Vector2.zero, new Vector2(70, 70), null, Color.white);
             icons[i].preserveAspect = true;
-            Txt("Tecla", frames[i].transform, tl, new Vector2(4, -2), new Vector2(30, 30), (i + 1).ToString(), 20, TextAnchor.UpperLeft);
+            Txt("Tecla", frames[i].transform, tl, new Vector2(4, -2), new Vector2(30, 30), (i + 1).ToString(), 24, TextAnchor.UpperLeft);
         }
-        var fragments = Txt("Fragmentos", t, tl, new Vector2(310, -205), new Vector2(360, 50), "Fragmentos: 0/5", 28, TextAnchor.MiddleLeft);
+        var fragments = Txt("Fragmentos", t, tl, new Vector2(310, -205), new Vector2(360, 50), "Fragmentos: 0/5", 34, TextAnchor.MiddleLeft);
 
         // Barra del jefe
         var top = new Vector2(0.5f, 1);
         var panel = UI("Jefe", t, top, new Vector2(0, -24), new Vector2(820, 80));
-        var bossName = Txt("Nombre", panel, top, Vector2.zero, new Vector2(820, 36), "Jefe", 28, TextAnchor.MiddleCenter);
+        var bossName = Txt("Nombre", panel, top, Vector2.zero, new Vector2(820, 44), "Jefe", 34, TextAnchor.MiddleCenter);
         Img("Fondo", panel, top, new Vector2(0, -42), new Vector2(806, 30), square, new Color(0, 0, 0, 0.75f));
         var bossFill = Img("Vida", panel, top, new Vector2(0, -45), new Vector2(800, 24), square, new Color(0.85f, 0.15f, 0.3f));
         bossFill.type = Image.Type.Filled;
@@ -1126,27 +1198,27 @@ public static class CrearJuego
         Set(hud, "bossName", bossName);
 
         // ---- Mensajes ----
-        var msg = UI("Mensaje", t, top, new Vector2(0, -120), new Vector2(1000, 64));
+        var msg = UI("Mensaje", t, top, new Vector2(0, -125), new Vector2(1200, 80));
         msg.gameObject.AddComponent<Image>().color = Oscuro;
-        var msgText = Txt("Texto", msg, c, Vector2.zero, new Vector2(980, 60), "", 28, TextAnchor.MiddleCenter);
+        var msgText = Txt("Texto", msg, c, Vector2.zero, new Vector2(1180, 76), "", 34, TextAnchor.MiddleCenter);
         var msgGroup = msg.gameObject.AddComponent<CanvasGroup>();
 
         var title = UI("Titulo", t, c, new Vector2(0, 170), new Vector2(1400, 140));
-        var titleText = Txt("Texto", title, c, Vector2.zero, new Vector2(1400, 140), titulo, 84, TextAnchor.MiddleCenter);
+        var titleText = Txt("Texto", title, c, Vector2.zero, new Vector2(1400, 140), titulo, 100, TextAnchor.MiddleCenter);
         var titleGroup = title.gameObject.AddComponent<CanvasGroup>();
 
-        var prompt = Txt("Aviso", t, new Vector2(0.5f, 0f), new Vector2(0, 300), new Vector2(900, 50), "", 30, TextAnchor.MiddleCenter);
+        var prompt = Txt("Aviso", t, new Vector2(0.5f, 0f), new Vector2(0, 330), new Vector2(1100, 60), "", 38, TextAnchor.MiddleCenter);
 
         // ---- Diálogo ----
-        var dlg = UI("Dialogo", t, new Vector2(0.5f, 0f), new Vector2(0, 30), new Vector2(1500, 250));
+        var dlg = UI("Dialogo", t, new Vector2(0.5f, 0f), new Vector2(0, 30), new Vector2(1700, 290));
         dlg.gameObject.AddComponent<Image>().color = Oscuro;
-        var retrato = Img("Retrato", dlg, new Vector2(0, 0.5f), new Vector2(35, 0), new Vector2(170, 200), null, Color.white);
+        var retrato = Img("Retrato", dlg, new Vector2(0, 0.5f), new Vector2(35, 0), new Vector2(200, 235), null, Color.white);
         retrato.preserveAspect = true;
-        Img("Marco", dlg, new Vector2(0, 0.5f), new Vector2(15, 0), new Vector2(215, 230), marcoRetrato, Color.white);
-        var dlgName = Txt("Nombre", dlg, tl, new Vector2(260, -18), new Vector2(1000, 44), "", 34, TextAnchor.MiddleLeft);
-        var dlgBody = Txt("Texto", dlg, tl, new Vector2(260, -70), new Vector2(1200, 140), "", 30, TextAnchor.UpperLeft);
+        Img("Marco", dlg, new Vector2(0, 0.5f), new Vector2(15, 0), new Vector2(245, 265), marcoRetrato, Color.white);
+        var dlgName = Txt("Nombre", dlg, tl, new Vector2(290, -18), new Vector2(1000, 52), "", 42, TextAnchor.MiddleLeft);
+        var dlgBody = Txt("Texto", dlg, tl, new Vector2(290, -78), new Vector2(1370, 170), "", 38, TextAnchor.UpperLeft);
         dlgBody.color = Color.white;
-        var dlgHint = Txt("Ayuda", dlg, new Vector2(1, 0), new Vector2(-24, 14), new Vector2(500, 36), "", 22, TextAnchor.LowerRight);
+        var dlgHint = Txt("Ayuda", dlg, new Vector2(1, 0), new Vector2(-24, 14), new Vector2(600, 40), "", 28, TextAnchor.LowerRight);
 
         // ---- Pausa ----
         var marcoMenu = LoadSprite(Sprites + "UI/Marco de menú.png");
@@ -1175,7 +1247,7 @@ public static class CrearJuego
         toast.gameObject.AddComponent<Image>().color = Oscuro;
         var toastIcon = Img("Icono", toast, new Vector2(0, 0.5f), new Vector2(12, 0), new Vector2(96, 96), null, Color.white);
         toastIcon.preserveAspect = true;
-        var toastText = Txt("Texto", toast, new Vector2(0, 0.5f), new Vector2(120, 0), new Vector2(350, 100), "", 24, TextAnchor.MiddleLeft);
+        var toastText = Txt("Texto", toast, new Vector2(0, 0.5f), new Vector2(120, 0), new Vector2(350, 100), "", 28, TextAnchor.MiddleLeft);
         var toastGroup = toast.gameObject.AddComponent<CanvasGroup>();
 
         Set(ui, "font", font);
@@ -1200,6 +1272,23 @@ public static class CrearJuego
         Set(ui, "toastGroup", toastGroup);
         Set(ui, "toastIcon", toastIcon);
         Set(ui, "toastText", toastText);
+
+        var personajes = new (string nombre, string sprite)[]
+        {
+            ("Lira", "Characters/Lira.png"), ("Maestra Sable", "Characters/Maestra Sable.png"),
+            ("Kaelor", "Enemies/Kaelor.png"), ("Isolde", "Enemies/Isolde.png"), ("Threnody", "Enemies/Threnody.png"),
+            ("Elenora", "Enemies/Eco_Archimaga_Elenora.png"), ("Eco", "Enemies/Ecos_Menores.png")
+        };
+        var so = new SerializedObject(ui);
+        var prop = so.FindProperty("retratos");
+        prop.arraySize = personajes.Length;
+        for (int i = 0; i < personajes.Length; i++)
+        {
+            var el = prop.GetArrayElementAtIndex(i);
+            el.FindPropertyRelative("nombre").stringValue = personajes[i].nombre;
+            el.FindPropertyRelative("retrato").objectReferenceValue = LoadSprite(Sprites + personajes[i].sprite);
+        }
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static string CrearMenu()
@@ -1257,6 +1346,62 @@ public static class CrearJuego
         Set(menu, "achievementsBack", volver.gameObject);
 
         string path = $"{Scenes}/{GameManager.MenuScene}.unity";
+        EditorSceneManager.SaveScene(scene, path);
+        return path;
+    }
+
+    static string CrearPrologo()
+    {
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        PrefabUtility.InstantiatePrefab(P["GameManager"]);
+
+        var cam = new GameObject("Main Camera").AddComponent<Camera>();
+        cam.tag = "MainCamera";
+        cam.orthographic = true;
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = Color.black;
+        cam.transform.position = new Vector3(0, 0, -10);
+
+        var canvas = NuevoCanvas("Prologo", 0);
+        var t = canvas.transform;
+        var c = new Vector2(0.5f, 0.5f);
+        var grupo = Estirar("Contenido", t).gameObject.AddComponent<CanvasGroup>();
+
+        var img = Img("Imagen", grupo.transform, c, new Vector2(0, 150), new Vector2(1300, 640), null, Color.white);
+        img.preserveAspect = true;
+        var vin = Estirar("Vineta", t).gameObject.AddComponent<Image>();
+        vin.sprite = vineta;
+        vin.raycastTarget = false;
+        var texto = Txt("Texto", grupo.transform, new Vector2(0.5f, 0f), new Vector2(0, 110), new Vector2(1500, 260), "", 42, TextAnchor.UpperCenter);
+        texto.color = Color.white;
+        var ayuda = Txt("Ayuda", t, new Vector2(1, 0), new Vector2(-30, 24), new Vector2(800, 40), "", 28, TextAnchor.LowerRight);
+
+        var escenas = new (string sprite, string texto)[]
+        {
+            ("Backgrounds/Corazón del Grimorio.jpg", "Hace años, la Archimaga Elenora intentó unir los cuatro elementos en un solo grimorio. Una noche su laboratorio quedó en silencio... y ella desapareció."),
+            ("Backgrounds/ALA_DE_APRENDIZAJE.png", "Los maestros de la Torre de Cristal sellaron sus hechizos y prohibieron hablar de ella. Con el tiempo, su nombre se volvió un rumor entre aprendices."),
+            ("Characters/Lira.png", "Lira, una aprendiz curiosa e impulsiva, encuentra en un baúl olvidado un grimorio de práctica con la cubierta agrietada. Sus páginas laten con una luz tenue."),
+            ("Enemies/Eco_Archimaga_Elenora.png", "Al abrirlo, los hechizos sellados despiertan. Ecos de magia escapan del libro y empiezan a corromper cada ala de la Torre."),
+            ("Backgrounds/Ala de Fuego.jpg", "Para restaurar el equilibrio, Lira tendrá que recorrer las cinco alas, aprender los cuatro elementos y enfrentar a los guardianes que protegen los secretos de Elenora.")
+        };
+
+        var prologo = canvas.gameObject.AddComponent<Prologo>();
+        var so = new SerializedObject(prologo);
+        var prop = so.FindProperty("escenas");
+        prop.arraySize = escenas.Length;
+        for (int i = 0; i < escenas.Length; i++)
+        {
+            var el = prop.GetArrayElementAtIndex(i);
+            el.FindPropertyRelative("imagen").objectReferenceValue = LoadSprite(Sprites + escenas[i].sprite);
+            el.FindPropertyRelative("texto").stringValue = escenas[i].texto;
+        }
+        so.ApplyModifiedPropertiesWithoutUndo();
+        Set(prologo, "imagen", img);
+        Set(prologo, "texto", texto);
+        Set(prologo, "ayuda", ayuda);
+        Set(prologo, "grupo", grupo);
+
+        string path = $"{Scenes}/{GameManager.PrologueScene}.unity";
         EditorSceneManager.SaveScene(scene, path);
         return path;
     }

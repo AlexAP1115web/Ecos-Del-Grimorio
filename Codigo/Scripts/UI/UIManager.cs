@@ -8,6 +8,14 @@ using UnityEngine.UI;
 // Interfaz de los niveles hecha con UGUI: mensajes, título del nivel, diálogos con retrato,
 // menú de pausa, pantalla de logros, Game Over y aviso de logro desbloqueado.
 // Se puede navegar con teclado, mouse o control.
+// En los diálogos, una línea que empieza con "Nombre: " cambia de personaje y de retrato.
+[Serializable]
+public class RetratoPersonaje
+{
+    public string nombre;
+    public Sprite retrato;
+}
+
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
@@ -28,6 +36,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text dialogueName;
     [SerializeField] private Text dialogueBody;
     [SerializeField] private Text dialogueHint;
+    [SerializeField] private RetratoPersonaje[] retratos = new RetratoPersonaje[0];
 
     [Header("Pantallas")]
     [SerializeField] private GameObject pausePanel;
@@ -54,6 +63,9 @@ public class UIManager : MonoBehaviour
     private float typeTimer;
     private Action onDialogueEnd;
     private int dialogueStartFrame;
+    private string defaultSpeaker;
+    private Sprite defaultPortrait;
+    private string currentText = "";
     private PlayerController playerController;
     private SpellCaster playerCaster;
 
@@ -119,11 +131,11 @@ public class UIManager : MonoBehaviour
     IEnumerator ShowTitle()
     {
         titleGroup.alpha = 0f;
-        yield return new WaitForSeconds(0.3f);
-        for (float t = 0; t < 1f; t += Time.deltaTime * 2f) { titleGroup.alpha = t; yield return null; }
+        yield return new WaitForSecondsRealtime(0.3f);
+        for (float t = 0; t < 1f; t += Time.unscaledDeltaTime * 2f) { titleGroup.alpha = t; yield return null; }
         titleGroup.alpha = 1f;
-        yield return new WaitForSeconds(2f);
-        for (float t = 1f; t > 0; t -= Time.deltaTime) { titleGroup.alpha = t; yield return null; }
+        yield return new WaitForSecondsRealtime(2.5f);
+        for (float t = 1f; t > 0; t -= Time.unscaledDeltaTime) { titleGroup.alpha = t; yield return null; }
         titleGroup.alpha = 0f;
     }
 
@@ -186,26 +198,57 @@ public class UIManager : MonoBehaviour
 
         lines = dialogueLines;
         lineIndex = 0;
-        visibleChars = 0;
         onDialogueEnd = onEnd;
         dialogueStartFrame = Time.frameCount;
-
-        dialogueName.text = speaker;
-        dialoguePortrait.sprite = portrait;
-        dialoguePortrait.enabled = portrait != null;
+        defaultSpeaker = speaker;
+        defaultPortrait = portrait;
+        PrepareLine();
         dialogueHint.text = $"{Controles.TextoInteractuar} para continuar";
         SetActive(dialoguePanel, true);
         HidePrompt();
 
         if (playerController != null) playerController.SetControlsEnabled(false);
         if (playerCaster != null) playerCaster.SetInputEnabled(false);
+        Time.timeScale = 0f; // el mundo se detiene mientras se lee
+    }
+
+    // Si la línea empieza con el nombre de un personaje conocido, cambia quién habla
+    void PrepareLine()
+    {
+        string raw = lines[lineIndex];
+        string speaker = defaultSpeaker;
+        Sprite portrait = defaultPortrait;
+        currentText = raw;
+
+        int colon = raw.IndexOf(':');
+        if (colon > 0 && colon < 30)
+        {
+            string name = raw.Substring(0, colon).Trim();
+            foreach (var r in retratos)
+            {
+                if (r != null && string.Equals(r.nombre, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    speaker = r.nombre;
+                    portrait = r.retrato;
+                    currentText = raw.Substring(colon + 1).Trim();
+                    break;
+                }
+            }
+        }
+
+        dialogueName.text = speaker;
+        dialoguePortrait.sprite = portrait;
+        dialoguePortrait.enabled = portrait != null;
+        visibleChars = 0;
+        typeTimer = 0f;
     }
 
     void UpdateDialogue(float dt)
     {
-        if (!InDialogue || Time.timeScale == 0f) return;
+        if (!InDialogue) return;
+        if (GameManager.Instance != null && GameManager.Instance.State == GameState.Pausa) return;
 
-        string line = lines[lineIndex];
+        string line = currentText;
         typeTimer += dt * 55f;
         while (typeTimer >= 1f && visibleChars < line.Length)
         {
@@ -226,13 +269,14 @@ public class UIManager : MonoBehaviour
         }
 
         lineIndex++;
-        visibleChars = 0;
         if (lineIndex >= lines.Length) EndDialogue();
+        else PrepareLine();
     }
 
     void EndDialogue()
     {
         SetActive(dialoguePanel, false);
+        if (GameManager.Instance == null || GameManager.Instance.State == GameState.Jugando) Time.timeScale = 1f;
         if (playerController != null) playerController.SetControlsEnabled(true);
         if (playerCaster != null) playerCaster.SetInputEnabled(true);
         var callback = onDialogueEnd;
