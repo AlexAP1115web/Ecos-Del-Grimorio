@@ -342,11 +342,12 @@ public class GameManager : MonoBehaviour
     {
         string current = SceneManager.GetActiveScene().name;
         float segundos = Time.time - levelStartTime;
-        LevelCompleted?.Invoke(current, segundos, tookDamageThisLevel);
 
-        if (unlocksSpell) UnlockSpell(spellToUnlock);
+        // Si algún script que escucha estos eventos falla, el nivel debe terminar de todos modos
+        try { LevelCompleted?.Invoke(current, segundos, tookDamageThisLevel); } catch (Exception e) { Debug.LogException(e); }
+        try { if (unlocksSpell) UnlockSpell(spellToUnlock); } catch (Exception e) { Debug.LogException(e); }
         checkpointScene = null;
-        if (nextScene == CreditsScene) GameFinished?.Invoke();
+        if (nextScene == CreditsScene) { try { GameFinished?.Invoke(); } catch (Exception e) { Debug.LogException(e); } }
 
         bool puedeCargar = !string.IsNullOrEmpty(nextScene) && Application.CanStreamedLevelBeLoaded(nextScene);
         if (puedeCargar && nextScene != CreditsScene) PlayerPrefs.SetString("eg_nivel", nextScene);
@@ -359,7 +360,7 @@ public class GameManager : MonoBehaviour
 
         // Pantalla de resultados del ala antes de pasar a la siguiente
         var ui = UIManager.Instance;
-        if (ui == null)
+        if (ui == null || !ui.HasResultsScreen)
         {
             Continuar();
             return;
@@ -373,8 +374,16 @@ public class GameManager : MonoBehaviour
             var h = player.GetComponent<Health>();
             if (h != null) h.SetInvulnerable(999f);
         }
-        SetState(GameState.NivelCompletado);
-        ui.ShowResults(ui.LevelTitle, Resumen(current, segundos, unlocksSpell, spellToUnlock), Continuar);
+        try
+        {
+            SetState(GameState.NivelCompletado);
+            if (!ui.ShowResults(ui.LevelTitle, Resumen(current, segundos, unlocksSpell, spellToUnlock), Continuar)) Continuar();
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+            Continuar();
+        }
     }
 
     string Resumen(string scene, float segundos, bool unlocksSpell, Elemento spell)

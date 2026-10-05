@@ -81,11 +81,13 @@ public class UIManager : MonoBehaviour
     private string currentSpeaker = "";
     private float nextVoiceTime;
     private Action onResultsContinue;
+    private int resultsShownFrame;
     private PlayerController playerController;
     private SpellCaster playerCaster;
 
     public bool InDialogue => dialoguePanel != null && dialoguePanel.activeSelf;
     public string LevelTitle => levelTitle;
+    public bool HasResultsScreen => resultsPanel != null;
 
     void Awake()
     {
@@ -183,6 +185,11 @@ public class UIManager : MonoBehaviour
 
         UpdateToast(dt);
         UpdateDialogue(dt);
+
+        // Respaldo: Enter / X / Triángulo también continúan aunque el botón haya perdido la selección
+        if (resultsPanel != null && resultsPanel.activeSelf && Time.frameCount > resultsShownFrame + 10
+            && (Controles.AceptarPresionado || Controles.InteractuarPresionado))
+            BotonContinuarResultados();
     }
 
     // ---------- Mensajes ----------
@@ -368,9 +375,12 @@ public class UIManager : MonoBehaviour
     }
 
     // Pantalla de resultados al terminar un ala
-    public void ShowResults(string title, string body, Action onContinue)
+    // Devuelve false si la escena no tiene la pantalla (escenas creadas con una versión anterior)
+    public bool ShowResults(string title, string body, Action onContinue)
     {
+        if (resultsPanel == null) return false;
         onResultsContinue = onContinue;
+        resultsShownFrame = Time.frameCount;
         if (resultsTitle != null) resultsTitle.text = $"¡{title} completada!";
         if (resultsBody != null) resultsBody.text = body;
         HidePrompt();
@@ -379,6 +389,7 @@ public class UIManager : MonoBehaviour
         Select(resultsFirst);
         Time.timeScale = 0f;
         AudioManager.Play(Sfx.Logro);
+        return true;
     }
 
     public void BotonContinuarResultados()
