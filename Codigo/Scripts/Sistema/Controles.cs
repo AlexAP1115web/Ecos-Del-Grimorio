@@ -8,12 +8,14 @@ using UnityEngine.InputSystem;
 //  Acción              Teclado            Control PS4
 //  Moverse             A/D o flechas      Stick izquierdo o cruceta
 //  Saltar              Espacio / W        X
+//  Agacharse           S / flecha abajo   Stick o cruceta abajo
 //  Lanzar hechizo      J / clic           Cuadrado
 //  Hechizo 1, 2, 3     1, 2, 3            L1 / R1 (anterior / siguiente)
 //  Cambiar hechizo     Q                  R2
 //  Esquive             Shift / K          Círculo
 //  Hablar / abrir      E                  Triángulo
 //  Pausa               Esc                Options
+//  Modo Archimaga      F H V A + Enter    L1 + R1 + Triángulo
 public static class Controles
 {
     static Keyboard Kb => Keyboard.current;
@@ -46,6 +48,14 @@ public static class Controles
     public static bool Arriba =>
         (Kb != null && (Kb.upArrowKey.isPressed)) ||
         (Pad != null && (Pad.leftStick.y.ReadValue() > 0.6f || Pad.dpad.up.isPressed));
+
+    public static bool Abajo =>
+        (Kb != null && (Kb.sKey.isPressed || Kb.downArrowKey.isPressed)) ||
+        (Pad != null && (Pad.leftStick.y.ReadValue() < -0.6f || Pad.dpad.down.isPressed));
+
+    // Truco con el control: mantener L1 + R1 y presionar Triángulo
+    public static bool TrucoControl =>
+        Pad != null && Pad.leftShoulder.isPressed && Pad.rightShoulder.isPressed && Pad.buttonNorth.wasPressedThisFrame;
 
     public static bool SaltarPresionado =>
         (Kb != null && (Kb.spaceKey.wasPressedThisFrame || Kb.wKey.wasPressedThisFrame)) ||

@@ -31,7 +31,9 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 | `Arte/Armas` | Armas de los enemigos |
 | `Arte/Logros` | Los diez logros |
 | `Arte/Bocetos` | Bocetos a lápiz |
+| `Arte/Audio` | Música de cada ala, jefes, menú y créditos, y efectos de sonido |
 | `Codigo` | Scripts C# del juego (copia de `Assets/Scripts` y `Assets/Editor`) |
+| `Codigo/Herramientas/Audio` | Scripts de Python con los que se sintetizan la música y los efectos |
 | `Evidencias` | Capturas del avance en Unity |
 | `BITACORA.md` | Registro de avances por fecha |
 
@@ -48,13 +50,14 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 |---|---|---|
 | Moverse | A / D o flechas | Stick izquierdo o cruceta |
 | Saltar | Espacio / W | X |
+| Agacharse | S / flecha abajo | Stick o cruceta abajo |
 | Lanzar hechizo | J o clic izquierdo | Cuadrado |
 | Hechizos equipados | 1, 2, 3 | L1 / R1 |
 | Cambiar hechizo equipado | Q | R2 |
 | Esquive | Shift / K | Círculo |
 | Hablar / abrir cofre | E | Triángulo |
 | Pausa | Esc | Options |
-| Modo Archimaga (código secreto) | F, H, V, A, Intro | — |
+| Modo Archimaga (código secreto) | F, H, V, A, Intro | Mantener L1 + R1 y presionar Triángulo |
 
 ## Créditos
 

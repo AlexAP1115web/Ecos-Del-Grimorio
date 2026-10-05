@@ -27,6 +27,15 @@ public class PlayerUpgrades : MonoBehaviour
     {
         // Recuperar las mejoras obtenidas en niveles anteriores
         if (GameManager.Instance == null) return;
+
+        // Cada Página Perdida encontrada da vida máxima extra
+        int pages = GameManager.Instance.PagesFound;
+        if (pages > 0 && health != null)
+        {
+            health.AddMaxHealth(pages * GameManager.HealthPerPage);
+            health.Heal(health.MaxHealth);
+        }
+
         foreach (var upgrade in new System.Collections.Generic.List<TipoItem>(GameManager.Instance.Upgrades)) Apply(upgrade);
 
         // Mejora cosmética del cofre secreto

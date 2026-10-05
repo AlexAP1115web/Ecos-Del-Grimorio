@@ -44,6 +44,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject achievementsPanel;
     [SerializeField] private Transform achievementsList;
     [SerializeField] private GameObject achievementsFirst;
+    [SerializeField] private GameObject controlsPanel;
+    [SerializeField] private GameObject controlsFirst;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject gameOverFirst;
 
@@ -95,6 +97,7 @@ public class UIManager : MonoBehaviour
         SetActive(dialoguePanel, false);
         SetActive(pausePanel, false);
         SetActive(achievementsPanel, false);
+        SetActive(controlsPanel, false);
         SetActive(gameOverPanel, false);
         if (messageGroup != null) messageGroup.alpha = 0f;
         if (toastGroup != null) toastGroup.alpha = 0f;
@@ -269,6 +272,7 @@ public class UIManager : MonoBehaviour
         }
 
         lineIndex++;
+        AudioManager.Play(Sfx.MenuMover, 0.4f);
         if (lineIndex >= lines.Length) EndDialogue();
         else PrepareLine();
     }
@@ -290,6 +294,7 @@ public class UIManager : MonoBehaviour
     {
         SetActive(pausePanel, state == GameState.Pausa);
         SetActive(achievementsPanel, false);
+        SetActive(controlsPanel, false);
         SetActive(gameOverPanel, state == GameState.GameOver);
 
         if (state == GameState.Pausa) Select(pauseFirst);
@@ -319,9 +324,17 @@ public class UIManager : MonoBehaviour
         Select(achievementsFirst);
     }
 
+    public void BotonControles()
+    {
+        SetActive(pausePanel, false);
+        SetActive(controlsPanel, true);
+        Select(controlsFirst);
+    }
+
     public void BotonVolverPausa()
     {
         SetActive(achievementsPanel, false);
+        SetActive(controlsPanel, false);
         SetActive(pausePanel, true);
         Select(pauseFirst);
     }

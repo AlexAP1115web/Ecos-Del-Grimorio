@@ -48,6 +48,7 @@ public class SecretChest : MonoBehaviour
         if (ui != null) ui.HidePrompt();
         Particula.Rafaga(transform.position, new Color(1f, 0.85f, 0.3f, 1f), 25, 5f, 0.18f, 0.8f, 3f);
         gm.AddCollectible("Capa dorada");
+        AudioManager.Play(Sfx.Cofre);
         gm.ShowMessage("Cofre abierto: la capa de Lira brilla con un tono dorado");
         AreaEffect.Spawn(transform.position, 1.5f, new Color(1f, 0.85f, 0.3f, 0.7f), 0.8f);
         ApplyTint();

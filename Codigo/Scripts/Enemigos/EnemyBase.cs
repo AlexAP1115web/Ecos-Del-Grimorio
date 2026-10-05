@@ -201,6 +201,7 @@ public abstract class EnemyBase : MonoBehaviour
         Particula.Rafaga(center, baseColor * new Color(0.8f, 0.6f, 1f, 1f), 18, 6f, 0.2f, 0.6f, 4f);
         Particula.Rafaga(center, new Color(0.1f, 0.05f, 0.15f, 0.9f), 10, 3f, 0.3f, 0.8f);
         CameraFollow.Shake(this is BossController ? 0.5f : 0.12f, this is BossController ? 0.6f : 0.15f);
+        AudioManager.Play(Sfx.MuerteEnemigo, this is BossController ? 1f : 0.7f, this is BossController ? 0.6f : 1f);
         Controles.Vibrar(0.4f, 0.4f, this is BossController ? 0.5f : 0.12f);
         if (GameManager.Instance != null) GameManager.Instance.HitStop(this is BossController ? 0.25f : 0.05f);
 

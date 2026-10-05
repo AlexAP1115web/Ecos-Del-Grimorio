@@ -10,18 +10,21 @@ using UnityEngine.Events;
 //   J / clic / Cuadrado -> lanza el espacio seleccionado (L1 y R1 cambian de espacio)
 //   Q / R2 -> cambia el hechizo del espacio seleccionado por otro desbloqueado
 //   Mantener arriba -> lanza en diagonal hacia arriba
+//   Agachada -> el hechizo sale a ras de suelo (para enemigos pequeños)
 // Si se lanzan dos elementos distintos seguidos (dentro de comboWindow) se forma un combo.
 public class SpellCaster : MonoBehaviour
 {
     [Header("Maná")]
     [SerializeField] private float maxMana = 100f;
-    [SerializeField] private float manaRegenRate = 6f;
+    [SerializeField] private float manaRegenRate = 9f;
 
     [Header("Hechizos")]
     [SerializeField] private SpellData[] spells = new SpellData[0];
     [SerializeField] private Elemento[] startUnlocked = { Elemento.Arcano };
     [SerializeField] private int maxEquipped = 3;
     [SerializeField] private Vector2 castOffset = new Vector2(0.8f, 0.3f);
+    [Tooltip("Cuánto baja el punto de lanzamiento cuando Lira está agachada")]
+    [SerializeField] private float crouchCastDrop = 0.75f;
 
     [Header("Combos")]
     [SerializeField] private float comboWindow = 0.9f;
@@ -225,9 +228,12 @@ public class SpellCaster : MonoBehaviour
     Vector2 Facing => controller == null || controller.FacingRight ? Vector2.right : Vector2.left;
 
     // Dirección de disparo: al frente, o en diagonal hacia arriba si se mantiene arriba
-    Vector2 AimDirection => Controles.Arriba ? new Vector2(Facing.x, 1f).normalized : Facing;
+    bool Crouching => controller != null && controller.IsCrouching;
 
-    Vector2 CastPoint => (Vector2)transform.position + new Vector2(castOffset.x * Facing.x, castOffset.y);
+    Vector2 AimDirection => Controles.Arriba && !Crouching ? new Vector2(Facing.x, 1f).normalized : Facing;
+
+    Vector2 CastPoint => (Vector2)transform.position +
+        new Vector2(castOffset.x * Facing.x, castOffset.y - (Crouching ? crouchCastDrop : 0f));
 
     void FireProjectile(SpellData spell, float damage, bool pierce, float speedMultiplier)
     {
@@ -236,6 +242,18 @@ public class SpellCaster : MonoBehaviour
         var projectile = go.GetComponent<SpellProjectile>();
         if (projectile != null) projectile.Init(spell, AimDirection, damage, pierce, speedMultiplier);
         Particula.Rafaga(CastPoint, ElementoColor.Get(spell.element), 5, 2f, 0.15f, 0.25f);
+        AudioManager.Play(SonidoDe(spell.element), 0.8f);
+    }
+
+    static Sfx SonidoDe(Elemento e)
+    {
+        switch (e)
+        {
+            case Elemento.Fuego: return Sfx.Fuego;
+            case Elemento.Hielo: return Sfx.Hielo;
+            case Elemento.Viento: return Sfx.Viento;
+            default: return Sfx.Arcano;
+        }
     }
 
     Sprite ComboSprite(TipoCombo combo)
@@ -283,6 +301,7 @@ public class SpellCaster : MonoBehaviour
 
         CameraFollow.Shake(0.15f, 0.2f);
         Controles.Vibrar(0.3f, 0.6f, 0.15f);
+        AudioManager.Play(Sfx.Combo);
         ComboCast?.Invoke(combo);
     }
 

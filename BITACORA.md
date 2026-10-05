@@ -54,6 +54,22 @@
   - Los Fragmentos de Grimorio, la Nota cifrada y el Diario revelan la historia de Elenora.
 - Textos de la interfaz más grandes y diálogos con varios personajes y retratos.
 
+### 5 de octubre
+- Ajuste de dificultad después de probar con el control:
+  - Lira tiene 150 de vida, recibe 35% menos daño y su invulnerabilidad después de un golpe dura más.
+  - El maná se recupera más rápido, las pociones curan más y los enemigos sueltan cristales y pociones más seguido.
+  - Los cuatro jefes tienen menos vida.
+- Lira puede agacharse: pasa por pasadizos bajos y sus hechizos salen a ras de suelo contra enemigos pequeños.
+- Modo Archimaga también desde el control (L1 + R1 + Triángulo).
+- Música para el menú, cada ala, los jefes y los créditos, más 23 efectos de sonido (saltos, hechizos, golpes, cofres, menús, logros).
+- Niveles más grandes y con cosas que buscar:
+  - Salas secretas detrás de muros agrietados que se rompen con un hechizo.
+  - Pasadizos bajos que solo se cruzan agachada.
+  - Rutas de plataformas hacia lo alto de cada ala.
+  - Vasijas que se rompen y cofres de madera con cristales y pociones.
+  - Páginas Perdidas: tres por ala; cada una da +5 de vida máxima.
+- Pantalla de Controles en el menú principal y en la pausa.
+
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
 - Subir capturas a `Evidencias`.

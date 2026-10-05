@@ -18,7 +18,7 @@ public static class CrearJuego
     const string Scenes = "Assets/Scenes";
     const float G = -4f; // altura del suelo (parte de arriba)
 
-    static Sprite square, circle, ladrillo, tablas, borde, vineta;
+    static Sprite square, circle, ladrillo, tablas, borde, vineta, pagina, vasija, grietas;
     static PhysicsMaterial2D noFriction;
     static Font font;
     static readonly Dictionary<Elemento, SpellData> spells = new Dictionary<Elemento, SpellData>();
@@ -59,8 +59,9 @@ public static class CrearJuego
 
         EditorUtility.DisplayDialog("Ecos del Grimorio",
             "Juego creado: Menú Principal, 5 niveles y Créditos.\n\n" +
-            "Controles:\nA/D o flechas: moverse    Espacio: saltar\n1, 2, 3: hechizos equipados    Q: cambiar hechizo\n" +
-            "J o clic: repetir hechizo    E: hablar / abrir\nEsc: pausa (L: logros)\n\nAbre MenuPrincipal y presiona Play.", "OK");
+            "Controles (también en el menú > Controles):\nA/D o flechas: moverse    Espacio: saltar    S: agacharse\n" +
+            "J o clic: lanzar    1, 2, 3: hechizos    Q: cambiar hechizo\nShift: esquive    E: hablar / abrir    Esc: pausa\n\n" +
+            "Abre MenuPrincipal y presiona Play.", "OK");
     }
 
     // =====================================================================
@@ -80,6 +81,9 @@ public static class CrearJuego
         tablas = Tablas();
         borde = Borde();
         vineta = Vineta();
+        pagina = EditorHelpers.Pagina();
+        vasija = EditorHelpers.Vasija();
+        grietas = Grietas();
         font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         noFriction = AssetDatabase.LoadAssetAtPath<PhysicsMaterial2D>(Data + "/SinFriccion.physicsMaterial2D");
@@ -102,8 +106,11 @@ public static class CrearJuego
         // Ítems (sección 2.13)
         Item("Cristal de Maná", TipoItem.Mana, 30, "Items/Cristal de Maná.png", "Recupera maná.");
         Item("Cristal de Maná Grande", TipoItem.Mana, 60, "Items/Cristal de Maná Grande.png", "Recupera mucho maná.");
-        Item("Poción Menor de Vida", TipoItem.Vida, 35, "Items/Poción de Vida.png", "Restaura parte de la vida.");
-        Item("Poción Mayor de Vida", TipoItem.Vida, 100, "Items/Poción Mayor de Vida.png", "Restaura toda la vida.");
+        Item("Poción Menor de Vida", TipoItem.Vida, 50, "Items/Poción de Vida.png", "Restaura parte de la vida.");
+        Item("Poción Mayor de Vida", TipoItem.Vida, 999, "Items/Poción Mayor de Vida.png", "Restaura toda la vida.");
+        Item("Página Perdida", TipoItem.PaginaPerdida, 0, "Items/Fragmento de Grimorio.png", "+5 de vida máxima.");
+        items["Página Perdida"].icon = pagina;
+        EditorUtility.SetDirty(items["Página Perdida"]);
         string[] romanos = { "I", "II", "III", "IV", "V" };
         string[] fragmentos =
         {
@@ -133,21 +140,22 @@ public static class CrearJuego
         foreach (var pair in items)
         {
             var tint = pair.Key == "Nota cifrada de Elenora" ? new Color(0.7f, 0.85f, 1f) : Color.white;
-            P[pair.Key] = PickupPrefab(pair.Value, tint);
+            bool esPagina = pair.Value.type == TipoItem.PaginaPerdida;
+            P[pair.Key] = PickupPrefab(pair.Value, tint, esPagina ? new Color(0.6f, 0.85f, 1f) : new Color(1f, 0.85f, 0.5f), esPagina ? 1.3f : 0.8f);
         }
 
         // Enemigos (sección 2.10)
-        var espectro = Enemy("Espectro de tinta", 30, 0, 10, 1.5f, 3f, 5f);
+        var espectro = Enemy("Espectro de tinta", 30, 0, 10, 1.5f, 3f, 5f, P["Cristal de Maná"], 0.25f);
         var mota = Enemy("Mota Corrupta", 10, 0, 0, 1.5f, 1.5f, 6f);
-        var mayor = Enemy("Espectro Mayor", 60, 3, 20, 1f, 2.2f, 6f, P["Cristal de Maná"], 0.5f);
-        var centinela = Enemy("Centinela de Ceniza", 45, 0, 15, 1.5f, 3f, 6f);
-        var salamandra = Enemy("Salamandra de Forja", 25, 0, 12, 2.5f, 4f, 7f, immune: Elemento.Fuego);
-        var escarchado = Enemy("Espectro Escarchado", 45, 0, 12, 1.6f, 3.2f, 6f, immune: Elemento.Hielo);
-        var cristal = Enemy("Cristal Viviente", 35, 0, 8, 0f, 0f, 9f);
-        var ave = Enemy("Ave de Tormenta", 20, 0, 10, 2f, 2f, 7f);
-        var golem = Enemy("Golem de Piedra Suspendida", 60, 0, 20, 1f, 1f, 6f);
-        var eco = Enemy("Eco Menor", 30, 0, 10, 1.8f, 3.2f, 7f, P["Cristal de Maná"], 0.25f);
-        var espejo = Enemy("Guardián Espejo", 80, 0, 15, 1.5f, 1.5f, 10f);
+        var mayor = Enemy("Espectro Mayor", 60, 3, 20, 1f, 2.2f, 6f, P["Poción Menor de Vida"], 1f);
+        var centinela = Enemy("Centinela de Ceniza", 45, 0, 15, 1.5f, 3f, 6f, P["Poción Menor de Vida"], 0.2f);
+        var salamandra = Enemy("Salamandra de Forja", 25, 0, 12, 2.5f, 4f, 7f, P["Cristal de Maná"], 0.3f, Elemento.Fuego);
+        var escarchado = Enemy("Espectro Escarchado", 45, 0, 12, 1.6f, 3.2f, 6f, P["Poción Menor de Vida"], 0.2f, Elemento.Hielo);
+        var cristal = Enemy("Cristal Viviente", 35, 0, 8, 0f, 0f, 9f, P["Cristal de Maná"], 0.35f);
+        var ave = Enemy("Ave de Tormenta", 20, 0, 10, 2f, 2f, 7f, P["Cristal de Maná"], 0.25f);
+        var golem = Enemy("Golem de Piedra Suspendida", 60, 0, 20, 1f, 1f, 6f, P["Poción Menor de Vida"], 0.3f);
+        var eco = Enemy("Eco Menor", 30, 0, 10, 1.8f, 3.2f, 7f, P["Cristal de Maná"], 0.3f);
+        var espejo = Enemy("Guardián Espejo", 80, 0, 15, 1.5f, 1.5f, 10f, P["Poción Mayor de Vida"], 0.5f);
 
         P["Espectro"] = Walker("Espectro_de_Tinta", "Enemies/Espectro_De_Tinta.png", 1.5f, espectro);
         P["Mayor"] = Walker("Espectro_Mayor", "Enemies/Espectro_Mayor.png", 2.3f, mayor);
@@ -170,14 +178,14 @@ public static class CrearJuego
             ai => { Set(ai, "diveSpeed", 6f); Set(ai, "diveCooldown", 3.5f); Set(ai, "hoverRadius", 0.6f); });
 
         // Jefes
-        P["Kaelor"] = Boss("Kaelor", "Enemies/Kaelor.png", 3.0f, typeof(KaelorBoss), 320, 20, 1.8f, false, new[] { 0.5f },
+        P["Kaelor"] = Boss("Kaelor", "Enemies/Kaelor.png", 3.0f, typeof(KaelorBoss), 260, 20, 1.8f, false, new[] { 0.5f },
             new[] { P["Núcleo de Ascua"], P["Fragmento de Grimorio II"] }, (Elemento.Fuego, 0.5f), (Elemento.Hielo, 1.5f));
-        P["Isolde"] = Boss("Isolde", "Enemies/Isolde.png", 2.7f, typeof(IsoldeBoss), 350, 15, 2f, false, new[] { 0.5f },
+        P["Isolde"] = Boss("Isolde", "Enemies/Isolde.png", 2.7f, typeof(IsoldeBoss), 280, 15, 2f, false, new[] { 0.5f },
             new[] { P["Anillo de Escarcha"], P["Fragmento de Grimorio III"] }, (Elemento.Hielo, 0.3f), (Elemento.Fuego, 1.5f));
-        P["Threnody"] = Boss("Threnody", "Enemies/Threnody.png", 3.0f, typeof(ThrenodyBoss), 380, 18, 3f, true, new[] { 0.5f },
+        P["Threnody"] = Boss("Threnody", "Enemies/Threnody.png", 3.0f, typeof(ThrenodyBoss), 300, 18, 3f, true, new[] { 0.5f },
             new[] { P["Pluma Ligera"], P["Fragmento de Grimorio IV"] }, (Elemento.Viento, 0.3f), (Elemento.Hielo, 1.3f));
         Set(P["Threnody"].GetComponent<ThrenodyBoss>(), "minionPrefab", P["Ave"]);
-        P["Elenora"] = Boss("Eco de la Archimaga Elenora", "Enemies/Eco_Archimaga_Elenora.png", 3.3f, typeof(ElenoraBoss), 600, 20, 3f, true,
+        P["Elenora"] = Boss("Eco de la Archimaga Elenora", "Enemies/Eco_Archimaga_Elenora.png", 3.3f, typeof(ElenoraBoss), 480, 20, 3f, true,
             new[] { 0.8f, 0.6f, 0.4f, 0.2f }, new[] { P["Fragmento de Grimorio V"], P["Grimorio Completo"] });
 
         Derrota("Kaelor", "Enemies/Kaelor.png",
@@ -269,14 +277,14 @@ public static class CrearJuego
         items[name] = item;
     }
 
-    static GameObject PickupPrefab(ItemData item, Color tint)
+    static GameObject PickupPrefab(ItemData item, Color tint, Color luz, float brillo)
     {
         var go = new GameObject(item.itemName);
         var sr = AddSprite(go, item.icon != null ? item.icon : circle, 0.8f, 3);
         sr.color = item.icon != null ? tint : Color.yellow;
         go.AddComponent<CircleCollider2D>().isTrigger = true;
         Set(go.AddComponent<Pickup>(), "item", item);
-        Light(go, 3, new Color(1f, 0.85f, 0.5f), 0.8f, 1.8f);
+        Light(go, 3, luz, brillo, 1.8f);
         return SavePrefab(go, $"{Prefabs}/Items/{FileName(item.itemName)}.prefab");
     }
 
@@ -425,8 +433,9 @@ public static class CrearJuego
         groundCheck.localPosition = new Vector3(center.x, center.y - size.y * 0.475f, 0f);
 
         var health = go.AddComponent<Health>();
-        Set(health, "maxHealth", 100f);
-        Set(health, "invulnerableTime", 1.2f);
+        Set(health, "maxHealth", 150f);
+        Set(health, "invulnerableTime", 1.5f);
+        Set(health, "damageTakenMultiplier", 0.65f); // recibe 35% menos daño
         Set(health, "destroyOnDeath", false);
 
         Set(go.AddComponent<PlayerController>(), "groundCheck", groundCheck);
@@ -479,7 +488,42 @@ public static class CrearJuego
         }
         so.ApplyModifiedPropertiesWithoutUndo();
 
+        // Música y efectos de sonido
+        var audio = go.AddComponent<AudioManager>();
+        Set(audio, "musicaMenu", Audio("Musica/Menu.ogg"));
+        SetArray(audio, "musicaNiveles", new Object[]
+        {
+            Audio("Musica/Nivel1.ogg"), Audio("Musica/Nivel2.ogg"), Audio("Musica/Nivel3.ogg"),
+            Audio("Musica/Nivel4.ogg"), Audio("Musica/Nivel5.ogg")
+        });
+        Set(audio, "musicaJefe", Audio("Musica/Jefe.ogg"));
+        Set(audio, "musicaJefeFinal", Audio("Musica/JefeFinal.ogg"));
+        Set(audio, "musicaCreditos", Audio("Musica/Creditos.ogg"));
+        var nombres = System.Enum.GetNames(typeof(Sfx));
+        var efectos = new Object[nombres.Length];
+        for (int i = 0; i < nombres.Length; i++) efectos[i] = Audio($"Efectos/{nombres[i]}.wav");
+        SetArray(audio, "efectos", efectos);
+
         return SavePrefab(go, Prefabs + "/GameManager.prefab");
+    }
+
+    static AudioClip Audio(string path)
+    {
+        string full = "Assets/Audio/" + path;
+        // La música se reproduce desde el disco (streaming) para no ocupar memoria
+        if (path.StartsWith("Musica") && AssetImporter.GetAtPath(full) is AudioImporter imp)
+        {
+            var cfg = imp.defaultSampleSettings;
+            if (cfg.loadType != AudioClipLoadType.Streaming)
+            {
+                cfg.loadType = AudioClipLoadType.Streaming;
+                imp.defaultSampleSettings = cfg;
+                imp.SaveAndReimport();
+            }
+        }
+        var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(full);
+        if (clip == null) Debug.LogWarning("No se encontró el audio " + path);
+        return clip;
     }
 
     // =====================================================================
@@ -835,18 +879,110 @@ public static class CrearJuego
         Set(le, "spellToUnlock", hechizo);
     }
 
+    // ---------- Secretos y objetos para explorar ----------
+
+    // Sala secreta: un bloque de piedra con un muro agrietado que se rompe con cualquier hechizo.
+    // Mientras no se rompa, una capa de piedra tapa el interior.
+    static void Escondite(Nivel n, float x1, float x2, bool entradaDerecha, float alto = 3.6f)
+    {
+        var roca = n.tema.piedra * 0.75f; roca.a = 1f;
+        float cx = (x1 + x2) / 2f, w = x2 - x1, grosor = 3f, mw = 0.9f;
+
+        Solido(n.geo, "Escondite_Techo", new Vector2(cx, G + alto + grosor / 2f), new Vector2(w, grosor), ladrillo, roca);
+        Tiled(n.geo, "Borde", new Vector2(cx, G + alto + grosor), new Vector2(w + 0.2f, 0.5f), borde, n.tema.borde, 3);
+
+        float ix1 = entradaDerecha ? x1 : x1 + mw, ix2 = entradaDerecha ? x2 - mw : x2;
+        var fondoColor = n.tema.piedra * 0.4f; fondoColor.a = 1f;
+        Tiled(n.deco, "Escondite_Fondo", new Vector2((ix1 + ix2) / 2f, G + alto / 2f), new Vector2(ix2 - ix1, alto), ladrillo, fondoColor, -10);
+        var tapa = Tiled(n.deco, "Escondite_Piedra", new Vector2((ix1 + ix2) / 2f, G + alto / 2f), new Vector2(ix2 - ix1, alto), ladrillo, roca, 40);
+
+        float mx = entradaDerecha ? x2 - mw / 2f : x1 + mw / 2f;
+        var muro = Tiled(n.geo, "Muro_Agrietado", new Vector2(mx, G + alto / 2f), new Vector2(mw, alto), ladrillo, roca * new Color(1.15f, 1.1f, 1.05f, 1f), 2);
+        muro.AddComponent<BoxCollider2D>().size = new Vector2(mw, alto);
+        Tiled(muro.transform, "Grietas", new Vector2(mx, G + alto / 2f), new Vector2(mw, alto), grietas, Color.white, 3);
+        var r = muro.AddComponent<Rompible>();
+        Set(muro.GetComponent<Health>(), "maxHealth", 10f);
+        Set(r, "mensaje", "¡Un pasadizo secreto!");
+        Set(r, "colorParticulas", roca);
+        SetArray(r, "revelar", new Object[] { tapa.GetComponent<SpriteRenderer>() });
+    }
+
+    // Pasadizo bajo: Lira solo cabe agachada. Arriba se puede caminar.
+    static void Tunel(Nivel n, float x1, float x2, float alto = 1.3f)
+    {
+        float cx = (x1 + x2) / 2f, grosor = 1.2f;
+        var col = n.tema.piedra * 0.85f; col.a = 1f;
+        Solido(n.geo, "Tunel_Techo", new Vector2(cx, G + alto + grosor / 2f), new Vector2(x2 - x1, grosor), ladrillo, col);
+        Tiled(n.geo, "Borde", new Vector2(cx, G + alto + grosor), new Vector2(x2 - x1 + 0.2f, 0.5f), borde, n.tema.borde, 3);
+        var fondo = n.tema.piedra * 0.4f; fondo.a = 1f;
+        Tiled(n.deco, "Tunel_Fondo", new Vector2(cx, G + alto / 2f), new Vector2(x2 - x1, alto), ladrillo, fondo, -10);
+    }
+
+    // Vasija que se rompe con un hechizo o atravesándola con el esquive
+    static void Vasija(Nivel n, float x, float suelo = G)
+    {
+        var go = new GameObject("Vasija");
+        go.transform.SetParent(n.items, false);
+        var sr = AddSprite(go, vasija, 0.95f, 4);
+        sr.color = Color.Lerp(new Color(0.78f, 0.48f, 0.32f), n.tema.borde, 0.3f);
+        go.transform.position = new Vector2(x, suelo + 0.475f);
+        var box = go.AddComponent<BoxCollider2D>();
+        box.isTrigger = true;
+        box.size = vasija.bounds.size;
+        var r = go.AddComponent<Rompible>();
+        Set(go.GetComponent<Health>(), "maxHealth", 1f);
+        SetArray(r, "botin", new Object[] { P["Cristal de Maná"], P["Poción Menor de Vida"], P["Cristal de Maná"] });
+        Set(r, "probabilidadBotin", 0.7f);
+        Set(r, "rompeConEsquive", true);
+        Set(r, "colorParticulas", sr.color);
+    }
+
+    static void Vasijas(Nivel n, params float[] xs)
+    {
+        foreach (var x in xs) Vasija(n, x);
+    }
+
+    // Cofre de madera: se abre con E / Triángulo
+    static void CofreMadera(Nivel n, float x, float suelo, params string[] contenido)
+    {
+        var go = new GameObject("Cofre");
+        go.transform.SetParent(n.items, false);
+        go.transform.position = new Vector2(x, suelo + 0.45f);
+        Tiled(go.transform, "Cuerpo", new Vector2(x, suelo + 0.38f), new Vector2(1.1f, 0.75f), tablas, new Color(0.5f, 0.32f, 0.16f), 3);
+        var tapa = Tiled(go.transform, "Tapa", new Vector2(x, suelo + 0.85f), new Vector2(1.2f, 0.24f), tablas, new Color(0.4f, 0.25f, 0.12f), 4);
+        var cerradura = new GameObject("Cerradura");
+        cerradura.transform.SetParent(go.transform, false);
+        cerradura.transform.position = new Vector2(x, suelo + 0.55f);
+        AddSprite(cerradura, circle, 0.22f, 5).color = new Color(1f, 0.85f, 0.3f);
+        var c = go.AddComponent<Cofre>();
+        var prefabs = new Object[contenido.Length];
+        for (int i = 0; i < contenido.Length; i++) prefabs[i] = P[contenido[i]];
+        SetArray(c, "contenido", prefabs);
+        Set(c, "tapa", tapa.GetComponent<SpriteRenderer>());
+        Light(go, 3, new Color(1f, 0.8f, 0.4f), 0.5f, 1.6f);
+    }
+
+    static void Pagina(Nivel n, float x, float sobre) => Objeto(n, "Página Perdida", x, sobre);
+
     // =====================================================================
-    // Niveles (sección 2.7)
+    // Niveles (sección 2.7). Cada ala tiene 3 Páginas Perdidas escondidas:
+    // una en una sala secreta (muro agrietado), una en un pasadizo bajo (agacharse)
+    // y otra en lo alto de una ruta de plataformas.
     // =====================================================================
 
     static string Nivel1()
     {
-        var n = NuevoNivel(Aprendizaje, "Ala de Aprendizaje", -12f, 62f, new Vector2(-7f, 0f));
+        var n = NuevoNivel(Aprendizaje, "Ala de Aprendizaje", -24f, 100f, new Vector2(-7f, 0f));
 
-        Suelo(n, -12, 22); Suelo(n, 25, 62);
+        Suelo(n, -24, 22); Suelo(n, 25, 70); Suelo(n, 73, 100);
         Plat(n, 6, -2, 3); Plat(n, 10, 0, 3); Plat(n, 14, -2, 3);
         Plat(n, 30, -2, 4); Plat(n, 35, 0, 3); Plat(n, 40, 2, 3); Plat(n, 44.5f, 4, 2.5f);
-        Antorchas(n, -9, 1, 12, 20, 28, 38, 48, 57);
+        Plat(n, 49, 5.5f, 2.5f); Plat(n, 53.5f, 7f, 2.5f);
+        Plat(n, 71.5f, -3, 1.5f);
+        Antorchas(n, -9, 1, 12, 20, 28, 38, 48, 57, 70, 77, 86, 96);
+
+        Escondite(n, -24, -15, true);
+        Tunel(n, 61, 67);
 
         // Escena 1 del guion (sección 2.14)
         Narracion(n, -7f,
@@ -863,9 +999,14 @@ public static class CrearJuego
             "Muévete con A/D o el stick y salta con Espacio o X.",
             "Lanza el hechizo con J o Cuadrado. Mantén arriba para lanzarlo en diagonal.",
             "Si un enemigo se acerca demasiado, esquiva con Shift o Círculo: durante el esquive nada te toca.",
+            "Agáchate con S o con el stick hacia abajo: así pasas por pasadizos bajos y tus hechizos salen a ras de suelo, contra los enemigos pequeños.",
+            "La Torre está llena de secretos. Los muros agrietados se rompen con un hechizo y las vasijas guardan cristales y pociones.",
+            "Busca las Páginas Perdidas: hay tres en cada ala y cada una te da más vida.",
             "Y Lira... si encuentras páginas sueltas del grimorio, léelas con cuidado.");
+        Narracion(n, -13f, "Lira: Esa pared está agrietada... tal vez un hechizo la derribe.");
         Narracion(n, 19f, "Eco: ...Elenora... ¿dónde estás...?", "Lira: ¿Esa voz salió del grimorio?");
-        Narracion(n, 46f, "Lira: Esa sombra es más grande que las demás. Debe ser la que mantiene sellada la salida.");
+        Narracion(n, 58f, "Lira: Ese pasaje es muy bajo. Si me agacho (S o stick abajo) quizá quepa.");
+        Narracion(n, 80f, "Lira: Esa sombra es más grande que las demás. Debe ser la que mantiene sellada la salida.");
 
         var cofre = new GameObject("Cofre_Secreto");
         cofre.transform.SetParent(n.items, false);
@@ -879,114 +1020,170 @@ public static class CrearJuego
 
         Enemigo(n, "Espectro", 3); Enemigo(n, "Espectro", 10, 0, 1); Enemigo(n, "Espectro", 28); Enemigo(n, "Espectro", 38);
         Volador(n, "Mota", 18, 0.5f); Volador(n, "Mota", 33, 1.5f);
-        var mayor = Enemigo(n, "Mayor", 52, G, 2);
+        Enemigo(n, "Espectro", 52, G, 2); Volador(n, "Mota", 76, 1f); Enemigo(n, "Espectro", 78, G, 2);
+        var mayor = Enemigo(n, "Mayor", 90, G, 2);
 
         Objeto(n, "Cristal de Maná", 14, -2);
         Objeto(n, "Poción Menor de Vida", 30, -2);
         Objeto(n, "Fragmento de Grimorio I", 40, 2);
         Objeto(n, "Llave Rúnica", 44.5f, 4);
+        Objeto(n, "Poción Menor de Vida", -21, G);
+        Pagina(n, -18, G);
+        Pagina(n, 53.5f, 7f);
+        Pagina(n, 64, G);
+        Vasijas(n, 0, 21, 36, 56, 75);
+        CofreMadera(n, 68.5f, G, "Cristal de Maná Grande", "Poción Menor de Vida");
+        PuntoReaparicion(n, 59.5f);
 
-        Salida(n, 60, mayor.GetComponent<Health>(), "Nivel2_AlaDeFuego", true, Elemento.Fuego);
+        Salida(n, 98, mayor.GetComponent<Health>(), "Nivel2_AlaDeFuego", true, Elemento.Fuego);
         return Guardar(n, "Nivel1_AlaDeAprendizaje");
     }
 
     static string Nivel2()
     {
-        var n = NuevoNivel(Fuego, "Ala de Fuego", -12f, 92f, new Vector2(-9f, 0f));
+        var n = NuevoNivel(Fuego, "Ala de Fuego", -22f, 132f, new Vector2(-9f, 0f));
 
-        Suelo(n, -12, 15); Suelo(n, 18, 40); Suelo(n, 43, 92);
-        Lava(n, 15, 18); Lava(n, 40, 43);
-        Plat(n, 8, -2, 3); Plat(n, 24, -2, 3); Plat(n, 28, 0, 3); Plat(n, 32, -2, 3); Plat(n, 52, -2, 3);
-        Antorchas(n, -6, 4, 22, 35, 48, 58, 68, 78, 88);
+        Suelo(n, -22, 15); Suelo(n, 18, 40); Suelo(n, 43, 70); Suelo(n, 74, 132);
+        Lava(n, 15, 18); Lava(n, 40, 43); Lava(n, 70, 74);
+        Plat(n, 8, -2, 3); Plat(n, 24, -2, 3); Plat(n, 28, 0, 3); Plat(n, 32, -2, 3); Plat(n, 50, -2, 3);
+        Plat(n, 56, -1.5f, 3); Plat(n, 60.5f, 1f, 3); Plat(n, 65, 3.5f, 3);
+        Plat(n, 72, -3, 1.5f);
+        Antorchas(n, -6, 4, 22, 35, 48, 58, 68, 88, 98, 108, 118, 128);
+
+        Escondite(n, -22, -13, true);
+        Tunel(n, 77, 83);
+
         Narracion(n, -7f,
             "Lira: El Ala de Fuego... la forja antigua sigue encendida después de tantos años.",
             "Lira: Ahora tengo el hechizo de Fuego. Si lo lanzo justo después del Arcano, tal vez logre una explosión.",
             "Lira: (2 o R1 para cambiar de hechizo, y lanzar rápido uno después del otro)");
         Narracion(n, 30f, "Eco: El fuego fue robado... robado de su laboratorio...");
+        Narracion(n, 54f, "Lira: Esas plataformas suben hasta lo alto de la forja. Algo brilla allá arriba.");
+
         Enemigo(n, "Centinela", 5, G, 2); Enemigo(n, "Salamandra", 12); Enemigo(n, "Centinela", 22, G, 2);
         Enemigo(n, "Salamandra", 35); Enemigo(n, "Centinela", 47, G, 2); Enemigo(n, "Salamandra", 55);
+        Enemigo(n, "Salamandra", 66, G, 2); Enemigo(n, "Centinela", 89, G, 1.5f);
 
         Objeto(n, "Cristal de Maná Grande", 28, 0);
-        Objeto(n, "Poción Menor de Vida", 52, -2);
-        PuntoReaparicion(n, 60);
+        Objeto(n, "Poción Menor de Vida", 50, -2);
+        Objeto(n, "Cristal de Maná Grande", -20, G);
+        Pagina(n, -17, G);
+        Pagina(n, 65, 3.5f);
+        Pagina(n, 80, G);
+        Vasijas(n, 2, 26, 46, 61, 76);
+        CofreMadera(n, 85, G, "Poción Menor de Vida", "Cristal de Maná");
+        PuntoReaparicion(n, 93);
 
-        Dialogo(n, 66, "Kaelor", "Enemies/Kaelor.png", false, true,
+        Dialogo(n, 98, "Kaelor", "Enemies/Kaelor.png", false, true,
             "¿Otra aprendiz que despierta el fuego dormido?",
             "Los ecos no perdonan a quien despierta el fuego dormido.");
-        var kaelor = Jefe(n, "Kaelor", 82, G + 1.6f, 68, 90, 0);
+        var kaelor = Jefe(n, "Kaelor", 116, G + 1.6f, 102, 130, 0);
 
-        Salida(n, 90, kaelor.GetComponent<Health>(), "Nivel3_AlaDeHielo", true, Elemento.Hielo);
+        Salida(n, 130, kaelor.GetComponent<Health>(), "Nivel3_AlaDeHielo", true, Elemento.Hielo);
         return Guardar(n, "Nivel2_AlaDeFuego");
     }
 
     static string Nivel3()
     {
-        var n = NuevoNivel(Hielo, "Ala de Hielo", -12f, 92f, new Vector2(-9f, 0f));
+        var n = NuevoNivel(Hielo, "Ala de Hielo", -22f, 132f, new Vector2(-9f, 0f));
 
-        Suelo(n, -12, 20); Suelo(n, 23, 45); Suelo(n, 48, 92);
+        Suelo(n, -22, 20); Suelo(n, 23, 45); Suelo(n, 48, 70); Suelo(n, 73, 132);
         Plat(n, 6, -2, 3); Plat(n, 10, 0, 3); Plat(n, 30, -2, 3); Plat(n, 34, 0, 3); Plat(n, 38, 2, 3);
-        Antorchas(n, -6, 8, 18, 28, 40, 55, 70, 85);
+        Plat(n, 52, -2, 3); Plat(n, 56, 0, 2.5f); Plat(n, 60, 2, 2.5f); Plat(n, 64, 4, 2.5f);
+        Antorchas(n, -6, 8, 18, 28, 40, 55, 68, 90, 100, 112, 124);
+
+        Escondite(n, -22, -13, true);
+        Tunel(n, 77, 83);
+
         Narracion(n, -7f,
             "Lira: Hace tanto frío que el tiempo parece detenido.",
             "Lira: Fuego y Hielo juntos deberían crear vapor. Con eso podría cegar a los enemigos.");
         Narracion(n, 33f, "Eco: Ella escribía de noche... notas que nadie podía leer...");
+        Narracion(n, 74f, "Lira: Otro pasadizo bajo... Agachada quepo, y de paso me escondo de las esquirlas.");
+
         Enemigo(n, "Escarchado", 4); Enemigo(n, "Cristal", 16); Enemigo(n, "Escarchado", 27);
-        Enemigo(n, "Cristal", 43); Enemigo(n, "Escarchado", 52); Enemigo(n, "Cristal", 57);
+        Enemigo(n, "Cristal", 43); Enemigo(n, "Escarchado", 51, G, 2); Enemigo(n, "Cristal", 67);
+        Enemigo(n, "Escarchado", 88, G, 2);
 
         Objeto(n, "Cristal de Maná Grande", 10, 0);
         Objeto(n, "Poción Menor de Vida", 34, 0);
         Objeto(n, "Nota cifrada de Elenora", 38, 2);
-        PuntoReaparicion(n, 62);
+        Objeto(n, "Poción Menor de Vida", -20, G);
+        Pagina(n, -17, G);
+        Pagina(n, 64, 4);
+        Pagina(n, 80, G);
+        Vasijas(n, 0, 25, 49, 58, 75);
+        CofreMadera(n, 36, G, "Cristal de Maná Grande");
+        PuntoReaparicion(n, 92);
 
-        Dialogo(n, 66, "Isolde", "Enemies/Isolde.png", false, true,
+        Dialogo(n, 98, "Isolde", "Enemies/Isolde.png", false, true,
             "Fui aprendiz de la Archimaga Elenora.",
             "Desde que sellaron los hechizos, nadie cruza esta ala. Tú tampoco lo harás.");
-        var isolde = Jefe(n, "Isolde", 82, G + 1.5f, 68, 90, 0);
+        var isolde = Jefe(n, "Isolde", 116, G + 1.5f, 102, 130, 0);
         Set(isolde.GetComponent<IsoldeBoss>(), "groundY", G);
 
-        Salida(n, 90, isolde.GetComponent<Health>(), "Nivel4_AlaDeViento", true, Elemento.Viento);
+        Salida(n, 130, isolde.GetComponent<Health>(), "Nivel4_AlaDeViento", true, Elemento.Viento);
         return Guardar(n, "Nivel3_AlaDeHielo");
     }
 
     static string Nivel4()
     {
-        var n = NuevoNivel(Viento, "Ala de Viento", -12f, 100f, new Vector2(-9f, 0f));
+        var n = NuevoNivel(Viento, "Ala de Viento", -22f, 142f, new Vector2(-9f, 0f));
 
-        Suelo(n, -12, 10); Suelo(n, 18, 28); Suelo(n, 38, 48); Suelo(n, 58, 100);
+        Suelo(n, -22, 10); Suelo(n, 18, 28); Suelo(n, 38, 48); Suelo(n, 58, 80); Suelo(n, 88, 142);
         PlatMovil(n, 12.5f, G, 3, new Vector2(4f, 0f), 2f);
         PlatMovil(n, 30.5f, G, 3, new Vector2(6f, 0f), 2.5f);
         PlatMovil(n, 50.5f, G, 3, new Vector2(6f, 0f), 2.5f);
+        PlatMovil(n, 82.5f, G, 3, new Vector2(4f, 0f), 2f);
         Plat(n, 22, -2, 3); Plat(n, 42, -2, 3); Plat(n, 45, 0, 3);
-        Plat(n, 78, -2, 3); Plat(n, 86, -1, 3); Plat(n, 94, -2, 3);
+        Plat(n, 62, -1.5f, 3); Plat(n, 66, 1f, 2.5f); Plat(n, 70.5f, 3.5f, 2.5f); Plat(n, 75, 5.5f, 2.5f);
+        Plat(n, 120, -2, 3); Plat(n, 128, -1, 3); Plat(n, 136, -2, 3);
+
+        Escondite(n, -22, -13, true);
+        Tunel(n, 93, 99);
+
         Narracion(n, -7f,
             "Lira: El Ala de Viento está abierta al cielo... las plataformas flotan sobre las corrientes.",
             "Lira: Ya tengo cuatro hechizos pero solo puedo llevar tres. Con Q o R2 cambio el que tengo equipado.");
         Narracion(n, 40f, "Eco: Sus aprendices la buscaron... pero nunca miraron dentro del libro...");
+        Narracion(n, 60f, "Lira: Desde aquí arriba se ve toda la Torre... y algo brilla en la plataforma más alta.");
+
         Volador(n, "Ave", 6, 0); Volador(n, "Ave", 23, 1); Volador(n, "Golem", 33, 0);
-        Volador(n, "Ave", 43, 2); Volador(n, "Golem", 53, 0); Volador(n, "Ave", 62, 1);
+        Volador(n, "Ave", 43, 2); Volador(n, "Golem", 53, 0); Volador(n, "Ave", 64, 1);
+        Volador(n, "Ave", 84, 1.5f); Volador(n, "Golem", 101, 1f);
 
         Objeto(n, "Cristal de Maná Grande", 22, -2);
         Objeto(n, "Diario de la Archimaga Elenora", 45, 0);
         Objeto(n, "Poción Menor de Vida", 60, G);
-        PuntoReaparicion(n, 66);
+        Objeto(n, "Poción Menor de Vida", -20, G);
+        Pagina(n, -17, G);
+        Pagina(n, 75, 5.5f);
+        Pagina(n, 96, G);
+        Vasijas(n, 0, 20, 39.5f, 68, 90);
+        CofreMadera(n, 103, G, "Cristal de Maná Grande", "Poción Menor de Vida");
+        PuntoReaparicion(n, 106);
 
-        Dialogo(n, 70, "Threnody", "Enemies/Threnody.png", false, true,
+        Dialogo(n, 110, "Threnody", "Enemies/Threnody.png", false, true,
             "Los cuatro guardianes fuimos aprendices de la Archimaga Elenora antes de que desapareciera.",
             "Si quieres la verdad, tendrás que ganártela en el aire.");
-        var threnody = Jefe(n, "Threnody", 88, 2f, 72, 98, 2f);
+        var threnody = Jefe(n, "Threnody", 128, 2f, 114, 140, 2f);
 
-        Salida(n, 98, threnody.GetComponent<Health>(), "Nivel5_CorazonDelGrimorio", false, Elemento.Arcano);
+        Salida(n, 140, threnody.GetComponent<Health>(), "Nivel5_CorazonDelGrimorio", false, Elemento.Arcano);
         return Guardar(n, "Nivel4_AlaDeViento");
     }
 
     static string Nivel5()
     {
-        var n = NuevoNivel(Corazon, "Corazón del Grimorio", -12f, 92f, new Vector2(-6f, 0f));
+        var n = NuevoNivel(Corazon, "Corazón del Grimorio", -22f, 132f, new Vector2(-6f, 0f));
 
-        Suelo(n, -12, 92);
+        Suelo(n, -22, 40); Suelo(n, 43, 132);
         Plat(n, 8, -2, 3); Plat(n, 16, 0, 3); Plat(n, 24, -2, 3);
-        Plat(n, 66, -2, 3); Plat(n, 74, 0, 3); Plat(n, 82, -2, 3);
-        Antorchas(n, -8, 4, 14, 26, 36, 46, 58, 70, 84);
+        Plat(n, 48, -2, 3); Plat(n, 52, 0, 2.5f); Plat(n, 56, 2, 2.5f); Plat(n, 61, 4, 2.5f);
+        Plat(n, 106, -2, 3); Plat(n, 114, 0, 3); Plat(n, 122, -2, 3);
+        Antorchas(n, -8, 4, 14, 26, 36, 46, 58, 80, 92, 104, 116, 126);
+
+        Escondite(n, -22, -13, true);
+        Tunel(n, 70, 76);
 
         Narracion(n, -6f,
             "Lira: Maestra Sable... ¿usted sabía todo esto?",
@@ -994,22 +1191,30 @@ public static class CrearJuego
             "Maestra Sable: Pero ya no hay vuelta atrás. Su eco te espera en el corazón del grimorio.");
         Dialogo(n, -9.5f, "Maestra Sable", "Characters/Maestra Sable.png", true, false,
             "Elenora dominaba los cuatro elementos y resiste el que está usando en cada momento.",
-            "Cambia de hechizo y combínalos como te enseñé. Y no le tengas miedo: ella también fue aprendiz alguna vez.");
+            "Cambia de hechizo y combínalos como te enseñé. Y no le tengas miedo: ella también fue aprendiz alguna vez.",
+            "Si quieres llegar con más vida, busca las últimas Páginas Perdidas de la Torre.");
         Narracion(n, 34f, "Eco: Lo que lances... volverá a ti...");
 
-        Enemigo(n, "Eco", 6); Enemigo(n, "Eco", 16, 0, 1); Enemigo(n, "Eco", 30); Enemigo(n, "Espejo", 40); Enemigo(n, "Eco", 48);
+        Enemigo(n, "Eco", 6); Enemigo(n, "Eco", 16, 0, 1); Enemigo(n, "Eco", 30); Enemigo(n, "Espejo", 36, G, 2);
+        Enemigo(n, "Eco", 47); Enemigo(n, "Eco", 64, G, 2); Enemigo(n, "Espejo", 82, G, 2);
 
         Objeto(n, "Cristal de Maná Grande", 24, -2);
-        Objeto(n, "Poción Mayor de Vida", 52, G);
-        PuntoReaparicion(n, 56);
+        Objeto(n, "Poción Mayor de Vida", 90, G);
+        Objeto(n, "Cristal de Maná Grande", -20, G);
+        Pagina(n, -17, G);
+        Pagina(n, 61, 4);
+        Pagina(n, 73, G);
+        Vasijas(n, 2, 28, 44.5f, 66, 86);
+        CofreMadera(n, 88, G, "Poción Menor de Vida", "Cristal de Maná Grande");
+        PuntoReaparicion(n, 94);
 
-        Dialogo(n, 61, "Eco de Elenora", "Enemies/Eco_Archimaga_Elenora.png", false, true,
+        Dialogo(n, 99, "Eco de Elenora", "Enemies/Eco_Archimaga_Elenora.png", false, true,
             "¿Viniste a terminar lo que yo empecé, aprendiz?",
             "Entonces demuéstrame que entiendes el grimorio mejor que yo.");
-        var elenora = Jefe(n, "Elenora", 76, 2f, 62, 90, 2f);
+        var elenora = Jefe(n, "Elenora", 114, 2f, 100, 128, 2f);
         Set(elenora.GetComponent<ElenoraBoss>(), "groundY", G);
 
-        Salida(n, 90, elenora.GetComponent<Health>(), GameManager.CreditsScene, false, Elemento.Arcano);
+        Salida(n, 130, elenora.GetComponent<Health>(), GameManager.CreditsScene, false, Elemento.Arcano);
         return Guardar(n, "Nivel5_CorazonDelGrimorio");
     }
 
@@ -1117,6 +1322,7 @@ public static class CrearJuego
         btn.colors = colors;
         Txt("Texto", img.transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(440, 74), texto, 38, TextAnchor.MiddleCenter);
         UnityEventTools.AddPersistentListener(btn.onClick, accion);
+        img.gameObject.AddComponent<SonidoBoton>();
         return btn;
     }
 
@@ -1172,7 +1378,8 @@ public static class CrearJuego
             icons[i].preserveAspect = true;
             Txt("Tecla", frames[i].transform, tl, new Vector2(4, -2), new Vector2(30, 30), (i + 1).ToString(), 24, TextAnchor.UpperLeft);
         }
-        var fragments = Txt("Fragmentos", t, tl, new Vector2(310, -205), new Vector2(360, 50), "Fragmentos: 0/5", 34, TextAnchor.MiddleLeft);
+        var fragments = Txt("Fragmentos", t, tl, new Vector2(310, -192), new Vector2(420, 46), "Fragmentos: 0/5", 32, TextAnchor.MiddleLeft);
+        var paginas = Txt("Paginas", t, tl, new Vector2(310, -236), new Vector2(420, 46), "Páginas del ala: 0/3", 32, TextAnchor.MiddleLeft);
 
         // Barra del jefe
         var top = new Vector2(0.5f, 1);
@@ -1188,6 +1395,7 @@ public static class CrearJuego
         Set(hud, "healthFill", vida);
         Set(hud, "manaFill", mana);
         Set(hud, "fragmentsText", fragments);
+        Set(hud, "pagesText", paginas);
         SetArray(hud, "elementIcons", new Object[]
         {
             spells[Elemento.Arcano].icon, spells[Elemento.Fuego].icon, spells[Elemento.Hielo].icon, spells[Elemento.Viento].icon
@@ -1225,11 +1433,14 @@ public static class CrearJuego
         var marcoMenu = LoadSprite(Sprites + "UI/Marco de menú.png");
         var pause = Panel(t, "Pausa", new Color(0, 0, 0, 0.6f));
         Img("Marco", pause.transform, c, Vector2.zero, new Vector2(700, 660), marcoMenu, Color.white);
-        Txt("Titulo", pause.transform, c, new Vector2(0, 200), new Vector2(600, 90), "PAUSA", 64, TextAnchor.MiddleCenter);
-        var reanudar = Boton(pause.transform, "Reanudar", new Vector2(0, 90), ui.BotonReanudar);
-        Boton(pause.transform, "Logros", new Vector2(0, 0), ui.BotonLogros);
-        Boton(pause.transform, "Reiniciar nivel", new Vector2(0, -90), ui.BotonReiniciar);
-        Boton(pause.transform, "Menú principal", new Vector2(0, -180), ui.BotonMenu);
+        Txt("Titulo", pause.transform, c, new Vector2(0, 225), new Vector2(600, 90), "PAUSA", 64, TextAnchor.MiddleCenter);
+        var reanudar = Boton(pause.transform, "Reanudar", new Vector2(0, 125), ui.BotonReanudar);
+        Boton(pause.transform, "Controles", new Vector2(0, 40), ui.BotonControles);
+        Boton(pause.transform, "Logros", new Vector2(0, -45), ui.BotonLogros);
+        Boton(pause.transform, "Reiniciar nivel", new Vector2(0, -130), ui.BotonReiniciar);
+        Boton(pause.transform, "Menú principal", new Vector2(0, -215), ui.BotonMenu);
+
+        var controles = PanelControles(t, true, ui.BotonVolverPausa, out var volverControles);
 
         var logros = Panel(t, "Logros", new Color(0, 0, 0, 0.75f));
         Img("Marco", logros.transform, c, new Vector2(0, -10), new Vector2(1150, 1000), marcoMenu, Color.white);
@@ -1268,6 +1479,8 @@ public static class CrearJuego
         Set(ui, "achievementsPanel", logros);
         Set(ui, "achievementsList", lista.transform);
         Set(ui, "achievementsFirst", volver.gameObject);
+        Set(ui, "controlsPanel", controles);
+        Set(ui, "controlsFirst", volverControles.gameObject);
         Set(ui, "gameOverPanel", over);
         Set(ui, "gameOverFirst", reintentar.gameObject);
         Set(ui, "toastGroup", toastGroup);
@@ -1290,6 +1503,45 @@ public static class CrearJuego
             el.FindPropertyRelative("retrato").objectReferenceValue = LoadSprite(Sprites + personajes[i].sprite);
         }
         so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    // Pantalla de controles (menú principal y pausa)
+    static GameObject PanelControles(Transform parent, bool oscurecer, UnityAction volver, out Button botonVolver)
+    {
+        var c = new Vector2(0.5f, 0.5f);
+        var panel = oscurecer ? Panel(parent, "Controles", new Color(0, 0, 0, 0.75f))
+                              : UI("Controles", parent, c, Vector2.zero, new Vector2(1920, 1080)).gameObject;
+        var t = panel.transform;
+        Img("Marco", t, c, new Vector2(0, -10), new Vector2(1150, 1000), LoadSprite(Sprites + "UI/Marco de menú.png"), Color.white);
+        Txt("Titulo", t, c, new Vector2(0, 410), new Vector2(800, 80), "CONTROLES", 60, TextAnchor.MiddleCenter);
+
+        var filas = new (string accion, string teclado, string control)[]
+        {
+            ("<b>Acción</b>", "<b>Teclado</b>", "<b>Control PS4</b>"),
+            ("Moverse", "A / D o flechas", "Stick / cruceta"),
+            ("Saltar (mantén = más alto)", "Espacio o W", "X"),
+            ("Agacharse", "S o flecha abajo", "Stick abajo"),
+            ("Lanzar hechizo", "J o clic", "Cuadrado"),
+            ("Apuntar en diagonal", "Flecha arriba", "Stick arriba"),
+            ("Elegir hechizo equipado", "1, 2, 3", "L1 / R1"),
+            ("Cambiar hechizo del espacio", "Q", "R2"),
+            ("Esquive (invulnerable)", "Shift o K", "Círculo"),
+            ("Hablar / abrir cofres", "E", "Triángulo"),
+            ("Pausa", "Esc", "Options"),
+        };
+        for (int i = 0; i < filas.Length; i++)
+        {
+            float y = 320 - i * 50;
+            Txt("Accion", t, c, new Vector2(-235, y), new Vector2(430, 48), filas[i].accion, 29, TextAnchor.MiddleLeft).rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            Txt("Teclado", t, c, new Vector2(115, y), new Vector2(260, 48), filas[i].teclado, 29, TextAnchor.MiddleLeft).color = Color.white;
+            Txt("Control", t, c, new Vector2(350, y), new Vector2(210, 48), filas[i].control, 29, TextAnchor.MiddleLeft).color = Color.white;
+        }
+        Txt("Consejos", t, c, new Vector2(0, -290), new Vector2(900, 130),
+            "Combos: lanza dos elementos distintos seguidos (menos de 1 segundo entre uno y otro).\n" +
+            "Rompe vasijas y muros agrietados con tus hechizos: esconden objetos y Páginas Perdidas.",
+            25, TextAnchor.MiddleCenter);
+        botonVolver = Boton(t, "Volver", new Vector2(0, -400), volver);
+        return panel;
     }
 
     static string CrearMenu()
@@ -1324,11 +1576,12 @@ public static class CrearJuego
         Img("Elenora", main, c, new Vector2(620, -80), new Vector2(420, 640), LoadSprite(Sprites + "Enemies/Eco_Archimaga_Elenora.png"), new Color(1f, 1f, 1f, 0.85f));
         Txt("Titulo", main, c, new Vector2(0, 380), new Vector2(1400, 140), "ECOS DEL GRIMORIO", 104, TextAnchor.MiddleCenter);
         Img("Marco", main, c, new Vector2(0, -70), new Vector2(680, 640), marco, Color.white);
-        var nueva = Boton(main, "Nueva Partida", new Vector2(0, 120), menu.NuevaPartida);
-        var cont = Boton(main, "Continuar", new Vector2(0, 30), menu.Continuar);
-        Boton(main, "Logros", new Vector2(0, -60), menu.ShowAchievements);
-        Boton(main, "Créditos", new Vector2(0, -150), menu.Creditos);
-        Boton(main, "Salir", new Vector2(0, -240), menu.Salir);
+        var nueva = Boton(main, "Nueva Partida", new Vector2(0, 150), menu.NuevaPartida);
+        var cont = Boton(main, "Continuar", new Vector2(0, 65), menu.Continuar);
+        Boton(main, "Controles", new Vector2(0, -20), menu.ShowControls);
+        Boton(main, "Logros", new Vector2(0, -105), menu.ShowAchievements);
+        Boton(main, "Créditos", new Vector2(0, -190), menu.Creditos);
+        Boton(main, "Salir", new Vector2(0, -275), menu.Salir);
         Txt("Ayuda", main, new Vector2(0.5f, 0f), new Vector2(0, 30), new Vector2(1400, 40),
             "Teclado o control de PS4 / Xbox", 24, TextAnchor.MiddleCenter);
 
@@ -1345,6 +1598,9 @@ public static class CrearJuego
         Set(menu, "font", font);
         Set(menu, "firstButton", nueva.gameObject);
         Set(menu, "achievementsBack", volver.gameObject);
+        var controlesMenu = PanelControles(t, false, menu.ShowMain, out var volverMenu);
+        Set(menu, "controlsPanel", controlesMenu);
+        Set(menu, "controlsBack", volverMenu.gameObject);
 
         string path = $"{Scenes}/{GameManager.MenuScene}.unity";
         EditorSceneManager.SaveScene(scene, path);

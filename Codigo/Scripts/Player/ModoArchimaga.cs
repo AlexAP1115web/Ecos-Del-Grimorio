@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Código secreto de la sección 2.16: F-H-V-A + Intro.
+// Código secreto de la sección 2.16: F-H-V-A + Intro (o L1 + R1 + Triángulo en el control).
 // Durante 60 segundos da maná ilimitado y quita el cooldown de los hechizos.
 public class ModoArchimaga : MonoBehaviour
 {
@@ -30,6 +30,14 @@ public class ModoArchimaga : MonoBehaviour
         {
             active = false;
             if (caster != null) caster.SetArchmageMode(false);
+            if (GameManager.Instance != null) GameManager.Instance.ShowMessage("El Modo Archimaga se terminó");
+        }
+
+        if (Time.timeScale > 0f && Controles.TrucoControl)
+        {
+            progress = 0;
+            Activate();
+            return;
         }
 
         var kb = Keyboard.current;
@@ -60,6 +68,9 @@ public class ModoArchimaga : MonoBehaviour
         endTime = Time.time + duration;
         if (caster != null) caster.SetArchmageMode(true);
         Activated?.Invoke();
-        Debug.Log("Modo Archimaga activado");
+        AudioManager.Play(Sfx.ObjetoEspecial);
+        Particula.Rafaga(transform.position, new Color(0.8f, 0.6f, 1f, 1f), 30, 6f, 0.2f, 0.8f, 3f);
+        if (GameManager.Instance != null)
+            GameManager.Instance.ShowMessage($"Modo Archimaga: maná infinito y sin espera durante {Mathf.RoundToInt(duration)} segundos", 4f);
     }
 }

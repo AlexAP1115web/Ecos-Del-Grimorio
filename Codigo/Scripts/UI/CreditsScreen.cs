@@ -37,6 +37,7 @@ public class CreditsScreen : MonoBehaviour
                 "Diseño, programación y documentación\nPérez Alcántara Alejandro\n\n" +
                 "Creación de Videojuegos — 10° D\nUniversidad Tecnológica de Puebla\n\n" +
                 "Docente\nJosé Francisco Espinosa Garita\n\n" +
+                "Música y efectos de sonido\nOriginales, creados por síntesis de audio\n\n" +
                 "Motor\nUnity 6\n\n\n" +
                 "Gracias por jugar\n\n(Enter o X para volver al menú)";
         }

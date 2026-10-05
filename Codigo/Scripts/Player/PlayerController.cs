@@ -2,7 +2,8 @@ using System;
 using UnityEngine;
 
 // Movimiento de Lira: correr con aceleración, salto con "coyote time" y búfer,
-// caída más rápida, esquive con invulnerabilidad y animación procedural
+// caída más rápida, esquive con invulnerabilidad, agacharse (para pasar por
+// pasadizos bajos y atacar a enemigos pequeños) y animación procedural
 // (estirarse al saltar, aplastarse al caer, inclinarse al correr).
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
@@ -24,6 +25,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float dashSpeed = 17f;
     [SerializeField] private float dashTime = 0.18f;
     [SerializeField] private float dashCooldown = 0.6f;
+
+    [Header("Agacharse")]
+    [SerializeField] private float crouchSpeed = 3.2f;
+    [Tooltip("Altura del collider agachada (fracción de la altura de pie)")]
+    [SerializeField] private float crouchHeight = 0.6f;
 
     [Header("Detección de suelo")]
     [SerializeField] private Transform groundCheck;
@@ -57,10 +63,17 @@ public class PlayerController : MonoBehaviour
     private float dashDirection;
     private float nextGhostTime;
     private Vector2 squash = Vector2.one;
+    private CapsuleCollider2D capsule;
+    private Vector2 standSize, standOffset;
+    private Vector3 visualBaseLocalPos;
+    private float visualBottom;
+    private float crouchAmount;
+    private bool landedSoundReady;
 
     public bool FacingRight { get; private set; } = true;
     public bool IsGrounded => isGrounded;
     public bool IsDashing => Time.time < dashUntil;
+    public bool IsCrouching { get; private set; }
 
     void Awake()
     {
@@ -68,8 +81,19 @@ public class PlayerController : MonoBehaviour
         health = GetComponent<Health>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         visual = spriteRenderer != null && spriteRenderer.transform != transform ? spriteRenderer.transform : null;
-        if (visual != null) visualBaseScale = visual.localScale;
+        if (visual != null)
+        {
+            visualBaseScale = visual.localScale;
+            visualBaseLocalPos = visual.localPosition;
+            if (spriteRenderer.sprite != null) visualBottom = spriteRenderer.sprite.bounds.min.y * visualBaseScale.y;
+        }
         baseGravity = rb.gravityScale;
+        capsule = GetComponent<CapsuleCollider2D>();
+        if (capsule != null)
+        {
+            standSize = capsule.size;
+            standOffset = capsule.offset;
+        }
     }
 
     void Update()
@@ -84,6 +108,8 @@ public class PlayerController : MonoBehaviour
 
             if (Controles.EsquivePresionado && Time.time >= nextDashTime) StartDash();
         }
+
+        UpdateCrouch(controlsEnabled && Time.timeScale > 0f && Controles.Abajo && isGrounded);
 
         if (horizontalInput > 0.1f) FacingRight = true;
         else if (horizontalInput < -0.1f) FacingRight = false;
@@ -109,7 +135,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // Correr con aceleración (se siente más suave que cambiar la velocidad de golpe)
-        float speed = moveSpeed * (Time.time < slowUntil ? slowMultiplier : 1f);
+        float speed = (IsCrouching ? crouchSpeed : moveSpeed) * (Time.time < slowUntil ? slowMultiplier : 1f);
         float target = horizontalInput * speed;
         float accel = isGrounded ? groundAcceleration : airAcceleration;
         float currentX = rb.linearVelocity.x - externalVelocity.x - platformX;
@@ -117,7 +143,7 @@ public class PlayerController : MonoBehaviour
         float vy = rb.linearVelocity.y;
 
         // Salto con coyote time (unos milisegundos después de dejar el suelo) y búfer
-        bool canJump = Time.time - lastGroundedTime <= coyoteTime;
+        bool canJump = Time.time - lastGroundedTime <= coyoteTime && !(IsCrouching && CeilingBlocked());
         bool wantsJump = Time.time - lastJumpPressedTime <= jumpBuffer;
         if (canJump && wantsJump)
         {
@@ -126,7 +152,9 @@ public class PlayerController : MonoBehaviour
             lastGroundedTime = -10f;
             isGrounded = false;
             jumpCutPending = false;
+            if (IsCrouching) SetCrouch(false);
             squash = new Vector2(0.8f, 1.25f);
+            AudioManager.Play(Sfx.Salto, 0.7f);
             Particula.Polvo((Vector2)transform.position + Vector2.down * 0.8f, new Color(0.9f, 0.85f, 0.75f, 0.6f));
             Jumped?.Invoke();
         }
@@ -150,12 +178,55 @@ public class PlayerController : MonoBehaviour
         nextDashTime = Time.time + dashCooldown;
         if (health != null) health.SetInvulnerable(dashTime + 0.05f);
         squash = new Vector2(1.3f, 0.8f);
+        AudioManager.Play(Sfx.Esquive, 0.8f);
         Dashed?.Invoke();
+    }
+
+    // ---------- Agacharse ----------
+
+    void UpdateCrouch(bool wantsCrouch)
+    {
+        if (capsule == null) return;
+        if (wantsCrouch && !IsCrouching) SetCrouch(true);
+        else if (!wantsCrouch && IsCrouching && !CeilingBlocked()) SetCrouch(false);
+    }
+
+    void SetCrouch(bool crouch)
+    {
+        IsCrouching = crouch;
+        if (crouch)
+        {
+            float h = standSize.y * crouchHeight;
+            capsule.size = new Vector2(standSize.x, h);
+            capsule.offset = new Vector2(standOffset.x, standOffset.y - (standSize.y - h) * 0.5f);
+        }
+        else
+        {
+            capsule.size = standSize;
+            capsule.offset = standOffset;
+        }
+    }
+
+    // ¿Hay techo encima? (en un pasadizo bajo Lira no puede pararse)
+    bool CeilingBlocked()
+    {
+        if (capsule == null) return false;
+        Vector2 center = (Vector2)transform.position + standOffset + Vector2.up * standSize.y * 0.2f;
+        Vector2 size = new Vector2(standSize.x * 0.8f, standSize.y * 0.55f);
+        foreach (var col in Physics2D.OverlapBoxAll(center, size, 0f))
+        {
+            if (col.isTrigger || col.attachedRigidbody == rb) continue;
+            if (col.CompareTag("Enemy") || col.CompareTag("Player")) continue;
+            return true;
+        }
+        return false;
     }
 
     void OnLand()
     {
         squash = new Vector2(1.25f, 0.75f);
+        if (landedSoundReady) AudioManager.Play(Sfx.Aterrizaje, 0.5f);
+        landedSoundReady = true;
         Particula.Polvo((Vector2)transform.position + Vector2.down * 0.8f, new Color(0.9f, 0.85f, 0.75f, 0.6f));
         Landed?.Invoke();
     }
@@ -171,12 +242,20 @@ public class PlayerController : MonoBehaviour
         float bob = run > 0.1f ? Mathf.Abs(Mathf.Sin(Time.time * 14f)) * 0.06f * run : Mathf.Sin(Time.time * 2.5f) * 0.015f;
         float stretchY = !isGrounded ? Mathf.Clamp(rb.linearVelocity.y * 0.012f, -0.08f, 0.1f) : 0f;
 
-        visual.localScale = new Vector3(
-            visualBaseScale.x * squash.x * (1f - stretchY * 0.5f),
-            visualBaseScale.y * squash.y * (1f + bob + stretchY),
-            visualBaseScale.z);
+        crouchAmount = Mathf.MoveTowards(crouchAmount, IsCrouching ? 1f : 0f, 10f * Time.deltaTime);
+        float crouchY = Mathf.Lerp(1f, crouchHeight + 0.05f, crouchAmount);
+        float crouchX = Mathf.Lerp(1f, 1.08f, crouchAmount);
+        if (IsCrouching) bob *= 0.4f;
 
-        float tilt = IsDashing ? -12f * dashDirection : -6f * horizontalInput * (isGrounded ? 1f : 0.5f);
+        float scaleY = squash.y * (1f + bob + stretchY) * crouchY;
+        visual.localScale = new Vector3(
+            visualBaseScale.x * squash.x * (1f - stretchY * 0.5f) * crouchX,
+            visualBaseScale.y * scaleY,
+            visualBaseScale.z);
+        // Mantiene los pies en el suelo aunque el sprite se aplaste
+        visual.localPosition = visualBaseLocalPos + Vector3.up * (visualBottom * (1f - scaleY));
+
+        float tilt = IsDashing ? -12f * dashDirection : -6f * horizontalInput * (isGrounded ? 1f : 0.5f) * (IsCrouching ? 0.3f : 1f);
         visual.localRotation = Quaternion.Lerp(visual.localRotation, Quaternion.Euler(0f, 0f, tilt), 15f * Time.deltaTime);
 
         if (IsDashing && Time.time >= nextGhostTime)

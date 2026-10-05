@@ -52,6 +52,7 @@ public class SpellProjectile : MonoBehaviour
         if (health == null || health.CompareTag("Player")) return;
 
         health.TakeDamage(damage, data.element);
+        AudioManager.Play(Sfx.GolpeEnemigo, 0.7f);
 
         var enemy = other.GetComponentInParent<EnemyBase>();
         if (enemy != null)

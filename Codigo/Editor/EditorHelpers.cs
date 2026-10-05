@@ -243,6 +243,69 @@ public static class EditorHelpers
         return new Color(0, 0, 0, Mathf.Clamp01((d - 0.55f) * 1.6f) * 0.85f);
     }, 256, 256, 100);
 
+    // Página suelta del grimorio (pergamino con renglones)
+    public static Sprite Pagina() => TiledTexture("Pagina", (x, y) =>
+    {
+        float wob = Mathf.Sin(y * 0.5f) * 0.6f;
+        if (x < 3 + wob || x > 28 + wob || y < 2 || y > 37) return new Color(0, 0, 0, 0);
+        bool esquina = x - 3 + (37 - y) < 5;           // esquina doblada
+        if (x > 21 + wob && y > 30 && (x - 21) > (y - 30)) return new Color(0.75f, 0.68f, 0.5f, 1f);
+        if (esquina) return new Color(0, 0, 0, 0);
+        bool orilla = x < 4.5f + wob || x > 26.5f + wob || y < 3.5f || y > 35.5f;
+        float v = 0.92f + (Hash(x, y) - 0.5f) * 0.08f;
+        var c = new Color(v, v * 0.93f, v * 0.75f, 1f);
+        if (orilla) c *= 0.8f;
+        bool renglon = y % 5 == 0 && y > 6 && y < 32 && x > 6 && x < 25 && Hash(x / 3, y) > 0.2f;
+        if (renglon) c = new Color(0.35f, 0.3f, 0.45f, 1f);
+        c.a = 1f;
+        return c;
+    }, 32, 40, 32);
+
+    // Vasija de barro (se pinta del color del ala)
+    public static Sprite Vasija() => TiledTexture("Vasija", (x, y) =>
+    {
+        float cx = 15.5f;
+        float r;
+        if (y >= 36) r = 7f;                                      // borde
+        else if (y >= 31) r = 4.5f;                               // cuello
+        else r = 5.5f + 8.5f * Mathf.Sin(Mathf.PI * (y + 2) / 35f); // cuerpo
+        float dx = Mathf.Abs(x - cx);
+        if (dx > r || y > 39) return new Color(0, 0, 0, 0);
+        float luz = 0.65f + 0.35f * (1f - dx / r) - (x > cx ? 0.12f : 0f);
+        if (dx > r - 1.2f) luz *= 0.55f;                            // contorno
+        if (y == 20 || y == 21 || y == 33) luz *= 0.6f;                // franjas decorativas
+        if (y >= 36 && y <= 37) luz *= 0.75f;
+        luz += (Hash(x, y) - 0.5f) * 0.05f;
+        return new Color(luz, luz, luz, 1f);
+    }, 32, 40, 32);
+
+    // Grietas que se ponen encima del ladrillo para marcar un muro que se puede romper
+    static bool[] grietas;
+    public static Sprite Grietas()
+    {
+        const int w = 64, h = 64;
+        grietas = new bool[w * h];
+        var r = new System.Random(5);
+        for (int k = 0; k < 7; k++)
+        {
+            float x = r.Next(8, 56), y = r.Next(4, 60);
+            float ang = (float)(r.NextDouble() * Mathf.PI * 2f);
+            for (int paso = 0; paso < 40; paso++)
+            {
+                ang += (float)(r.NextDouble() - 0.5) * 1.1f;
+                x += Mathf.Cos(ang); y += Mathf.Sin(ang);
+                int ix = Mathf.RoundToInt(x), iy = Mathf.RoundToInt(y);
+                if (ix < 1 || iy < 1 || ix >= w - 1 || iy >= h - 1) break;
+                grietas[iy * w + ix] = true;
+                if (paso < 12) grietas[iy * w + ix + 1] = true;
+            }
+        }
+        return TiledTexture("Grietas", (x, y) =>
+            grietas[y * w + x] ? new Color(0.05f, 0.03f, 0.03f, 0.95f)
+            : (x > 0 && grietas[y * w + x - 1]) ? new Color(1f, 0.95f, 0.85f, 0.35f)
+            : new Color(0, 0, 0, 0), w, h, 32);
+    }
+
     // Luz 2D de URP agregada desde el editor (tipo: 3 = puntual, 4 = global)
     public static Component Light(GameObject go, int type, Color color, float intensity, float radius = 0f)
     {

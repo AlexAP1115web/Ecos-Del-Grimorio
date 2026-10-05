@@ -23,6 +23,8 @@ public class Health : MonoBehaviour, IDamageable
     [SerializeField] private int hitsToKill = 0;
     [SerializeField] private float invulnerableTime = 0f;
     [SerializeField] private bool destroyOnDeath = true;
+    [Tooltip("Multiplica todo el daño recibido (Lira usa menos de 1 para que el juego sea más accesible)")]
+    [SerializeField] private float damageTakenMultiplier = 1f;
     [SerializeField] private ElementResistance[] resistances = new ElementResistance[0];
 
     public UnityEvent<float> OnHealthChanged = new UnityEvent<float>();
@@ -75,6 +77,14 @@ public class Health : MonoBehaviour, IDamageable
         OnHealthChanged.Invoke(Percent);
     }
 
+    // Aumenta la vida máxima (Páginas Perdidas) y cura esa misma cantidad
+    public void AddMaxHealth(float extra)
+    {
+        maxHealth += extra;
+        currentHealth = Mathf.Min(currentHealth + extra, maxHealth);
+        OnHealthChanged.Invoke(Percent);
+    }
+
     public void SetHitsToKill(int hits)
     {
         hitsToKill = hits;
@@ -107,7 +117,7 @@ public class Health : MonoBehaviour, IDamageable
     {
         if (IsDead || Time.time < invulnerableUntil) return;
 
-        float finalDamage = amount * GetMultiplier(element);
+        float finalDamage = amount * GetMultiplier(element) * damageTakenMultiplier;
         if (finalDamage <= 0f) return; // inmune a ese elemento
 
         if (hitsToKill > 0)
@@ -124,6 +134,7 @@ public class Health : MonoBehaviour, IDamageable
         invulnerableUntil = Time.time + invulnerableTime;
         LastHitTime = Time.time;
 
+        if (CompareTag("Player")) AudioManager.Play(Sfx.DanoLira);
         Damaged?.Invoke(finalDamage);
         OnHealthChanged.Invoke(Percent);
 

@@ -23,6 +23,8 @@ public class GameManager : MonoBehaviour
     public const string FirstLevel = "Nivel1_AlaDeAprendizaje";
     public const string CreditsScene = "Creditos";
     public const string PrologueScene = "Prologo";
+    public const int PagesPerLevel = 3;
+    public const float HealthPerPage = 5f;
 
     public static GameManager Instance { get; private set; }
 
@@ -41,11 +43,13 @@ public class GameManager : MonoBehaviour
     public int UnlockedSpellCount => unlockedSpells.Count;
     public int PotionsUsedInBossFight { get; private set; }
     public bool HasCollectible(string itemName) => collectibles.Contains(itemName);
+    public int PagesFound => pages.Count;
 
     private readonly HashSet<Elemento> unlockedSpells = new HashSet<Elemento> { Elemento.Arcano };
     private readonly HashSet<TipoItem> upgrades = new HashSet<TipoItem>();
     private readonly HashSet<string> collectibles = new HashSet<string>();
     private readonly HashSet<string> takenPickups = new HashSet<string>();
+    private readonly HashSet<string> pages = new HashSet<string>();
 
     private float levelStartTime;
     private bool tookDamageThisLevel;
@@ -175,6 +179,7 @@ public class GameManager : MonoBehaviour
             if (controller != null) controller.SetControlsEnabled(false);
         }
         SetState(GameState.GameOver);
+        AudioManager.Play(Sfx.GameOver);
         CameraFollow.Shake(0.3f, 0.4f);
         Controles.Vibrar(0.8f, 0.8f, 0.4f);
     }
@@ -193,6 +198,7 @@ public class GameManager : MonoBehaviour
         upgrades.Clear();
         collectibles.Clear();
         takenPickups.Clear();
+        pages.Clear();
         Fragments = 0;
         HasRunicKey = false;
         checkpointScene = null;
@@ -222,6 +228,21 @@ public class GameManager : MonoBehaviour
     }
 
     public void AddCollectible(string itemName) => collectibles.Add(itemName);
+
+    // Páginas Perdidas: el id incluye la escena para poder contarlas por ala
+    public bool AddPage(string id)
+    {
+        if (!pages.Add(id)) return false;
+        Save();
+        return true;
+    }
+
+    public int PagesInScene(string scene)
+    {
+        int count = 0;
+        foreach (var p in pages) if (p.StartsWith(scene + ":")) count++;
+        return count;
+    }
 
     public void GiveRunicKey() => HasRunicKey = true;
 
@@ -289,6 +310,7 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.SetString("eg_mejoras", string.Join(",", upgrades));
         PlayerPrefs.SetString("eg_coleccionables", string.Join("|", collectibles));
         PlayerPrefs.SetString("eg_recogidos", string.Join("|", takenPickups));
+        PlayerPrefs.SetString("eg_paginas", string.Join("|", pages));
         PlayerPrefs.SetInt("eg_fragmentos", Fragments);
         PlayerPrefs.SetInt("eg_llave", HasRunicKey ? 1 : 0);
         PlayerPrefs.Save();
@@ -304,6 +326,8 @@ public class GameManager : MonoBehaviour
             if (s.Length > 0) collectibles.Add(s);
         foreach (var s in PlayerPrefs.GetString("eg_recogidos", "").Split('|'))
             if (s.Length > 0) takenPickups.Add(s);
+        foreach (var s in PlayerPrefs.GetString("eg_paginas", "").Split('|'))
+            if (s.Length > 0) pages.Add(s);
         Fragments = PlayerPrefs.GetInt("eg_fragmentos", 0);
         HasRunicKey = PlayerPrefs.GetInt("eg_llave", 0) == 1;
     }

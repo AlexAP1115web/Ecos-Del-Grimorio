@@ -9,7 +9,8 @@ public enum TipoItem
     AnilloDeEscarcha,
     PlumaLigera,
     LlaveRunica,
-    Coleccionable
+    Coleccionable,
+    PaginaPerdida   // 3 escondidas en cada ala: cada una da +5 de vida máxima
 }
 
 // Datos de un ítem de la tabla 2.13 (Cristal de Maná, Poción de Vida, etc.)

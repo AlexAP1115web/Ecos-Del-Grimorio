@@ -20,7 +20,9 @@ public class Pickup : MonoBehaviour
     public ItemData Item => item;
 
     bool IsUnique => item != null && item.type != TipoItem.Mana && item.type != TipoItem.Vida;
-    string Id => SceneManager.GetActiveScene().name + ":" + item.itemName;
+    // Las Páginas Perdidas comparten el mismo ItemData, así que su id incluye la posición
+    string Id => SceneManager.GetActiveScene().name + ":" + item.itemName +
+                 (item.type == TipoItem.PaginaPerdida ? $":{Mathf.RoundToInt(startPosition.x * 2f)}:{Mathf.RoundToInt(startPosition.y * 2f)}" : "");
 
     void Start()
     {
@@ -48,8 +50,18 @@ public class Pickup : MonoBehaviour
         var gm = GameManager.Instance;
         if (gm != null && IsUnique) gm.MarkPickupTaken(Id);
 
+        AudioManager.Play(item.type == TipoItem.PaginaPerdida ? Sfx.Pagina : IsUnique ? Sfx.ObjetoEspecial : Sfx.Objeto);
+
         // Los fragmentos, la nota y el diario cuentan parte de la historia de Elenora
-        if (item.lore != null && item.lore.Length > 0 && UIManager.Instance != null)
+        if (item.type == TipoItem.PaginaPerdida)
+        {
+            if (gm != null)
+            {
+                string scene = SceneManager.GetActiveScene().name;
+                gm.ShowMessage($"Página Perdida ({gm.PagesInScene(scene)}/{GameManager.PagesPerLevel} en esta ala): +{GameManager.HealthPerPage:0} de vida máxima", 4f);
+            }
+        }
+        else if (item.lore != null && item.lore.Length > 0 && UIManager.Instance != null)
             UIManager.Instance.StartDialogue(item.itemName, item.icon, item.lore, null);
         else if (gm != null)
             gm.ShowMessage(string.IsNullOrEmpty(item.description) ? item.itemName : $"{item.itemName}: {item.description}");
@@ -87,6 +99,12 @@ public class Pickup : MonoBehaviour
             case TipoItem.PlumaLigera:
                 var upgrades = player.GetComponent<PlayerUpgrades>();
                 if (upgrades != null) upgrades.Apply(item.type);
+                return true;
+
+            case TipoItem.PaginaPerdida:
+                var h = player.GetComponent<Health>();
+                if (gm != null && !gm.AddPage(Id)) return true;
+                if (h != null) h.AddMaxHealth(GameManager.HealthPerPage);
                 return true;
 
             case TipoItem.LlaveRunica:

@@ -19,6 +19,7 @@ public class Checkpoint : MonoBehaviour
         if (activated || !other.CompareTag("Player")) return;
         activated = true;
         if (sr != null) sr.color = Color.white;
+        AudioManager.Play(Sfx.Checkpoint);
         AreaEffect.Spawn(transform.position, 1.2f, new Color(0.5f, 1f, 1f, 0.6f), 0.6f);
         if (GameManager.Instance != null) GameManager.Instance.SetCheckpoint(transform.position);
     }

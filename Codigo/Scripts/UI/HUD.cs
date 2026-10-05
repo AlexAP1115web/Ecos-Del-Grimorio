@@ -10,6 +10,7 @@ public class HUD : MonoBehaviour
     [SerializeField] private Image healthFill;
     [SerializeField] private Image manaFill;
     [SerializeField] private Text fragmentsText;
+    [SerializeField] private Text pagesText;
 
     [Header("Hechizos equipados")]
     [Tooltip("Íconos por elemento en orden: Arcano, Fuego, Hielo, Viento")]
@@ -64,6 +65,12 @@ public class HUD : MonoBehaviour
         {
             int fragments = GameManager.Instance != null ? GameManager.Instance.Fragments : 0;
             fragmentsText.text = $"Fragmentos: {fragments}/5";
+        }
+
+        if (pagesText != null && GameManager.Instance != null)
+        {
+            string scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            pagesText.text = $"Páginas del ala: {GameManager.Instance.PagesInScene(scene)}/{GameManager.PagesPerLevel}";
         }
 
         if (bossPanel != null && bossPanel.activeSelf && bossHealth == null)

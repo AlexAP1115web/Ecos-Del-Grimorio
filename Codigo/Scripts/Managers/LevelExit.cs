@@ -36,6 +36,7 @@ public class LevelExit : MonoBehaviour
         }
 
         used = true;
+        AudioManager.Play(Sfx.Portal);
         if (GameManager.Instance != null)
             GameManager.Instance.CompleteLevel(nextScene, spellToUnlock, unlocksSpell);
     }
