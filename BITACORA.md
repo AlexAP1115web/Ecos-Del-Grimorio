@@ -70,6 +70,14 @@
   - Páginas Perdidas: tres por ala; cada una da +5 de vida máxima.
 - Pantalla de Controles en el menú principal y en la pausa.
 
+- Segunda prueba con el control:
+  - No se escuchaba nada porque las cámaras no tenían AudioListener; ahora lo trae el AudioManager.
+  - Los textos de Controles y Logros se salían del marco: ahora usan un panel que se estira sin deformarse.
+- Voces de los personajes al hablar (Lira, Maestra Sable, los guardianes, Elenora y los ecos) y quejidos de Lira al recibir daño, al hacer combos y al caer.
+- Lira camina: el sprite se separa en cuerpo y piernas, y las piernas se mueven al correr, saltar, esquivar y agacharse. También tiene sombra y sonido de pasos.
+- Retrato del HUD: la cara de Lira ahora queda recortada dentro del marco redondo.
+- Las orillas de la pantalla se ponen rojas al recibir daño y laten cuando queda poca vida.
+
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
 - Subir capturas a `Evidencias`.

@@ -51,6 +51,25 @@ public class Particula : MonoBehaviour
     }
 
     // Copia del sprite que se desvanece (esquive de Lira)
+    // Silueta de un sprite completo (para el esquive de Lira, que está hecha por partes)
+    public static void Fantasma(Sprite sprite, Vector3 posicion, Vector3 escala, bool voltear, int orden, Color tinte, float vida)
+    {
+        if (sprite == null) return;
+        var go = new GameObject("Fantasma");
+        go.transform.position = posicion;
+        go.transform.localScale = new Vector3(Mathf.Abs(escala.x), Mathf.Abs(escala.y), 1f);
+        var p = go.AddComponent<Particula>();
+        p.sr = go.AddComponent<SpriteRenderer>();
+        p.sr.sprite = sprite;
+        p.sr.flipX = voltear;
+        p.sr.sortingOrder = orden;
+        p.sr.color = tinte;
+        p.color = tinte;
+        p.life = vida;
+        p.startScale = go.transform.localScale.x;
+        p.shrink = false;
+    }
+
     public static void Fantasma(SpriteRenderer origen, Color tinte, float vida)
     {
         if (origen == null || origen.sprite == null) return;

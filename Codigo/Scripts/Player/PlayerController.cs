@@ -5,6 +5,8 @@ using UnityEngine;
 // caída más rápida, esquive con invulnerabilidad, agacharse (para pasar por
 // pasadizos bajos y atacar a enemigos pequeños) y animación procedural
 // (estirarse al saltar, aplastarse al caer, inclinarse al correr).
+// El sprite de Lira se separa en cuerpo y dos piernas para que pueda caminar:
+// las piernas giran desde la cadera al correr, saltar y esquivar.
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
 {
@@ -30,6 +32,19 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float crouchSpeed = 3.2f;
     [Tooltip("Altura del collider agachada (fracción de la altura de pie)")]
     [SerializeField] private float crouchHeight = 0.6f;
+
+    [Header("Animación por partes")]
+    [SerializeField] private bool animarPiernas = true;
+    [Tooltip("Proporciones del dibujo de Lira (0 a 1, medidas desde abajo / izquierda)")]
+    [SerializeField] private float cadera = 0.4365f;
+    [SerializeField] private float corteCuerpo = 0.424f;
+    [SerializeField] private float topePiernas = 0.445f;
+    [SerializeField] private float piernaIzqX = 0.311f;
+    [SerializeField] private float separacionX = 0.502f;
+    [SerializeField] private float piernaDerX = 0.683f;
+    [SerializeField] private float caderaIzqX = 0.417f;
+    [SerializeField] private float caderaDerX = 0.597f;
+    [SerializeField] private float largoPaso = 1.8f;
 
     [Header("Detección de suelo")]
     [SerializeField] private Transform groundCheck;
@@ -69,6 +84,12 @@ public class PlayerController : MonoBehaviour
     private float visualBottom;
     private float crouchAmount;
     private bool landedSoundReady;
+    private Sprite fullSprite;
+    private Transform legL, legR;
+    private SpriteRenderer[] parts = new SpriteRenderer[0];
+    private float walkPhase;
+    private int lastStep;
+    private SpriteRenderer shadow;
 
     public bool FacingRight { get; private set; } = true;
     public bool IsGrounded => isGrounded;
@@ -94,6 +115,88 @@ public class PlayerController : MonoBehaviour
             standSize = capsule.size;
             standOffset = capsule.offset;
         }
+        if (spriteRenderer != null) fullSprite = spriteRenderer.sprite;
+        SetupParts();
+        CreateShadow();
+    }
+
+    void Start()
+    {
+        if (health != null)
+        {
+            health.Damaged += _ => AudioManager.Lira(VozLira.Dano);
+            health.OnDeath.AddListener(() => AudioManager.Lira(VozLira.Caida));
+        }
+    }
+
+    // Separa el sprite en cuerpo + pierna izquierda + pierna derecha (misma textura, sin arte nuevo)
+    void SetupParts()
+    {
+        parts = spriteRenderer != null ? new[] { spriteRenderer } : new SpriteRenderer[0];
+        if (!animarPiernas || visual == null || fullSprite == null) return;
+
+        var tex = fullSprite.texture;
+        Rect r = fullSprite.rect;
+        float W = r.width, H = r.height, ppu = fullSprite.pixelsPerUnit;
+        Vector2 pivot = fullSprite.pivot;
+
+        float bodyBottom = H * corteCuerpo, legTop = H * topePiernas, hipY = H * cadera;
+        spriteRenderer.sprite = Sprite.Create(tex, new Rect(r.x, r.y + bodyBottom, W, H - bodyBottom),
+            new Vector2(pivot.x / W, (pivot.y - bodyBottom) / (H - bodyBottom)), ppu, 0, SpriteMeshType.FullRect);
+
+        legL = CreateLeg("PiernaIzq", tex, r, W * piernaIzqX, W * separacionX, W * caderaIzqX, legTop, hipY, pivot, ppu);
+        legR = CreateLeg("PiernaDer", tex, r, W * separacionX, W * piernaDerX, W * caderaDerX, legTop, hipY, pivot, ppu);
+        parts = new[] { spriteRenderer, legL.GetComponent<SpriteRenderer>(), legR.GetComponent<SpriteRenderer>() };
+    }
+
+    Transform CreateLeg(string name, Texture2D tex, Rect r, float x0, float x1, float hipX, float top, float hipY, Vector2 pivot, float ppu)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(visual, false);
+        go.transform.localPosition = new Vector3((hipX - pivot.x) / ppu, (hipY - pivot.y) / ppu, 0f);
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = Sprite.Create(tex, new Rect(r.x + x0, r.y, x1 - x0, top),
+            new Vector2((hipX - x0) / (x1 - x0), hipY / top), ppu, 0, SpriteMeshType.FullRect);
+        sr.sortingOrder = spriteRenderer.sortingOrder - 1;
+        sr.color = spriteRenderer.color;
+        return go.transform;
+    }
+
+    // Sombra en el piso que se achica cuando Lira está en el aire
+    void CreateShadow()
+    {
+        var go = new GameObject("Sombra");
+        go.transform.SetParent(transform, false);
+        shadow = go.AddComponent<SpriteRenderer>();
+        shadow.sprite = AreaEffect.GetCircleSprite();
+        shadow.color = new Color(0f, 0f, 0f, 0.35f);
+        shadow.sortingOrder = (spriteRenderer != null ? spriteRenderer.sortingOrder : 10) - 3;
+    }
+
+    void LateUpdate()
+    {
+        if (shadow == null) return;
+        float feet = transform.position.y + standOffset.y - standSize.y * 0.5f;
+        RaycastHit2D? best = null;
+        foreach (var hit in Physics2D.RaycastAll(new Vector2(transform.position.x, feet + 0.05f), Vector2.down, 6f))
+        {
+            if (hit.collider.isTrigger || hit.rigidbody == rb || !hit.collider.CompareTag("Ground")) continue;
+            best = hit;
+            break;
+        }
+        if (best == null) { shadow.enabled = false; return; }
+        shadow.enabled = true;
+        float dist = Mathf.Max(0f, feet - best.Value.point.y);
+        float k = Mathf.Clamp01(1f - dist / 5f);
+        shadow.transform.position = new Vector3(transform.position.x, best.Value.point.y + 0.03f, 0f);
+        shadow.transform.localScale = new Vector3(0.95f * (0.4f + 0.6f * k), 0.2f * (0.4f + 0.6f * k), 1f);
+        shadow.color = new Color(0f, 0f, 0f, 0.35f * k);
+    }
+
+    // Cambia el color de todas las partes de Lira (capa dorada del cofre secreto)
+    public void Tint(Color color)
+    {
+        foreach (var p in parts) if (p != null) p.color = color;
     }
 
     void Update()
@@ -113,7 +216,7 @@ public class PlayerController : MonoBehaviour
 
         if (horizontalInput > 0.1f) FacingRight = true;
         else if (horizontalInput < -0.1f) FacingRight = false;
-        if (spriteRenderer != null) spriteRenderer.flipX = !FacingRight;
+        if (spriteRenderer != null) spriteRenderer.flipX = legL == null && !FacingRight;
 
         AnimateVisual();
     }
@@ -239,7 +342,10 @@ public class PlayerController : MonoBehaviour
         squash = Vector2.Lerp(squash, Vector2.one, 12f * Time.deltaTime);
 
         float run = isGrounded ? Mathf.Abs(rb.linearVelocity.x) / moveSpeed : 0f;
-        float bob = run > 0.1f ? Mathf.Abs(Mathf.Sin(Time.time * 14f)) * 0.06f * run : Mathf.Sin(Time.time * 2.5f) * 0.015f;
+        AnimateLegs();
+        float bob = run > 0.1f
+            ? (legL != null ? Mathf.Abs(Mathf.Cos(walkPhase)) * 0.05f * Mathf.Min(run, 1f) : Mathf.Abs(Mathf.Sin(Time.time * 14f)) * 0.06f * run)
+            : Mathf.Sin(Time.time * 2.5f) * 0.015f;
         float stretchY = !isGrounded ? Mathf.Clamp(rb.linearVelocity.y * 0.012f, -0.08f, 0.1f) : 0f;
 
         crouchAmount = Mathf.MoveTowards(crouchAmount, IsCrouching ? 1f : 0f, 10f * Time.deltaTime);
@@ -248,8 +354,9 @@ public class PlayerController : MonoBehaviour
         if (IsCrouching) bob *= 0.4f;
 
         float scaleY = squash.y * (1f + bob + stretchY) * crouchY;
+        float facing = legL != null && !FacingRight ? -1f : 1f;
         visual.localScale = new Vector3(
-            visualBaseScale.x * squash.x * (1f - stretchY * 0.5f) * crouchX,
+            facing * visualBaseScale.x * squash.x * (1f - stretchY * 0.5f) * crouchX,
             visualBaseScale.y * scaleY,
             visualBaseScale.z);
         // Mantiene los pies en el suelo aunque el sprite se aplaste
@@ -261,8 +368,54 @@ public class PlayerController : MonoBehaviour
         if (IsDashing && Time.time >= nextGhostTime)
         {
             nextGhostTime = Time.time + 0.03f;
-            Particula.Fantasma(spriteRenderer, new Color(0.7f, 0.5f, 1f, 0.5f), 0.25f);
+            if (legL != null)
+                Particula.Fantasma(fullSprite, visual.position, visual.lossyScale, !FacingRight, spriteRenderer.sortingOrder - 2, new Color(0.7f, 0.5f, 1f, 0.5f), 0.25f);
+            else
+                Particula.Fantasma(spriteRenderer, new Color(0.7f, 0.5f, 1f, 0.5f), 0.25f);
         }
+    }
+
+    // Piernas: caminar (alternan), saltar (una adelante y otra atrás), esquivar (zancada)
+    void AnimateLegs()
+    {
+        if (legL == null) return;
+
+        float vx = Mathf.Abs(rb.linearVelocity.x);
+        float a = 0f, b = 0f;
+        if (IsDashing) { a = 32f; b = -26f; }
+        else if (IsCrouching) { a = 8f; b = -8f; }
+        else if (!isGrounded)
+        {
+            bool up = rb.linearVelocity.y > 0f;
+            a = up ? 22f : -6f;
+            b = up ? -14f : 12f;
+        }
+        else if (vx > 0.3f)
+        {
+            walkPhase += vx * Time.deltaTime * (Mathf.PI * 2f / largoPaso);
+            float swing = Mathf.Sin(walkPhase) * Mathf.Lerp(12f, 30f, Mathf.Clamp01(vx / moveSpeed));
+            a = swing;
+            b = -swing;
+
+            // Pasos: sonido suave y un poco de polvo cada vez que un pie toca el suelo
+            int step = Mathf.FloorToInt(walkPhase / Mathf.PI);
+            if (step != lastStep)
+            {
+                lastStep = step;
+                AudioManager.Play(Sfx.Paso, 0.35f);
+                if (step % 2 == 0)
+                    Particula.Rafaga((Vector2)transform.position + new Vector2(0f, standOffset.y - standSize.y * 0.5f),
+                        new Color(0.85f, 0.8f, 0.7f, 0.4f), 3, 1.2f, 0.08f, 0.3f);
+            }
+        }
+        else
+        {
+            walkPhase = Mathf.MoveTowards(walkPhase, Mathf.Round(walkPhase / Mathf.PI) * Mathf.PI, Time.deltaTime * 8f);
+        }
+
+        float t = 18f * Time.deltaTime;
+        legL.localRotation = Quaternion.Lerp(legL.localRotation, Quaternion.Euler(0f, 0f, a), t);
+        legR.localRotation = Quaternion.Lerp(legR.localRotation, Quaternion.Euler(0f, 0f, b), t);
     }
 
     void CheckGround()

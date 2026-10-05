@@ -18,7 +18,7 @@ public static class CrearJuego
     const string Scenes = "Assets/Scenes";
     const float G = -4f; // altura del suelo (parte de arriba)
 
-    static Sprite square, circle, ladrillo, tablas, borde, vineta, pagina, vasija, grietas;
+    static Sprite square, circle, ladrillo, tablas, borde, vineta, pagina, vasija, grietas, panelUI, vinetaBlanca;
     static PhysicsMaterial2D noFriction;
     static Font font;
     static readonly Dictionary<Elemento, SpellData> spells = new Dictionary<Elemento, SpellData>();
@@ -84,6 +84,8 @@ public static class CrearJuego
         pagina = EditorHelpers.Pagina();
         vasija = EditorHelpers.Vasija();
         grietas = Grietas();
+        panelUI = PanelUI();
+        vinetaBlanca = VinetaBlanca();
         font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         noFriction = AssetDatabase.LoadAssetAtPath<PhysicsMaterial2D>(Data + "/SinFriccion.physicsMaterial2D");
@@ -503,6 +505,30 @@ public static class CrearJuego
         var efectos = new Object[nombres.Length];
         for (int i = 0; i < nombres.Length; i++) efectos[i] = Audio($"Efectos/{nombres[i]}.wav");
         SetArray(audio, "efectos", efectos);
+
+        // Voces de los personajes (sílabas) y quejidos de Lira
+        var personajes = new (string nombre, string archivo, float volumen)[]
+        {
+            ("Lira", "Lira", 0.55f), ("Sable", "Sable", 0.6f), ("Kaelor", "Kaelor", 0.7f), ("Isolde", "Isolde", 0.6f),
+            ("Threnody", "Threnody", 0.65f), ("Elenora", "Elenora", 0.6f), ("Eco", "Eco", 0.55f)
+        };
+        var soAudio = new SerializedObject(audio);
+        var vocesProp = soAudio.FindProperty("voces");
+        vocesProp.arraySize = personajes.Length;
+        for (int i = 0; i < personajes.Length; i++)
+        {
+            var el = vocesProp.GetArrayElementAtIndex(i);
+            el.FindPropertyRelative("nombre").stringValue = personajes[i].nombre;
+            el.FindPropertyRelative("volumen").floatValue = personajes[i].volumen;
+            var silabas = el.FindPropertyRelative("silabas");
+            silabas.arraySize = 8;
+            for (int k = 0; k < 8; k++)
+                silabas.GetArrayElementAtIndex(k).objectReferenceValue = Audio($"Voces/Voz{personajes[i].archivo}_{k + 1}.wav");
+        }
+        soAudio.ApplyModifiedPropertiesWithoutUndo();
+        SetArray(audio, "liraDano", new Object[] { Audio("Voces/LiraDano_1.wav"), Audio("Voces/LiraDano_2.wav"), Audio("Voces/LiraDano_3.wav") });
+        SetArray(audio, "liraEsfuerzo", new Object[] { Audio("Voces/LiraEsfuerzo_1.wav"), Audio("Voces/LiraEsfuerzo_2.wav") });
+        Set(audio, "liraCaida", Audio("Voces/LiraCaida.wav"));
 
         return SavePrefab(go, Prefabs + "/GameManager.prefab");
     }
@@ -1346,6 +1372,29 @@ public static class CrearJuego
         return layout;
     }
 
+    // Panel oscuro con borde dorado que se estira sin deformar las esquinas
+    static Image Recuadro(string name, Transform parent, Vector2 anchor, Vector2 pos, Vector2 size)
+    {
+        var img = Img(name, parent, anchor, pos, size, panelUI, Color.white);
+        img.type = Image.Type.Sliced;
+        img.preserveAspect = false;
+        img.pixelsPerUnitMultiplier = 1.1f;
+        return img;
+    }
+
+    // Pantalla de logros (menú principal y pausa)
+    static GameObject PanelLogros(Transform parent, bool oscurecer, UnityAction volver, out VerticalLayoutGroup lista, out Button botonVolver)
+    {
+        var c = new Vector2(0.5f, 0.5f);
+        var panel = oscurecer ? Panel(parent, "Logros", new Color(0, 0, 0, 0.75f))
+                              : UI("Logros", parent, c, Vector2.zero, new Vector2(1920, 1080)).gameObject;
+        Recuadro("Fondo", panel.transform, c, new Vector2(0, -15), new Vector2(1440, 930));
+        Txt("Titulo", panel.transform, c, new Vector2(0, 395), new Vector2(800, 80), "LOGROS", 58, TextAnchor.MiddleCenter);
+        lista = Lista(panel.transform, new Vector2(0, 0), new Vector2(1300, 690));
+        botonVolver = Boton(panel.transform, "Volver", new Vector2(0, -415), volver);
+        return panel;
+    }
+
     static void HUD(GameObject lira, string titulo)
     {
         var canvas = NuevoCanvas("HUD", 0);
@@ -1360,13 +1409,21 @@ public static class CrearJuego
         vin.sprite = vineta;
         vin.raycastTarget = false;
 
-        // Retrato de Lira con marco, barras y hechizos equipados
-        var marcoRetrato = LoadSprite(Sprites + "UI/Marco de retrato.png");
-        Img("Retrato", t, tl, new Vector2(38, -36), new Vector2(118, 118), LoadSprite(Sprites + "Characters/Lira.png"), Color.white);
-        Img("MarcoRetrato", t, tl, new Vector2(20, -20), new Vector2(155, 155), marcoRetrato, Color.white);
+        // Orillas rojas al recibir daño
+        var dano = Estirar("Dano", t).gameObject.AddComponent<Image>();
+        dano.sprite = vinetaBlanca;
+        dano.color = new Color(0.85f, 0.05f, 0.1f, 0f);
+        dano.raycastTarget = false;
 
-        var vida = Barra(t, "BarraVida", Sprites + "UI/Barra de vida.png", new Vector2(185, -22), 380, new Color(0.85f, 0.15f, 0.2f));
-        var mana = Barra(t, "BarraMana", Sprites + "UI/Barra de maná.png", new Vector2(185, -82), 380, new Color(0.2f, 0.45f, 1f));
+        // Retrato de Lira: su cara recortada en un círculo, detrás del marco redondo
+        var marcoRetrato = LoadSprite(Sprites + "UI/Marco de retrato.png");
+        var mascara = Img("RetratoMascara", t, tl, new Vector2(58, -44), new Vector2(96, 96), circle, new Color(0.16f, 0.1f, 0.26f, 1f));
+        mascara.gameObject.AddComponent<Mask>().showMaskGraphic = true;
+        Img("Retrato", mascara.transform, c, new Vector2(2, -144), new Vector2(277, 385), LoadSprite(Sprites + "Characters/Lira.png"), Color.white);
+        Img("MarcoRetrato", t, tl, new Vector2(16, -14), new Vector2(176, 167), marcoRetrato, Color.white);
+
+        var vida = Barra(t, "BarraVida", Sprites + "UI/Barra de vida.png", new Vector2(205, -22), 380, new Color(0.85f, 0.15f, 0.2f));
+        var mana = Barra(t, "BarraMana", Sprites + "UI/Barra de maná.png", new Vector2(205, -82), 380, new Color(0.2f, 0.45f, 1f));
 
         var icons = new Image[3];
         var frames = new Image[3];
@@ -1405,11 +1462,11 @@ public static class CrearJuego
         Set(hud, "bossPanel", panel.gameObject);
         Set(hud, "bossFill", bossFill);
         Set(hud, "bossName", bossName);
+        Set(hud, "damageFlash", dano);
 
         // ---- Mensajes ----
-        var msg = UI("Mensaje", t, top, new Vector2(0, -125), new Vector2(1200, 80));
-        msg.gameObject.AddComponent<Image>().color = Oscuro;
-        var msgText = Txt("Texto", msg, c, Vector2.zero, new Vector2(1180, 76), "", 34, TextAnchor.MiddleCenter);
+        var msg = Recuadro("Mensaje", t, top, new Vector2(0, -125), new Vector2(1250, 96)).rectTransform;
+        var msgText = Txt("Texto", msg, c, Vector2.zero, new Vector2(1150, 80), "", 32, TextAnchor.MiddleCenter);
         var msgGroup = msg.gameObject.AddComponent<CanvasGroup>();
 
         var title = UI("Titulo", t, c, new Vector2(0, 170), new Vector2(1400, 140));
@@ -1419,11 +1476,10 @@ public static class CrearJuego
         var prompt = Txt("Aviso", t, new Vector2(0.5f, 0f), new Vector2(0, 330), new Vector2(1100, 60), "", 38, TextAnchor.MiddleCenter);
 
         // ---- Diálogo ----
-        var dlg = UI("Dialogo", t, new Vector2(0.5f, 0f), new Vector2(0, 30), new Vector2(1700, 290));
-        dlg.gameObject.AddComponent<Image>().color = Oscuro;
-        var retrato = Img("Retrato", dlg, new Vector2(0, 0.5f), new Vector2(35, 0), new Vector2(200, 235), null, Color.white);
+        var dlg = Recuadro("Dialogo", t, new Vector2(0.5f, 0f), new Vector2(0, 30), new Vector2(1700, 300)).rectTransform;
+        Img("FondoRetrato", dlg, new Vector2(0, 0.5f), new Vector2(28, 0), new Vector2(230, 250), square, new Color(0.16f, 0.1f, 0.26f, 0.9f));
+        var retrato = Img("Retrato", dlg, new Vector2(0, 0.5f), new Vector2(36, 0), new Vector2(214, 236), null, Color.white);
         retrato.preserveAspect = true;
-        Img("Marco", dlg, new Vector2(0, 0.5f), new Vector2(15, 0), new Vector2(245, 265), marcoRetrato, Color.white);
         var dlgName = Txt("Nombre", dlg, tl, new Vector2(290, -18), new Vector2(1000, 52), "", 42, TextAnchor.MiddleLeft);
         var dlgBody = Txt("Texto", dlg, tl, new Vector2(290, -78), new Vector2(1370, 170), "", 38, TextAnchor.UpperLeft);
         dlgBody.color = Color.white;
@@ -1442,11 +1498,7 @@ public static class CrearJuego
 
         var controles = PanelControles(t, true, ui.BotonVolverPausa, out var volverControles);
 
-        var logros = Panel(t, "Logros", new Color(0, 0, 0, 0.75f));
-        Img("Marco", logros.transform, c, new Vector2(0, -10), new Vector2(1150, 1000), marcoMenu, Color.white);
-        Txt("Titulo", logros.transform, c, new Vector2(0, 430), new Vector2(800, 80), "LOGROS", 60, TextAnchor.MiddleCenter);
-        var lista = Lista(logros.transform, new Vector2(0, 40), new Vector2(900, 680));
-        var volver = Boton(logros.transform, "Volver", new Vector2(0, -400), ui.BotonVolverPausa);
+        var logros = PanelLogros(t, true, ui.BotonVolverPausa, out var lista, out var volver);
 
         // ---- Game Over ----
         var over = Panel(t, "GameOver", new Color(0.25f, 0f, 0.05f, 0.7f));
@@ -1455,11 +1507,10 @@ public static class CrearJuego
         Boton(over.transform, "Menú principal", new Vector2(0, -95), ui.BotonMenu);
 
         // ---- Aviso de logro ----
-        var toast = UI("AvisoLogro", t, new Vector2(1, 0), new Vector2(-24, 24), new Vector2(480, 120));
-        toast.gameObject.AddComponent<Image>().color = Oscuro;
-        var toastIcon = Img("Icono", toast, new Vector2(0, 0.5f), new Vector2(12, 0), new Vector2(96, 96), null, Color.white);
+        var toast = Recuadro("AvisoLogro", t, new Vector2(1, 0), new Vector2(-24, 24), new Vector2(500, 130)).rectTransform;
+        var toastIcon = Img("Icono", toast, new Vector2(0, 0.5f), new Vector2(18, 0), new Vector2(96, 96), null, Color.white);
         toastIcon.preserveAspect = true;
-        var toastText = Txt("Texto", toast, new Vector2(0, 0.5f), new Vector2(120, 0), new Vector2(350, 100), "", 28, TextAnchor.MiddleLeft);
+        var toastText = Txt("Texto", toast, new Vector2(0, 0.5f), new Vector2(126, 0), new Vector2(350, 100), "", 27, TextAnchor.MiddleLeft);
         var toastGroup = toast.gameObject.AddComponent<CanvasGroup>();
 
         Set(ui, "font", font);
@@ -1512,13 +1563,13 @@ public static class CrearJuego
         var panel = oscurecer ? Panel(parent, "Controles", new Color(0, 0, 0, 0.75f))
                               : UI("Controles", parent, c, Vector2.zero, new Vector2(1920, 1080)).gameObject;
         var t = panel.transform;
-        Img("Marco", t, c, new Vector2(0, -10), new Vector2(1150, 1000), LoadSprite(Sprites + "UI/Marco de menú.png"), Color.white);
-        Txt("Titulo", t, c, new Vector2(0, 410), new Vector2(800, 80), "CONTROLES", 60, TextAnchor.MiddleCenter);
+        Recuadro("Fondo", t, c, new Vector2(0, -15), new Vector2(1440, 930));
+        Txt("Titulo", t, c, new Vector2(0, 395), new Vector2(800, 80), "CONTROLES", 58, TextAnchor.MiddleCenter);
 
         var filas = new (string accion, string teclado, string control)[]
         {
             ("<b>Acción</b>", "<b>Teclado</b>", "<b>Control PS4</b>"),
-            ("Moverse", "A / D o flechas", "Stick / cruceta"),
+            ("Moverse", "A / D o flechas", "Stick o cruceta"),
             ("Saltar (mantén = más alto)", "Espacio o W", "X"),
             ("Agacharse", "S o flecha abajo", "Stick abajo"),
             ("Lanzar hechizo", "J o clic", "Cuadrado"),
@@ -1531,16 +1582,18 @@ public static class CrearJuego
         };
         for (int i = 0; i < filas.Length; i++)
         {
-            float y = 320 - i * 50;
-            Txt("Accion", t, c, new Vector2(-235, y), new Vector2(430, 48), filas[i].accion, 29, TextAnchor.MiddleLeft).rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            Txt("Teclado", t, c, new Vector2(115, y), new Vector2(260, 48), filas[i].teclado, 29, TextAnchor.MiddleLeft).color = Color.white;
-            Txt("Control", t, c, new Vector2(350, y), new Vector2(210, 48), filas[i].control, 29, TextAnchor.MiddleLeft).color = Color.white;
+            float y = 305 - i * 54;
+            if (i > 0 && i % 2 == 0)
+                Img("Franja", t, c, new Vector2(0, y), new Vector2(1320, 50), square, new Color(1f, 1f, 1f, 0.05f));
+            Txt("Accion", t, c, new Vector2(-370, y), new Vector2(560, 50), filas[i].accion, 32, TextAnchor.MiddleLeft);
+            Txt("Teclado", t, c, new Vector2(150, y), new Vector2(420, 50), filas[i].teclado, 32, TextAnchor.MiddleLeft).color = Color.white;
+            Txt("Control", t, c, new Vector2(510, y), new Vector2(300, 50), filas[i].control, 32, TextAnchor.MiddleLeft).color = Color.white;
         }
-        Txt("Consejos", t, c, new Vector2(0, -290), new Vector2(900, 130),
+        Txt("Consejos", t, c, new Vector2(0, -322), new Vector2(1300, 90),
             "Combos: lanza dos elementos distintos seguidos (menos de 1 segundo entre uno y otro).\n" +
             "Rompe vasijas y muros agrietados con tus hechizos: esconden objetos y Páginas Perdidas.",
-            25, TextAnchor.MiddleCenter);
-        botonVolver = Boton(t, "Volver", new Vector2(0, -400), volver);
+            27, TextAnchor.MiddleCenter);
+        botonVolver = Boton(t, "Volver", new Vector2(0, -415), volver);
         return panel;
     }
 
@@ -1585,15 +1638,11 @@ public static class CrearJuego
         Txt("Ayuda", main, new Vector2(0.5f, 0f), new Vector2(0, 30), new Vector2(1400, 40),
             "Teclado o control de PS4 / Xbox", 24, TextAnchor.MiddleCenter);
 
-        var logros = UI("Logros", t, c, Vector2.zero, new Vector2(1920, 1080));
-        Img("Marco", logros, c, new Vector2(0, -20), new Vector2(1150, 1000), marco, Color.white);
-        Txt("Titulo", logros, c, new Vector2(0, 430), new Vector2(800, 80), "LOGROS", 60, TextAnchor.MiddleCenter);
-        var lista = Lista(logros, new Vector2(0, 40), new Vector2(900, 680));
-        var volver = Boton(logros, "Volver", new Vector2(0, -400), menu.ShowMain);
+        var logros = PanelLogros(t, false, menu.ShowMain, out var lista, out var volver);
 
         Set(menu, "continueButton", cont);
         Set(menu, "mainPanel", main.gameObject);
-        Set(menu, "achievementsPanel", logros.gameObject);
+        Set(menu, "achievementsPanel", logros);
         Set(menu, "achievementsList", lista.transform);
         Set(menu, "font", font);
         Set(menu, "firstButton", nueva.gameObject);

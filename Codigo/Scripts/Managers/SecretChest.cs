@@ -59,7 +59,7 @@ public class SecretChest : MonoBehaviour
         var sr = GetComponentInChildren<SpriteRenderer>();
         if (sr != null) sr.color = new Color(1f, 1f, 1f, 0.5f);
         if (player == null) return;
-        var playerSr = player.GetComponentInChildren<SpriteRenderer>();
-        if (playerSr != null) playerSr.color = capeTint;
+        var pc = player.GetComponent<PlayerController>();
+        if (pc != null) pc.Tint(capeTint);
     }
 }

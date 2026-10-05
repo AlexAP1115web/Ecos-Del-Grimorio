@@ -41,8 +41,7 @@ public class PlayerUpgrades : MonoBehaviour
         // Mejora cosmética del cofre secreto
         if (GameManager.Instance.HasCollectible("Capa dorada"))
         {
-            var sr = GetComponentInChildren<SpriteRenderer>();
-            if (sr != null) sr.color = new Color(1f, 0.92f, 0.7f);
+            if (controller != null) controller.Tint(new Color(1f, 0.92f, 0.7f));
         }
     }
 

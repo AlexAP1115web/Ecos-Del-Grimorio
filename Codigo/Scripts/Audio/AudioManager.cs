@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -8,12 +9,24 @@ public enum Sfx
     Arcano, Fuego, Hielo, Viento, Combo,
     GolpeEnemigo, MuerteEnemigo, DanoLira,
     Objeto, ObjetoEspecial, Pagina, Checkpoint, Cofre, Romper,
-    MenuMover, MenuAceptar, Logro, Portal, GameOver, JefeAparece
+    MenuMover, MenuAceptar, Logro, Portal, GameOver, JefeAparece, Paso
+}
+
+public enum VozLira { Dano, Esfuerzo, Caida }
+
+// Voz de un personaje: sílabas cortas que suenan mientras aparece su texto en los diálogos
+[Serializable]
+public class VozPersonaje
+{
+    public string nombre;
+    public AudioClip[] silabas = new AudioClip[0];
+    [Range(0f, 1f)] public float volumen = 0.6f;
 }
 
 // Música y efectos de sonido. Vive en el prefab del GameManager, así que pasa de una
 // escena a otra sin cortarse. Cada escena tiene su tema; al activarse un jefe cambia
 // a la música de combate y al derrotarlo regresa la del nivel (con un fundido).
+// También tiene las voces de los personajes y los quejidos de Lira.
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
@@ -29,6 +42,14 @@ public class AudioManager : MonoBehaviour
     [Header("Efectos (en el orden del enum Sfx)")]
     [SerializeField] private AudioClip[] efectos = new AudioClip[0];
 
+    [Header("Voces")]
+    [Tooltip("El orden importa: se busca el primer nombre que aparezca en el nombre de quien habla")]
+    [SerializeField] private VozPersonaje[] voces = new VozPersonaje[0];
+    [SerializeField] private AudioClip[] liraDano = new AudioClip[0];
+    [SerializeField] private AudioClip[] liraEsfuerzo = new AudioClip[0];
+    [SerializeField] private AudioClip liraCaida;
+    [Range(0f, 1f)] [SerializeField] private float volumenVoces = 0.85f;
+
     [Header("Volumen")]
     [Range(0f, 1f)] [SerializeField] private float volumenMusica = 0.5f;
     [Range(0f, 1f)] [SerializeField] private float volumenEfectos = 0.8f;
@@ -42,6 +63,8 @@ public class AudioManager : MonoBehaviour
     private float duck = 1f, duckObjetivo = 1f;
     private Coroutine fundidoActual;
     private readonly float[] ultimoSonido = new float[32];
+    private AudioSource voz;
+    private float ultimaQueja;
 
     public float VolumenMusica
     {
@@ -79,6 +102,13 @@ public class AudioManager : MonoBehaviour
             canales[i].playOnAwake = false;
             canales[i].ignoreListenerPause = true;
         }
+
+        voz = gameObject.AddComponent<AudioSource>();
+        voz.playOnAwake = false;
+        voz.ignoreListenerPause = true;
+
+        // Sin un AudioListener no se escucha nada: el AudioManager lleva el suyo
+        gameObject.AddComponent<AudioListener>();
 
         SceneManager.sceneLoaded += OnSceneLoaded;
         BossController.BossActivated += OnBossActivated;
@@ -121,6 +151,13 @@ public class AudioManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        // Solo debe haber un AudioListener: se quitan los de las cámaras
+        foreach (var cam in Camera.allCameras)
+        {
+            var l = cam.GetComponent<AudioListener>();
+            if (l != null) Destroy(l);
+        }
+
         AudioClip clip = musicaMenu;
         string n = scene.name;
         if (n == GameManager.CreditsScene) clip = musicaCreditos;
@@ -180,6 +217,62 @@ public class AudioManager : MonoBehaviour
         fundidoActual = null;
     }
 
+    // ---------- Voces ----------
+
+    // Una sílaba de la voz de quien habla (se llama mientras se escribe el diálogo)
+    public static void Hablar(string personaje, float tono = 1f)
+    {
+        if (Instance != null) Instance.HablarInternal(personaje, tono);
+    }
+
+    void HablarInternal(string personaje, float tono)
+    {
+        var v = BuscarVoz(personaje);
+        if (v == null || v.silabas == null || v.silabas.Length == 0) return;
+        var clip = v.silabas[UnityEngine.Random.Range(0, v.silabas.Length)];
+        if (clip == null) return;
+        voz.pitch = tono * UnityEngine.Random.Range(0.96f, 1.05f);
+        voz.PlayOneShot(clip, v.volumen * volumenVoces);
+    }
+
+    VozPersonaje BuscarVoz(string personaje)
+    {
+        if (string.IsNullOrEmpty(personaje) || voces == null) return null;
+        foreach (var v in voces)
+            if (v != null && string.Equals(v.nombre, personaje, StringComparison.OrdinalIgnoreCase)) return v;
+        foreach (var v in voces)
+            if (v != null && !string.IsNullOrEmpty(v.nombre) && personaje.IndexOf(v.nombre, StringComparison.OrdinalIgnoreCase) >= 0) return v;
+        return null;
+    }
+
+    public static void Lira(VozLira tipo)
+    {
+        if (Instance != null) Instance.LiraInternal(tipo);
+    }
+
+    void LiraInternal(VozLira tipo)
+    {
+        AudioClip clip = null;
+        switch (tipo)
+        {
+            case VozLira.Dano:
+                if (Time.unscaledTime - ultimaQueja < 0.5f) return;
+                if (liraDano.Length > 0) clip = liraDano[UnityEngine.Random.Range(0, liraDano.Length)];
+                break;
+            case VozLira.Esfuerzo:
+                if (Time.unscaledTime - ultimaQueja < 0.8f) return;
+                if (liraEsfuerzo.Length > 0) clip = liraEsfuerzo[UnityEngine.Random.Range(0, liraEsfuerzo.Length)];
+                break;
+            case VozLira.Caida:
+                clip = liraCaida;
+                break;
+        }
+        if (clip == null) return;
+        ultimaQueja = Time.unscaledTime;
+        voz.pitch = UnityEngine.Random.Range(0.97f, 1.04f);
+        voz.PlayOneShot(clip, volumenVoces);
+    }
+
     // ---------- Efectos ----------
 
     // Se puede llamar desde cualquier script aunque no haya AudioManager en la escena
@@ -202,7 +295,7 @@ public class AudioManager : MonoBehaviour
 
         var src = canales[siguienteCanal];
         siguienteCanal = (siguienteCanal + 1) % canales.Length;
-        src.pitch = pitch * Random.Range(0.95f, 1.05f);
+        src.pitch = pitch * UnityEngine.Random.Range(0.95f, 1.05f);
         src.PlayOneShot(efectos[i], volume * volumenEfectos);
     }
 }

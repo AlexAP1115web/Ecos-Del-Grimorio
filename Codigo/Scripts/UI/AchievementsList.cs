@@ -12,6 +12,10 @@ public static class AchievementsList
 
         foreach (Transform child in list) Object.Destroy(child.gameObject);
 
+        // Las filas usan el ancho de la lista para que el texto no se salga del marco
+        float width = ((RectTransform)list).rect.width;
+        if (width < 100f) width = 900f;
+
         foreach (var logro in am.Logros)
         {
             bool got = am.IsUnlocked(logro.tipo);
@@ -23,7 +27,7 @@ public static class AchievementsList
             layout.childControlWidth = false;
             layout.childControlHeight = false;
             layout.childAlignment = TextAnchor.MiddleLeft;
-            row.GetComponent<RectTransform>().sizeDelta = new Vector2(900, 64);
+            row.GetComponent<RectTransform>().sizeDelta = new Vector2(width, 64);
 
             var iconGo = new GameObject("Icono", typeof(RectTransform));
             iconGo.transform.SetParent(row.transform, false);
@@ -35,10 +39,12 @@ public static class AchievementsList
 
             var textGo = new GameObject("Texto", typeof(RectTransform));
             textGo.transform.SetParent(row.transform, false);
-            textGo.GetComponent<RectTransform>().sizeDelta = new Vector2(820, 60);
+            textGo.GetComponent<RectTransform>().sizeDelta = new Vector2(width - 76, 62);
             var text = textGo.AddComponent<Text>();
             text.font = font;
-            text.fontSize = 22;
+            text.fontSize = 24;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
             text.alignment = TextAnchor.MiddleLeft;
             text.color = got ? new Color(1f, 0.9f, 0.6f) : new Color(0.7f, 0.7f, 0.7f);
             text.text = $"<b>{logro.nombre}</b>  {(got ? "(obtenido)" : "")}\n{logro.condicion}";

@@ -35,6 +35,7 @@ public class Health : MonoBehaviour, IDamageable
     private int hitsTaken;
     private float invulnerableUntil;
     private SpriteRenderer spriteRenderer;
+    private SpriteRenderer[] blinkRenderers;
 
     public float CurrentHealth => currentHealth;
     public float MaxHealth => maxHealth;
@@ -57,16 +58,20 @@ public class Health : MonoBehaviour, IDamageable
 
     void Start()
     {
+        // Lira está hecha de varias partes (cuerpo y piernas): parpadean todas
+        if (invulnerableTime > 0f) blinkRenderers = GetComponentsInChildren<SpriteRenderer>();
         OnHealthChanged.Invoke(Percent);
     }
 
     void Update()
     {
         // Parpadeo mientras es invulnerable
-        if (spriteRenderer != null && invulnerableTime > 0f)
+        if (blinkRenderers != null && invulnerableTime > 0f)
         {
             bool blinking = Time.time < invulnerableUntil;
-            spriteRenderer.enabled = !blinking || Mathf.FloorToInt(Time.time * 15f) % 2 == 0;
+            bool visible = !blinking || Mathf.FloorToInt(Time.time * 15f) % 2 == 0;
+            foreach (var r in blinkRenderers)
+                if (r != null && r.gameObject.name != "Sombra") r.enabled = visible;
         }
     }
 

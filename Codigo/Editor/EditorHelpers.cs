@@ -306,6 +306,50 @@ public static class EditorHelpers
             : new Color(0, 0, 0, 0), w, h, 32);
     }
 
+    // Viñeta blanca (se pinta de rojo para el destello de daño)
+    public static Sprite VinetaBlanca() => TiledTexture("VinetaBlanca", (x, y) =>
+    {
+        float dx = (x - 127.5f) / 128f, dy = (y - 127.5f) / 128f;
+        float d = Mathf.Sqrt(dx * dx + dy * dy);
+        return new Color(1, 1, 1, Mathf.Clamp01((d - 0.5f) * 1.8f));
+    }, 256, 256, 100);
+
+    // Panel oscuro con borde dorado y gemas en las esquinas. Es un sprite de 9 partes
+    // (sliced): las esquinas no se deforman aunque el panel sea muy ancho.
+    public static Sprite PanelUI()
+    {
+        const int S = 128, B = 44;
+        var sprite = TiledTexture("PanelUI", (x, y) =>
+        {
+            int ex = Mathf.Min(x, S - 1 - x), ey = Mathf.Min(y, S - 1 - y);
+            // esquinas redondeadas
+            float rx = Mathf.Max(0, 10 - ex), ry = Mathf.Max(0, 10 - ey);
+            if (rx * rx + ry * ry > 100) return new Color(0, 0, 0, 0);
+            int e = Mathf.Min(ex, ey);
+            var fondo = new Color(0.07f, 0.04f, 0.13f, 0.94f);
+            var oro = new Color(0.93f, 0.76f, 0.38f, 1f);
+            var oroOscuro = new Color(0.55f, 0.4f, 0.18f, 1f);
+            // gema en cada esquina
+            float gx = Mathf.Abs(ex - 20), gy = Mathf.Abs(ey - 20);
+            if (gx + gy <= 9) return gx + gy >= 7.5f ? oro : new Color(0.62f, 0.32f, 0.95f, 1f) * (1.1f - (gx + gy) / 14f);
+            if (e < 2) return oroOscuro;
+            if (e < 6) return Color.Lerp(oro, oroOscuro, Mathf.Abs(e - 3.5f) / 2.5f);
+            if (e == 11 || e == 12) return new Color(oro.r, oro.g, oro.b, 0.8f);
+            return fondo;
+        }, S, S, 100);
+
+        string path = $"{Sprites}Generados/PanelUI.png";
+        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        if (importer.spriteBorder != new Vector4(B, B, B, B))
+        {
+            importer.spriteBorder = new Vector4(B, B, B, B);
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.SaveAndReimport();
+            sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+        return sprite;
+    }
+
     // Luz 2D de URP agregada desde el editor (tipo: 3 = puntual, 4 = global)
     public static Component Light(GameObject go, int type, Color color, float intensity, float radius = 0f)
     {

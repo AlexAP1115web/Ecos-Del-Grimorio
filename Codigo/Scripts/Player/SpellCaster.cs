@@ -302,6 +302,7 @@ public class SpellCaster : MonoBehaviour
         CameraFollow.Shake(0.15f, 0.2f);
         Controles.Vibrar(0.3f, 0.6f, 0.15f);
         AudioManager.Play(Sfx.Combo);
+        AudioManager.Lira(VozLira.Esfuerzo);
         ComboCast?.Invoke(combo);
     }
 

@@ -68,6 +68,8 @@ public class UIManager : MonoBehaviour
     private string defaultSpeaker;
     private Sprite defaultPortrait;
     private string currentText = "";
+    private string currentSpeaker = "";
+    private float nextVoiceTime;
     private PlayerController playerController;
     private SpellCaster playerCaster;
 
@@ -240,6 +242,7 @@ public class UIManager : MonoBehaviour
         }
 
         dialogueName.text = speaker;
+        currentSpeaker = speaker;
         dialoguePortrait.sprite = portrait;
         dialoguePortrait.enabled = portrait != null;
         visibleChars = 0;
@@ -257,6 +260,14 @@ public class UIManager : MonoBehaviour
         {
             typeTimer -= 1f;
             visibleChars++;
+
+            // Voz del personaje: una sílaba cada pocas letras
+            char ch = line[visibleChars - 1];
+            if (char.IsLetter(ch) && Time.unscaledTime >= nextVoiceTime)
+            {
+                AudioManager.Hablar(currentSpeaker);
+                nextVoiceTime = Time.unscaledTime + 0.09f;
+            }
         }
         dialogueBody.text = line.Substring(0, visibleChars);
 

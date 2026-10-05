@@ -18,12 +18,17 @@ public class HUD : MonoBehaviour
     [SerializeField] private Image[] slotIcons = new Image[3];
     [SerializeField] private Image[] slotFrames = new Image[3];
 
+    [Header("Daño")]
+    [Tooltip("Orillas rojas de la pantalla: destellan al recibir daño y laten con poca vida")]
+    [SerializeField] private Image damageFlash;
+
     [Header("Jefe")]
     [SerializeField] private GameObject bossPanel;
     [SerializeField] private Image bossFill;
     [SerializeField] private Text bossName;
 
     private Health bossHealth;
+    private float flash;
 
     void Start()
     {
@@ -40,6 +45,7 @@ public class HUD : MonoBehaviour
         if (playerHealth != null)
         {
             playerHealth.OnHealthChanged.AddListener(SetHealth);
+            playerHealth.Damaged += _ => flash = 1f;
             SetHealth(playerHealth.Percent);
         }
         if (playerCaster != null)
@@ -60,6 +66,7 @@ public class HUD : MonoBehaviour
     void Update()
     {
         UpdateSlots();
+        UpdateDamageFlash();
 
         if (fragmentsText != null)
         {
@@ -93,6 +100,16 @@ public class HUD : MonoBehaviour
                     ? new Color(1f, 0.85f, 0.3f, 1f)
                     : new Color(0f, 0f, 0f, 0.5f);
         }
+    }
+
+    void UpdateDamageFlash()
+    {
+        if (damageFlash == null || playerHealth == null) return;
+        flash = Mathf.MoveTowards(flash, 0f, Time.unscaledDeltaTime * 2.5f);
+        float low = !playerHealth.IsDead && playerHealth.Percent < 0.3f
+            ? 0.22f + 0.12f * Mathf.Sin(Time.unscaledTime * 6f) : 0f;
+        float alpha = Mathf.Max(flash * 0.6f, low);
+        damageFlash.color = new Color(0.85f, 0.05f, 0.1f, alpha);
     }
 
     void ShowBoss(BossController boss)

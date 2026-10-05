@@ -31,9 +31,9 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 | `Arte/Armas` | Armas de los enemigos |
 | `Arte/Logros` | Los diez logros |
 | `Arte/Bocetos` | Bocetos a lápiz |
-| `Arte/Audio` | Música de cada ala, jefes, menú y créditos, y efectos de sonido |
+| `Arte/Audio` | Música de cada ala, jefes, menú y créditos, voces de los personajes y efectos de sonido |
 | `Codigo` | Scripts C# del juego (copia de `Assets/Scripts` y `Assets/Editor`) |
-| `Codigo/Herramientas/Audio` | Scripts de Python con los que se sintetizan la música y los efectos |
+| `Codigo/Herramientas/Audio` | Scripts de Python con los que se sintetizan la música, las voces y los efectos |
 | `Evidencias` | Capturas del avance en Unity |
 | `BITACORA.md` | Registro de avances por fecha |
 

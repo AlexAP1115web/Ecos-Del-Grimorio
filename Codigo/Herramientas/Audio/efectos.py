@@ -220,6 +220,13 @@ def jefe_aparece():
     return efecto(mezclar(golpe, retumbe, acorde_ * 0.8), 0.4)
 
 
+def paso():
+    n = int(0.07 * SR)
+    t = t_(0.07)
+    y = lp(ruido(n), 900) * np.exp(-t * 60) + np.sin(2 * np.pi * 110 * t) * np.exp(-t * 50) * 0.6
+    return efecto(y, 0.0) * 0.5
+
+
 EFECTOS = [
     ('Salto', salto), ('Aterrizaje', aterrizaje), ('Esquive', esquive),
     ('Arcano', arcano), ('Fuego', fuego), ('Hielo', hielo), ('Viento', viento), ('Combo', combo),
@@ -227,6 +234,7 @@ EFECTOS = [
     ('Objeto', objeto), ('ObjetoEspecial', objeto_especial), ('Pagina', pagina), ('Checkpoint', checkpoint),
     ('Cofre', cofre), ('Romper', romper), ('MenuMover', menu_mover), ('MenuAceptar', menu_aceptar),
     ('Logro', logro), ('Portal', portal), ('GameOver', game_over), ('JefeAparece', jefe_aparece),
+    ('Paso', paso),
 ]
 
 if __name__ == '__main__':
