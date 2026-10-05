@@ -102,9 +102,13 @@ public static class EditorHelpers
 
     // Algunos archivos de arte traen espacios especiales o acentos con otra codificación
     // en el nombre; si no se encuentra la ruta exacta se busca el archivo equivalente.
-    static string Normalize(string s) =>
-        string.Join(" ", s.Normalize(System.Text.NormalizationForm.FormC).Replace('\u00a0', ' ')
-            .Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries)).ToLowerInvariant();
+    static string Normalize(string s)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (char ch in s.Normalize(System.Text.NormalizationForm.FormC))
+            sb.Append(char.IsWhiteSpace(ch) || char.GetUnicodeCategory(ch) == System.Globalization.UnicodeCategory.SpaceSeparator ? ' ' : ch);
+        return string.Join(" ", sb.ToString().Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries)).ToLowerInvariant();
+    }
 
     public static string ResolvePath(string path)
     {

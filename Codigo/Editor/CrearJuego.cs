@@ -609,9 +609,10 @@ public static class CrearJuego
         // Capa media: columnas de piedra o nubes que se mueven a media velocidad
         if (t.pilares)
         {
-            for (float x = minX; x <= maxX + 10f; x += 9f)
+            // Columnas delgadas y oscuras para que no tapen el fondo
+            for (float x = minX + 4f; x <= maxX + 10f; x += 15f)
             {
-                var col = Tiled(n.deco, "Columna", new Vector2(x, G + 4f), new Vector2(1.6f, 20f), ladrillo, t.pilar, -50);
+                var col = Tiled(n.deco, "Columna", new Vector2(x, G + 4f), new Vector2(0.9f, 20f), ladrillo, t.pilar * new Color(0.7f, 0.7f, 0.7f, 0.75f), -50);
                 var px = col.AddComponent<Parallax>();
                 Set(px, "factor", 0.45f);
                 Set(px, "factorVertical", 0.2f);
