@@ -2025,7 +2025,7 @@ public static class CrearJuego
         var vin = Estirar("Vineta", t).gameObject.AddComponent<Image>();
         vin.sprite = vineta;
 
-        var texto = Txt("Texto", t, new Vector2(0.5f, 0f), new Vector2(0, -900), new Vector2(1400, 1800), "", 40, TextAnchor.UpperCenter);
+        var texto = Txt("Texto", t, new Vector2(0.5f, 0f), new Vector2(0, 160), new Vector2(1400, 1800), "", 40, TextAnchor.UpperCenter);
         texto.rectTransform.pivot = new Vector2(0.5f, 1f);
 
         var credits = canvas.gameObject.AddComponent<CreditsScreen>();

@@ -101,6 +101,8 @@
   - El Modo Archimaga ya no se reinicia si se presiona otra tecla mientras se escribe el código; en el control funciona con L1 + R1 + Triángulo en cualquier orden.
   - Voces más suaves.
 
+- Créditos corregidos: el texto empezaba fuera de la pantalla y tardaba como 15 segundos en aparecer; ahora se ve desde el inicio y al terminar regresa solo al menú.
+
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
 - Subir capturas a `Evidencias`.

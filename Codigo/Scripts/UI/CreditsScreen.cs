@@ -8,10 +8,11 @@ public class CreditsScreen : MonoBehaviour
 {
     [SerializeField] private RectTransform scrollingText;
     [SerializeField] private Text textComponent;
-    [SerializeField] private float scrollSpeed = 60f;
+    [SerializeField] private float scrollSpeed = 70f;
     [SerializeField] private float endY = 2400f;
 
     private float inicio;
+    private float terminoEn = -1f;
 
     void Start()
     {
@@ -46,10 +47,35 @@ public class CreditsScreen : MonoBehaviour
         }
     }
 
+    void LateUpdate()
+    {
+        // El texto empieza justo en la parte de abajo de la pantalla para que se vea desde el principio
+        if (!colocado && scrollingText != null)
+        {
+            colocado = true;
+            scrollingText.anchoredPosition = new Vector2(scrollingText.anchoredPosition.x, 160f);
+            if (textComponent != null) endY = Mathf.Max(endY, textComponent.preferredHeight + 1150f);
+        }
+    }
+
+    private bool colocado;
+
     void Update()
     {
-        if (scrollingText != null && scrollingText.anchoredPosition.y < endY)
-            scrollingText.anchoredPosition += Vector2.up * scrollSpeed * Time.deltaTime;
+        if (scrollingText != null && colocado)
+        {
+            if (scrollingText.anchoredPosition.y < endY)
+                scrollingText.anchoredPosition += Vector2.up * scrollSpeed * Time.unscaledDeltaTime;
+            else if (terminoEn < 0f)
+                terminoEn = Time.unscaledTime;
+        }
+
+        // Al terminar los créditos regresa solo al menú
+        if (terminoEn > 0f && Time.unscaledTime - terminoEn > 3f)
+        {
+            SceneManager.LoadScene(GameManager.MenuScene);
+            return;
+        }
 
         // Los primeros segundos no se pueden saltar (para no perderse el final por presionar X)
         if (Time.unscaledTime - inicio > 3f && (Controles.AceptarPresionado || Controles.PausaPresionado))
