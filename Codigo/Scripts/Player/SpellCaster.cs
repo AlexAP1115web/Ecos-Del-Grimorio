@@ -3,13 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.InputSystem;
 
 // Maná, hechizos equipados y combos elementales.
 // Según la mecánica del documento, Lira equipa hasta 3 hechizos:
 //   1, 2, 3 -> lanza el hechizo del espacio 1, 2 o 3
-//   J o clic izquierdo -> repite el espacio seleccionado
-//   Q -> cambia el hechizo del espacio seleccionado por otro desbloqueado que no esté equipado
+//   J / clic / Cuadrado -> lanza el espacio seleccionado (L1 y R1 cambian de espacio)
+//   Q / R2 -> cambia el hechizo del espacio seleccionado por otro desbloqueado
+//   Mantener arriba -> lanza en diagonal hacia arriba
 // Si se lanzan dos elementos distintos seguidos (dentro de comboWindow) se forma un combo.
 public class SpellCaster : MonoBehaviour
 {
@@ -24,7 +24,7 @@ public class SpellCaster : MonoBehaviour
     [SerializeField] private Vector2 castOffset = new Vector2(0.8f, 0.3f);
 
     [Header("Combos")]
-    [SerializeField] private float comboWindow = 0.6f;
+    [SerializeField] private float comboWindow = 0.9f;
     [SerializeField] private float comboManaCost = 15f;
     [Tooltip("Arte de los combos en el orden: Explosión Arcana, Vapor Cegador, Granizo Cortante, Tormenta de Ascuas")]
     [SerializeField] private Sprite[] comboSprites = new Sprite[4];
@@ -45,6 +45,7 @@ public class SpellCaster : MonoBehaviour
     private float lastCastTime = -10f;
     private bool archmageMode;
     private PlayerController controller;
+    private bool inputEnabled = true;
 
     public float CurrentMana => currentMana;
     public float ManaPercent => currentMana / maxMana;
@@ -89,16 +90,16 @@ public class SpellCaster : MonoBehaviour
             OnManaChanged.Invoke(ManaPercent);
         }
 
-        var kb = Keyboard.current;
-        if (kb == null) return;
+        if (!inputEnabled) return;
 
-        if (kb.digit1Key.wasPressedThisFrame) CastSlot(0);
-        else if (kb.digit2Key.wasPressedThisFrame) CastSlot(1);
-        else if (kb.digit3Key.wasPressedThisFrame) CastSlot(2);
-        else if (kb.jKey.wasPressedThisFrame || (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame))
-            CastSlot(selectedSlot);
+        if (Controles.EspacioPresionado(0)) CastSlot(0);
+        else if (Controles.EspacioPresionado(1)) CastSlot(1);
+        else if (Controles.EspacioPresionado(2)) CastSlot(2);
+        else if (Controles.LanzarPresionado) CastSlot(selectedSlot);
 
-        if (kb.qKey.wasPressedThisFrame) SwapSelectedSlot();
+        if (Controles.SiguienteEspacio && equipped.Count > 0) selectedSlot = (selectedSlot + 1) % equipped.Count;
+        if (Controles.AnteriorEspacio && equipped.Count > 0) selectedSlot = (selectedSlot + equipped.Count - 1) % equipped.Count;
+        if (Controles.CambiarHechizo) SwapSelectedSlot();
     }
 
     public void CastSlot(int slot)
@@ -155,6 +156,8 @@ public class SpellCaster : MonoBehaviour
     {
         damageMultiplier[element] = multiplier;
     }
+
+    public void SetInputEnabled(bool enabled) => inputEnabled = enabled;
 
     public void SetArchmageMode(bool active)
     {
@@ -221,6 +224,9 @@ public class SpellCaster : MonoBehaviour
 
     Vector2 Facing => controller == null || controller.FacingRight ? Vector2.right : Vector2.left;
 
+    // Dirección de disparo: al frente, o en diagonal hacia arriba si se mantiene arriba
+    Vector2 AimDirection => Controles.Arriba ? new Vector2(Facing.x, 1f).normalized : Facing;
+
     Vector2 CastPoint => (Vector2)transform.position + new Vector2(castOffset.x * Facing.x, castOffset.y);
 
     void FireProjectile(SpellData spell, float damage, bool pierce, float speedMultiplier)
@@ -228,7 +234,8 @@ public class SpellCaster : MonoBehaviour
         if (spell.projectilePrefab == null) return;
         var go = Instantiate(spell.projectilePrefab, CastPoint, Quaternion.identity);
         var projectile = go.GetComponent<SpellProjectile>();
-        if (projectile != null) projectile.Init(spell, Facing, damage, pierce, speedMultiplier);
+        if (projectile != null) projectile.Init(spell, AimDirection, damage, pierce, speedMultiplier);
+        Particula.Rafaga(CastPoint, ElementoColor.Get(spell.element), 5, 2f, 0.15f, 0.25f);
     }
 
     Sprite ComboSprite(TipoCombo combo)
@@ -274,6 +281,8 @@ public class SpellCaster : MonoBehaviour
                 break;
         }
 
+        CameraFollow.Shake(0.15f, 0.2f);
+        Controles.Vibrar(0.3f, 0.6f, 0.15f);
         ComboCast?.Invoke(combo);
     }
 

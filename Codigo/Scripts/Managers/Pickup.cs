@@ -52,6 +52,7 @@ public class Pickup : MonoBehaviour
             gm.ShowMessage(string.IsNullOrEmpty(item.description) ? item.itemName : $"{item.itemName}: {item.description}");
         }
         Collected?.Invoke(item);
+        Particula.Rafaga(transform.position, new Color(1f, 0.9f, 0.5f, 1f), 14, 4f, 0.14f, 0.5f);
         Destroy(gameObject);
     }
 

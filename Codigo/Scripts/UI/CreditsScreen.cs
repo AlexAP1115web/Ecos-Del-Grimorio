@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -39,7 +38,7 @@ public class CreditsScreen : MonoBehaviour
                 "Creación de Videojuegos — 10° D\nUniversidad Tecnológica de Puebla\n\n" +
                 "Docente\nJosé Francisco Espinosa Garita\n\n" +
                 "Motor\nUnity 6\n\n\n" +
-                "Gracias por jugar\n\n(Enter para volver al menú)";
+                "Gracias por jugar\n\n(Enter o X para volver al menú)";
         }
     }
 
@@ -48,8 +47,7 @@ public class CreditsScreen : MonoBehaviour
         if (scrollingText != null && scrollingText.anchoredPosition.y < endY)
             scrollingText.anchoredPosition += Vector2.up * scrollSpeed * Time.deltaTime;
 
-        var kb = Keyboard.current;
-        if (kb != null && (kb.enterKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame))
+        if (Controles.AceptarPresionado || Controles.PausaPresionado)
             SceneManager.LoadScene(GameManager.MenuScene);
     }
 }

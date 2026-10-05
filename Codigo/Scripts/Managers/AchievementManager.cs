@@ -32,7 +32,6 @@ public class Logro
 public class AchievementManager : MonoBehaviour
 {
     [SerializeField] private Logro[] logros = new Logro[0];
-    [SerializeField] private float toastSeconds = 4f;
 
     public static AchievementManager Instance { get; private set; }
     public static event Action<Logro> Unlocked;
@@ -41,8 +40,6 @@ public class AchievementManager : MonoBehaviour
 
     private readonly HashSet<TipoCombo> combosUsed = new HashSet<TipoCombo>();
     private readonly HashSet<string> bossesDefeated = new HashSet<string>();
-    private Logro toast;
-    private float toastUntil;
 
     void Awake()
     {
@@ -139,43 +136,7 @@ public class AchievementManager : MonoBehaviour
 
         var logro = Array.Find(logros, l => l.tipo == tipo);
         if (logro == null) return;
-        toast = logro;
-        toastUntil = Time.unscaledTime + toastSeconds;
         Unlocked?.Invoke(logro);
     }
 
-    void OnGUI()
-    {
-        if (toast == null || Time.unscaledTime > toastUntil) return;
-
-        var rect = new Rect(Screen.width - 420, Screen.height - 130, 400, 100);
-        GUI.Box(rect, GUIContent.none);
-        if (toast.icono != null)
-            GUI.DrawTexture(new Rect(rect.x + 10, rect.y + 10, 80, 80), SpriteTexture(toast.icono), ScaleMode.ScaleToFit);
-
-        var title = new GUIStyle(GUI.skin.label) { fontSize = 16, fontStyle = FontStyle.Bold };
-        var body = new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true };
-        GUI.Label(new Rect(rect.x + 100, rect.y + 10, 290, 24), "Logro desbloqueado: " + toast.nombre, title);
-        GUI.Label(new Rect(rect.x + 100, rect.y + 36, 290, 60), toast.condicion, body);
-    }
-
-    // Lista de logros (pantalla de logros desde la pausa)
-    public void DrawList(Rect area)
-    {
-        GUI.Box(area, "LOGROS  (L para cerrar)");
-        float y = area.y + 30;
-        var style = new GUIStyle(GUI.skin.label) { fontSize = 15, wordWrap = true };
-        foreach (var l in logros)
-        {
-            bool got = IsUnlocked(l.tipo);
-            var old = GUI.color;
-            GUI.color = got ? Color.white : new Color(1f, 1f, 1f, 0.35f);
-            if (l.icono != null) GUI.DrawTexture(new Rect(area.x + 10, y, 40, 40), SpriteTexture(l.icono), ScaleMode.ScaleToFit);
-            GUI.Label(new Rect(area.x + 60, y, area.width - 70, 44), $"{l.nombre}: {l.condicion}", style);
-            GUI.color = old;
-            y += 46;
-        }
-    }
-
-    static Texture SpriteTexture(Sprite s) => s.texture;
 }

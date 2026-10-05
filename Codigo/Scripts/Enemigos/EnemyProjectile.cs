@@ -28,6 +28,8 @@ public class EnemyProjectile : MonoBehaviour
 
         var sr = GetComponentInChildren<SpriteRenderer>();
         if (sr != null && tintByElement) sr.color = ElementoColor.Get(elem);
+        var trail = GetComponent<EstelaProyectil>();
+        if (trail != null) trail.SetColor(ElementoColor.Get(elem) * new Color(1f, 1f, 1f, 0.6f));
 
         Destroy(gameObject, lifetime);
     }

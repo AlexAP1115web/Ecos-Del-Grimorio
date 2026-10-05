@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 public enum GameState
@@ -31,6 +30,7 @@ public class GameManager : MonoBehaviour
     public event Action<Elemento> SpellUnlocked;
     public event Action<string, float, bool> LevelCompleted; // escena, segundos, recibió daño
     public event Action GameFinished;
+    public event Action<string, float> MessageShown;
 
     public GameState State { get; private set; } = GameState.Jugando;
     public int Fragments { get; private set; }
@@ -46,13 +46,11 @@ public class GameManager : MonoBehaviour
     private readonly HashSet<string> collectibles = new HashSet<string>();
     private readonly HashSet<string> takenPickups = new HashSet<string>();
 
-    private string message = "";
-    private float messageUntil;
     private float levelStartTime;
     private bool tookDamageThisLevel;
     private string checkpointScene;
     private Vector3 checkpointPosition;
-    private bool showAchievements;
+    private float hitStopUntil;
 
     void Awake()
     {
@@ -88,7 +86,7 @@ public class GameManager : MonoBehaviour
     void PrepareScene(Scene scene)
     {
         Time.timeScale = 1f;
-        showAchievements = false;
+        hitStopUntil = 0f;
 
         if (scene.name == MenuScene) { SetState(GameState.MenuPrincipal); return; }
         if (scene.name == CreditsScene) { SetState(GameState.Creditos); return; }
@@ -114,25 +112,24 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        var kb = Keyboard.current;
-        if (kb == null) return;
-
-        switch (State)
+        // Fin de la pausa breve de impacto
+        if (hitStopUntil > 0f && Time.unscaledTime >= hitStopUntil)
         {
-            case GameState.Jugando:
-                if (kb.escapeKey.wasPressedThisFrame) Pause();
-                break;
-            case GameState.Pausa:
-                if (kb.escapeKey.wasPressedThisFrame) Resume();
-                else if (kb.rKey.wasPressedThisFrame) RestartLevel();
-                else if (kb.lKey.wasPressedThisFrame) showAchievements = !showAchievements;
-                else if (kb.mKey.wasPressedThisFrame) GoToMenu();
-                break;
-            case GameState.GameOver:
-                if (kb.rKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame) RestartLevel();
-                else if (kb.mKey.wasPressedThisFrame) GoToMenu();
-                break;
+            hitStopUntil = 0f;
+            if (State == GameState.Jugando) Time.timeScale = 1f;
         }
+
+        if (!Controles.PausaPresionado) return;
+        if (State == GameState.Jugando) Pause();
+        else if (State == GameState.Pausa) Resume();
+    }
+
+    // Congela el juego una fracción de segundo para dar peso a un golpe
+    public void HitStop(float seconds)
+    {
+        if (State != GameState.Jugando) return;
+        Time.timeScale = 0.05f;
+        hitStopUntil = Time.unscaledTime + seconds;
     }
 
     void SetState(GameState newState)
@@ -150,7 +147,7 @@ public class GameManager : MonoBehaviour
     public void Resume()
     {
         Time.timeScale = 1f;
-        showAchievements = false;
+        hitStopUntil = 0f;
         SetState(GameState.Jugando);
     }
 
@@ -173,6 +170,8 @@ public class GameManager : MonoBehaviour
             if (controller != null) controller.SetControlsEnabled(false);
         }
         SetState(GameState.GameOver);
+        CameraFollow.Shake(0.3f, 0.4f);
+        Controles.Vibrar(0.8f, 0.8f, 0.4f);
     }
 
     void OnBossActivated(BossController boss)
@@ -304,40 +303,10 @@ public class GameManager : MonoBehaviour
         HasRunicKey = PlayerPrefs.GetInt("eg_llave", 0) == 1;
     }
 
-    // ---------- Mensajes y pantallas temporales (OnGUI) ----------
+    // ---------- Mensajes (los muestra UIManager) ----------
 
     public void ShowMessage(string text, float seconds = 3f)
     {
-        message = text;
-        messageUntil = Time.unscaledTime + seconds;
-    }
-
-    void OnGUI()
-    {
-        if (Time.unscaledTime < messageUntil && State != GameState.MenuPrincipal)
-        {
-            var msgStyle = new GUIStyle(GUI.skin.box) { fontSize = 20, alignment = TextAnchor.MiddleCenter, wordWrap = true };
-            GUI.Box(new Rect(Screen.width / 2f - 260, 30, 520, 50), message, msgStyle);
-        }
-
-        if (State == GameState.Jugando || State == GameState.MenuPrincipal || State == GameState.Creditos) return;
-
-        var style = new GUIStyle(GUI.skin.box) { fontSize = 22, alignment = TextAnchor.MiddleCenter, wordWrap = true };
-
-        if (State == GameState.Pausa && showAchievements && AchievementManager.Instance != null)
-        {
-            AchievementManager.Instance.DrawList(new Rect(Screen.width / 2f - 300, 60, 600, Screen.height - 120));
-            return;
-        }
-
-        string text = State switch
-        {
-            GameState.Pausa => "PAUSA\n\nEsc: reanudar    R: reiniciar nivel\nL: logros    M: menú principal",
-            GameState.GameOver => "Lira ha caído\n\nR: reintentar    M: menú principal",
-            GameState.NivelCompletado => $"¡Nivel completado!\nFragmentos: {Fragments}/5",
-            _ => State.ToString()
-        };
-
-        GUI.Box(new Rect(Screen.width / 2f - 240, Screen.height / 2f - 100, 480, 200), text, style);
+        MessageShown?.Invoke(text, seconds);
     }
 }

@@ -38,6 +38,14 @@
   - Créditos con epílogo según el porcentaje de coleccionables.
   - Sistema de los 10 logros, Piedras de Reaparición y barra de vida de los jefes.
 
+- Primera prueba en Unity: el juego corre, pero el escenario se veía plano y las barras del HUD no cargaban su imagen.
+- Versión 2 del juego:
+  - Soporte para control de PS4 / Xbox (Input System) con vibración, además del teclado.
+  - Movimiento con aceleración, coyote time, búfer de salto y esquive con invulnerabilidad.
+  - Animación por código de los personajes (estirar, aplastar, inclinar) y efectos de golpe: partículas, temblor de cámara, retroceso y barras de vida en los enemigos.
+  - Escenarios con texturas que se repiten, fondo con parallax, columnas o nubes, luces 2D (antorchas, lava, portal) y partículas de ambiente por cada ala.
+  - Interfaz nueva con UGUI: diálogos con retrato, menú de pausa, Game Over, logros, avisos y título de cada nivel.
+
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
 - Subir capturas a `Evidencias`.

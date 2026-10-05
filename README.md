@@ -44,16 +44,17 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 
 ## Controles del prototipo
 
-| Acción | Tecla |
-|---|---|
-| Moverse | A / D o flechas |
-| Saltar | Espacio |
-| Hechizos equipados | 1, 2, 3 |
-| Repetir hechizo | J o clic izquierdo |
-| Cambiar hechizo equipado | Q |
-| Hablar / abrir cofre | E |
-| Pausa | Esc (en pausa: L logros, R reiniciar, M menú) |
-| Modo Archimaga (código secreto) | F, H, V, A, Intro |
+| Acción | Teclado | Control PS4 |
+|---|---|---|
+| Moverse | A / D o flechas | Stick izquierdo o cruceta |
+| Saltar | Espacio / W | X |
+| Lanzar hechizo | J o clic izquierdo | Cuadrado |
+| Hechizos equipados | 1, 2, 3 | L1 / R1 |
+| Cambiar hechizo equipado | Q | R2 |
+| Esquive | Shift / K | Círculo |
+| Hablar / abrir cofre | E | Triángulo |
+| Pausa | Esc | Options |
+| Modo Archimaga (código secreto) | F, H, V, A, Intro | — |
 
 ## Créditos
 

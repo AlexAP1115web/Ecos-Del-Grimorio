@@ -18,7 +18,7 @@ public static class CrearJuego
     const string Scenes = "Assets/Scenes";
     const float G = -4f; // altura del suelo (parte de arriba)
 
-    static Sprite square, circle;
+    static Sprite square, circle, ladrillo, tablas, borde, vineta;
     static PhysicsMaterial2D noFriction;
     static Font font;
     static readonly Dictionary<Elemento, SpellData> spells = new Dictionary<Elemento, SpellData>();
@@ -75,6 +75,10 @@ public static class CrearJuego
 
         square = GeneratedSprite("Cuadrado", false);
         circle = GeneratedSprite("Circulo", true);
+        ladrillo = Ladrillo();
+        tablas = Tablas();
+        borde = Borde();
+        vineta = Vineta();
         font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         noFriction = AssetDatabase.LoadAssetAtPath<PhysicsMaterial2D>(Data + "/SinFriccion.physicsMaterial2D");
@@ -180,6 +184,8 @@ public static class CrearJuego
         col.isTrigger = true;
         col.radius = (art != null ? art : circle).bounds.extents.y * 0.6f;
         go.AddComponent<SpellProjectile>();
+        go.AddComponent<EstelaProyectil>();
+        Light(go, 3, ElementoColor.Get(element), 1.3f, 2.2f);
 
         s.spellName = name;
         s.element = element;
@@ -215,6 +221,8 @@ public static class CrearJuego
 
         var p = go.AddComponent<EnemyProjectile>();
         Set(p, "tintByElement", tint || art == null);
+        go.AddComponent<EstelaProyectil>();
+        Light(go, 3, new Color(1f, 0.6f, 0.6f), 0.9f, 1.6f);
         return SavePrefab(go, $"{Prefabs}/{name}.prefab");
     }
 
@@ -237,6 +245,7 @@ public static class CrearJuego
         sr.color = item.icon != null ? tint : Color.yellow;
         go.AddComponent<CircleCollider2D>().isTrigger = true;
         Set(go.AddComponent<Pickup>(), "item", item);
+        Light(go, 3, new Color(1f, 0.85f, 0.5f), 0.8f, 1.8f);
         return SavePrefab(go, $"{Prefabs}/Items/{FileName(item.itemName)}.prefab");
     }
 
@@ -261,30 +270,35 @@ public static class CrearJuego
 
     static GameObject EnemyBody(string name, string sprite, float height, bool flying, out SpriteRenderer sr)
     {
+        // Raíz con física y un hijo "Visual" con el sprite, para poder animarlo sin mover el collider
         var go = new GameObject(name);
         go.tag = "Enemy";
+        var vis = new GameObject("Visual");
+        vis.transform.SetParent(go.transform, false);
         var art = LoadSprite(Sprites + sprite);
-        sr = AddSprite(go, art != null ? art : circle, height, 8);
+        sr = AddSprite(vis, art != null ? art : circle, height, 8);
         if (art == null) sr.color = new Color(0.5f, 0.3f, 0.7f);
 
         var rb = go.AddComponent<Rigidbody2D>();
         rb.gravityScale = flying ? 0f : 3f;
         rb.freezeRotation = true;
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
-        Bounds b = sr.sprite.bounds;
+        float k = vis.transform.localScale.x;
+        Vector2 size = sr.sprite.bounds.size * k, center = sr.sprite.bounds.center * k;
         if (flying)
         {
             var c = go.AddComponent<CircleCollider2D>();
-            c.radius = Mathf.Min(b.extents.x, b.extents.y) * 0.8f;
-            c.offset = b.center;
+            c.radius = Mathf.Min(size.x, size.y) * 0.4f;
+            c.offset = center;
         }
         else
         {
             var c = go.AddComponent<CapsuleCollider2D>();
-            bool wide = b.size.x > b.size.y;
+            bool wide = size.x > size.y;
             c.direction = wide ? CapsuleDirection2D.Horizontal : CapsuleDirection2D.Vertical;
-            c.size = wide ? new Vector2(b.size.x * 0.85f, b.size.y * 0.8f) : new Vector2(b.size.x * 0.55f, b.size.y * 0.92f);
-            c.offset = new Vector2(b.center.x, b.center.y - b.size.y * 0.03f);
+            c.size = wide ? new Vector2(size.x * 0.85f, size.y * 0.8f) : new Vector2(size.x * 0.55f, size.y * 0.92f);
+            c.offset = new Vector2(center.x, center.y - size.y * 0.03f);
         }
 
         go.AddComponent<Health>();
@@ -342,8 +356,17 @@ public static class CrearJuego
     {
         var go = new GameObject("Lira");
         go.tag = "Player";
+        var vis = new GameObject("Visual");
+        vis.transform.SetParent(go.transform, false);
         var sprite = LoadSprite(Sprites + "Characters/Lira.png");
-        AddSprite(go, sprite, 1.7f, 10);
+        AddSprite(vis, sprite, 1.8f, 10);
+        float k = vis.transform.localScale.x;
+
+        // Luz cálida que acompaña a Lira (el grimorio brilla)
+        var glow = new GameObject("Luz");
+        glow.transform.SetParent(go.transform, false);
+        glow.transform.localPosition = new Vector3(0f, 0.2f, 0f);
+        Light(glow, 3, new Color(1f, 0.85f, 0.6f), 0.9f, 5f);
 
         var rb = go.AddComponent<Rigidbody2D>();
         rb.gravityScale = 3f;
@@ -354,16 +377,17 @@ public static class CrearJuego
         var col = go.AddComponent<CapsuleCollider2D>();
         col.sharedMaterial = noFriction;
         Bounds b = sprite != null ? sprite.bounds : new Bounds(Vector3.zero, Vector3.one);
-        col.size = new Vector2(b.size.x * 0.4f, b.size.y * 0.95f);
-        col.offset = new Vector2(b.center.x, b.center.y);
+        Vector2 size = b.size * k, center = b.center * k;
+        col.size = new Vector2(size.x * 0.4f, size.y * 0.95f);
+        col.offset = center;
 
         var groundCheck = new GameObject("GroundCheck").transform;
         groundCheck.SetParent(go.transform, false);
-        groundCheck.localPosition = new Vector3(b.center.x, b.min.y, 0f);
+        groundCheck.localPosition = new Vector3(center.x, center.y - size.y * 0.475f, 0f);
 
         var health = go.AddComponent<Health>();
         Set(health, "maxHealth", 100f);
-        Set(health, "invulnerableTime", 1f);
+        Set(health, "invulnerableTime", 1.2f);
         Set(health, "destroyOnDeath", false);
 
         Set(go.AddComponent<PlayerController>(), "groundCheck", groundCheck);
@@ -420,61 +444,165 @@ public static class CrearJuego
     }
 
     // =====================================================================
+    // Temas visuales de cada ala de la Torre
+    // =====================================================================
+
+    class Tema
+    {
+        public string fondo;
+        public Color piedra, borde, plataforma, cielo, luz, antorcha, pilar, ambiente;
+        public float intensidad;
+        public Vector2 velAmbiente;
+        public float tasaAmbiente, tamAmbiente;
+        public bool ambienteDesdeArriba, pilares = true, nubes, chispas = true;
+    }
+
+    static readonly Tema Aprendizaje = new Tema
+    {
+        fondo = "ALA_DE_APRENDIZAJE.png", piedra = new Color(0.62f, 0.5f, 0.45f), borde = new Color(0.8f, 0.6f, 0.32f),
+        plataforma = new Color(0.65f, 0.45f, 0.3f), cielo = new Color(0.08f, 0.06f, 0.1f), luz = new Color(1f, 0.92f, 0.85f), intensidad = 0.6f,
+        antorcha = new Color(1f, 0.65f, 0.3f), pilar = new Color(0.38f, 0.3f, 0.28f), ambiente = new Color(1f, 0.9f, 0.6f, 0.5f),
+        velAmbiente = new Vector2(0.1f, 0.15f), tasaAmbiente = 6f, tamAmbiente = 0.06f
+    };
+
+    static readonly Tema Fuego = new Tema
+    {
+        fondo = "Ala de Fuego.jpg", piedra = new Color(0.4f, 0.24f, 0.2f), borde = new Color(1f, 0.45f, 0.1f),
+        plataforma = new Color(0.5f, 0.25f, 0.15f), cielo = new Color(0.12f, 0.04f, 0.02f), luz = new Color(1f, 0.7f, 0.6f), intensidad = 0.5f,
+        antorcha = new Color(1f, 0.45f, 0.1f), pilar = new Color(0.28f, 0.14f, 0.12f), ambiente = new Color(1f, 0.5f, 0.1f, 0.8f),
+        velAmbiente = new Vector2(0f, 1.2f), tasaAmbiente = 14f, tamAmbiente = 0.07f
+    };
+
+    static readonly Tema Hielo = new Tema
+    {
+        fondo = "Ala de Hielo.png", piedra = new Color(0.6f, 0.72f, 0.85f), borde = new Color(0.95f, 0.98f, 1f),
+        plataforma = new Color(0.72f, 0.86f, 0.96f), cielo = new Color(0.04f, 0.06f, 0.12f), luz = new Color(0.8f, 0.9f, 1f), intensidad = 0.6f,
+        antorcha = new Color(0.5f, 0.8f, 1f), pilar = new Color(0.32f, 0.42f, 0.58f), ambiente = new Color(1f, 1f, 1f, 0.8f),
+        velAmbiente = new Vector2(-0.3f, -1.2f), tasaAmbiente = 18f, tamAmbiente = 0.08f, ambienteDesdeArriba = true, chispas = false
+    };
+
+    static readonly Tema Viento = new Tema
+    {
+        fondo = "Ala de Viento.jpg", piedra = new Color(0.75f, 0.75f, 0.7f), borde = new Color(0.45f, 0.78f, 0.35f),
+        plataforma = new Color(0.78f, 0.72f, 0.6f), cielo = new Color(0.4f, 0.6f, 0.85f), luz = new Color(1f, 1f, 0.95f), intensidad = 0.95f,
+        antorcha = new Color(1f, 1f, 0.8f), pilar = new Color(0.6f, 0.65f, 0.7f), ambiente = new Color(0.6f, 0.9f, 0.5f, 0.8f),
+        velAmbiente = new Vector2(2.5f, -0.3f), tasaAmbiente = 8f, tamAmbiente = 0.1f, pilares = false, nubes = true
+    };
+
+    static readonly Tema Corazon = new Tema
+    {
+        fondo = "Corazón del Grimorio.jpg", piedra = new Color(0.4f, 0.3f, 0.52f), borde = new Color(0.9f, 0.75f, 0.35f),
+        plataforma = new Color(0.55f, 0.4f, 0.65f), cielo = new Color(0.05f, 0.02f, 0.08f), luz = new Color(0.9f, 0.8f, 1f), intensidad = 0.45f,
+        antorcha = new Color(0.75f, 0.45f, 1f), pilar = new Color(0.24f, 0.16f, 0.32f), ambiente = new Color(0.8f, 0.6f, 1f, 0.7f),
+        velAmbiente = new Vector2(0f, 0.5f), tasaAmbiente = 10f, tamAmbiente = 0.07f
+    };
+
+    // =====================================================================
     // Construcción de escenas
     // =====================================================================
 
     class Nivel
     {
         public UnityEngine.SceneManagement.Scene scene;
-        public Transform geo, enemigos, items;
+        public Transform geo, deco, enemigos, items;
         public GameObject lira;
-        public Color piedra, plataforma;
+        public Tema tema;
     }
 
-    static Nivel NuevoNivel(string fondo, float minX, float maxX, Vector2 inicio, Color piedra, Color plataforma, Color cielo)
+    static Nivel NuevoNivel(Tema t, string titulo, float minX, float maxX, Vector2 inicio)
     {
-        var n = new Nivel { piedra = piedra, plataforma = plataforma };
+        var n = new Nivel { tema = t };
         n.scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-        GlobalLight();
+        Light(new GameObject("Luz Global"), 4, t.luz, t.intensidad);
         PrefabUtility.InstantiatePrefab(P["GameManager"]);
+        EventSystem();
 
+        // Cámara
         var camGo = new GameObject("Main Camera");
         camGo.tag = "MainCamera";
         var cam = camGo.AddComponent<Camera>();
         cam.orthographic = true;
-        cam.orthographicSize = 6f;
+        cam.orthographicSize = 5f;
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = cielo;
-        camGo.transform.position = new Vector3(inicio.x, 0f, -10f);
+        cam.backgroundColor = t.cielo;
+        camGo.transform.position = new Vector3(inicio.x + 4f, G + 3.5f, -10f);
         var follow = camGo.AddComponent<CameraFollow>();
         Set(follow, "minX", minX);
         Set(follow, "maxX", maxX);
-        Set(follow, "minY", -7f);
-        Set(follow, "maxY", 12f);
+        Set(follow, "minY", G - 3f);
+        Set(follow, "maxY", 13f);
 
-        var bg = LoadSprite(Sprites + "Backgrounds/" + fondo);
-        if (bg != null)
-        {
-            var go = new GameObject("Fondo");
-            go.transform.SetParent(camGo.transform, false);
-            go.transform.localPosition = new Vector3(0f, 0f, 20f);
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = bg;
-            sr.sortingOrder = -100;
-            go.transform.localScale = Vector3.one * Mathf.Max(13f / bg.bounds.size.y, 25f / bg.bounds.size.x);
-        }
+        var amb = camGo.AddComponent<ParticulasAmbiente>();
+        Set(amb, "color", t.ambiente);
+        Set(amb, "velocidad", t.velAmbiente);
+        Set(amb, "porSegundo", t.tasaAmbiente);
+        Set(amb, "tamano", t.tamAmbiente);
+        Set(amb, "desdeArriba", t.ambienteDesdeArriba);
 
         n.geo = new GameObject("Nivel").transform;
+        n.deco = new GameObject("Decoracion").transform;
         n.enemigos = new GameObject("Enemigos").transform;
         n.items = new GameObject("Items").transform;
 
-        Bloque(n, "Pared_Izq", new Vector2(minX - 0.5f, 3f), new Vector2(1f, 20f), piedra, false);
-        Bloque(n, "Pared_Der", new Vector2(maxX + 0.5f, 3f), new Vector2(1f, 20f), piedra, false);
+        // Fondo lejano: dos copias (la segunda volteada) que se mueven casi con la cámara
+        var bg = LoadSprite(Sprites + "Backgrounds/" + t.fondo);
+        if (bg != null)
+        {
+            float scale = 15f / bg.bounds.size.y;
+            float width = bg.bounds.size.x * scale;
+            for (int i = 0; i < 2; i++)
+            {
+                var go = new GameObject("Fondo_" + i);
+                go.transform.SetParent(n.deco, false);
+                go.transform.position = new Vector3(camGo.transform.position.x + i * width, camGo.transform.position.y, 0f);
+                go.transform.localScale = Vector3.one * scale;
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = bg;
+                sr.flipX = i == 1;
+                sr.sortingOrder = -100;
+                var px = go.AddComponent<Parallax>();
+                Set(px, "factor", 0.88f);
+                Set(px, "factorVertical", 0.88f);
+            }
+        }
+
+        // Capa media: columnas de piedra o nubes que se mueven a media velocidad
+        if (t.pilares)
+        {
+            for (float x = minX; x <= maxX + 10f; x += 9f)
+            {
+                var col = Tiled(n.deco, "Columna", new Vector2(x, G + 4f), new Vector2(1.6f, 20f), ladrillo, t.pilar, -50);
+                var px = col.AddComponent<Parallax>();
+                Set(px, "factor", 0.45f);
+                Set(px, "factorVertical", 0.2f);
+            }
+        }
+        if (t.nubes)
+        {
+            var rnd = new System.Random(7);
+            for (int i = 0; i < 16; i++)
+            {
+                var c = new GameObject("Nube");
+                c.transform.SetParent(n.deco, false);
+                c.transform.position = new Vector2(minX + (float)rnd.NextDouble() * (maxX - minX), 1f + (float)rnd.NextDouble() * 7f);
+                c.transform.localScale = new Vector3(5f + (float)rnd.NextDouble() * 4f, 1.6f + (float)rnd.NextDouble(), 1f);
+                var sr = c.AddComponent<SpriteRenderer>();
+                sr.sprite = circle;
+                sr.color = new Color(1f, 1f, 1f, 0.35f);
+                sr.sortingOrder = -60;
+                var px = c.AddComponent<Parallax>();
+                Set(px, "factor", 0.6f);
+                Set(px, "factorVertical", 0.3f);
+            }
+        }
+
+        Solido(n.geo, "Pared_Izq", new Vector2(minX - 0.5f, 4f), new Vector2(1f, 24f), ladrillo, t.piedra * 0.7f, false);
+        Solido(n.geo, "Pared_Der", new Vector2(maxX + 0.5f, 4f), new Vector2(1f, 24f), ladrillo, t.piedra * 0.7f, false);
 
         var kill = new GameObject("ZonaDeCaida");
         kill.transform.SetParent(n.geo, false);
-        kill.transform.position = new Vector2((minX + maxX) / 2f, -12f);
+        kill.transform.position = new Vector2((minX + maxX) / 2f, G - 8f);
         var killCol = kill.AddComponent<BoxCollider2D>();
         killCol.isTrigger = true;
         killCol.size = new Vector2(maxX - minX + 20f, 2f);
@@ -483,7 +611,7 @@ public static class CrearJuego
         n.lira = (GameObject)PrefabUtility.InstantiatePrefab(P["Lira"]);
         n.lira.transform.position = new Vector3(inicio.x, G + 1f, 0f);
 
-        HUD(n.lira);
+        HUD(n.lira, titulo);
         return n;
     }
 
@@ -494,59 +622,90 @@ public static class CrearJuego
         return path;
     }
 
-    static void GlobalLight()
-    {
-        var lightGo = new GameObject("Global Light 2D");
-        var type = System.Type.GetType("UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.2D.Runtime");
-        if (type == null) return;
-        var light = lightGo.AddComponent(type);
-        var so = new SerializedObject(light);
-        var prop = so.FindProperty("m_LightType");
-        if (prop != null)
-        {
-            prop.intValue = 4; // Global
-            so.ApplyModifiedPropertiesWithoutUndo();
-        }
-    }
-
-    static GameObject Bloque(Nivel n, string name, Vector2 center, Vector2 size, Color color, bool esSuelo = true)
+    // Sprite que se repite (no se estira) del tamaño indicado
+    static GameObject Tiled(Transform parent, string name, Vector2 center, Vector2 size, Sprite sprite, Color color, int order)
     {
         var go = new GameObject(name);
-        if (esSuelo) go.tag = "Ground"; // las paredes no cuentan como suelo para que no se pueda escalar
-        go.transform.SetParent(n.geo, false);
+        go.transform.SetParent(parent, false);
         go.transform.position = center;
-        go.transform.localScale = new Vector3(size.x, size.y, 1f);
         var sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = square;
+        sr.sprite = sprite;
+        sr.drawMode = SpriteDrawMode.Tiled;
+        sr.size = size;
         sr.color = color;
-        sr.sortingOrder = 1;
-        go.AddComponent<BoxCollider2D>();
+        sr.sortingOrder = order;
         return go;
     }
 
-    static void Suelo(Nivel n, float x1, float x2) =>
-        Bloque(n, $"Suelo_{x1}_{x2}", new Vector2((x1 + x2) / 2f, G - 1f), new Vector2(x2 - x1, 2f), n.piedra);
+    static GameObject Solido(Transform parent, string name, Vector2 center, Vector2 size, Sprite sprite, Color color, bool esSuelo = true)
+    {
+        var go = Tiled(parent, name, center, size, sprite, color, 1);
+        if (esSuelo) go.tag = "Ground"; // las paredes no cuentan como suelo para que no se puedan escalar
+        go.AddComponent<BoxCollider2D>().size = size;
+        return go;
+    }
 
-    static void Plat(Nivel n, float x, float top, float w) =>
-        Bloque(n, $"Plataforma_{x}", new Vector2(x, top - 0.2f), new Vector2(w, 0.4f), n.plataforma);
+    // Suelo: bloque de ladrillo que llega hasta abajo de la pantalla con un borde arriba
+    static void Suelo(Nivel n, float x1, float x2)
+    {
+        float w = x2 - x1, cx = (x1 + x2) / 2f;
+        Solido(n.geo, $"Suelo_{x1}_{x2}", new Vector2(cx, G - 6f), new Vector2(w, 12f), ladrillo, n.tema.piedra);
+        Tiled(n.geo, "Borde", new Vector2(cx, G), new Vector2(w + 0.2f, 0.5f), borde, n.tema.borde, 3);
+    }
+
+    static GameObject Plat(Nivel n, float x, float top, float w)
+    {
+        var go = Solido(n.geo, $"Plataforma_{x}", new Vector2(x, top - 0.25f), new Vector2(w, 0.5f), tablas, n.tema.plataforma);
+        go.GetComponent<SpriteRenderer>().sortingOrder = 2;
+        return go;
+    }
 
     static void PlatMovil(Nivel n, float x, float top, float w, Vector2 offset, float speed)
     {
-        var go = Bloque(n, $"PlataformaMovil_{x}", new Vector2(x, top - 0.2f), new Vector2(w, 0.4f), n.plataforma * new Color(1f, 1f, 1.2f));
+        var go = Plat(n, x, top, w);
+        go.name = $"PlataformaMovil_{x}";
+        go.GetComponent<SpriteRenderer>().color = n.tema.plataforma * new Color(0.9f, 1f, 1.15f);
         var mp = go.AddComponent<MovingPlatform>();
         Set(mp, "offset", offset);
         Set(mp, "speed", speed);
+        var glow = new GameObject("Runa");
+        glow.transform.SetParent(go.transform, false);
+        Light(glow, 3, new Color(0.6f, 1f, 0.8f), 0.7f, 2.2f);
     }
 
-    static void Decoracion(Nivel n, float x1, float x2, Color color)
+    // Pozo de lava (Ala de Fuego): brilla y suelta brasas
+    static void Lava(Nivel n, float x1, float x2)
     {
-        var go = new GameObject("Lava");
-        go.transform.SetParent(n.geo, false);
-        go.transform.position = new Vector2((x1 + x2) / 2f, G - 1.6f);
-        go.transform.localScale = new Vector3(x2 - x1, 1.2f, 1f);
-        var sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = square;
-        sr.color = color;
+        var go = Tiled(n.deco, "Lava", new Vector2((x1 + x2) / 2f, G - 3.5f), new Vector2(x2 - x1, 3f), square, new Color(1f, 0.4f, 0.05f), 0);
+        Light(go, 3, new Color(1f, 0.45f, 0.1f), 1.6f, 4.5f);
+        var f = go.AddComponent<LuzParpadeante>();
+        Set(f, "intensidadBase", 1.6f);
+        Set(f, "colorChispa", new Color(1f, 0.6f, 0.1f, 1f));
+    }
+
+    // Antorchas (o cristales en el Ala de Hielo) con luz que parpadea
+    static void Antorchas(Nivel n, params float[] xs)
+    {
+        foreach (var x in xs)
+        {
+            var go = new GameObject("Antorcha");
+            go.transform.SetParent(n.deco, false);
+            go.transform.position = new Vector2(x, G + 2.8f);
+
+            var soporte = Tiled(go.transform, "Soporte", new Vector2(x, G + 2.45f), new Vector2(0.15f, 0.5f), square, new Color(0.2f, 0.15f, 0.12f), -5);
+            soporte.transform.SetParent(go.transform, true);
+
+            var llama = new GameObject("Llama");
+            llama.transform.SetParent(go.transform, false);
+            var sr = AddSprite(llama, circle, 0.4f, -4);
+            sr.color = n.tema.antorcha;
+
+            Light(go, 3, n.tema.antorcha, 1.2f, 4.5f);
+            var f = go.AddComponent<LuzParpadeante>();
+            Set(f, "intensidadBase", 1.2f);
+            Set(f, "echaChispas", n.tema.chispas);
+            Set(f, "colorChispa", n.tema.antorcha);
+        }
     }
 
     static GameObject Poner(Nivel n, string prefab, float x, float y, Transform parent)
@@ -579,22 +738,28 @@ public static class CrearJuego
         go.transform.position = new Vector2(x, G + 0.6f);
         go.AddComponent<BoxCollider2D>().isTrigger = true;
         go.AddComponent<Checkpoint>();
+        Light(go, 3, new Color(0.5f, 1f, 1f), 0.8f, 2.5f);
     }
 
-    static void Dialogo(Nivel n, float x, string quien, string sprite, float altura, params string[] lineas)
+    // Personaje con quien se habla (Maestra Sable) o diálogo automático antes de un jefe
+    static void Dialogo(Nivel n, float x, string quien, string retrato, bool visible, bool automatico, params string[] lineas)
     {
         var go = new GameObject("Dialogo_" + FileName(quien));
         go.transform.SetParent(n.items, false);
-        if (sprite != null)
+        var sprite = retrato != null ? LoadSprite(Sprites + retrato) : null;
+        if (visible && sprite != null)
         {
-            var s = LoadSprite(Sprites + sprite);
-            if (s != null) AddSprite(go, s, altura, 9);
+            var vis = new GameObject("Visual");
+            vis.transform.SetParent(go.transform, false);
+            AddSprite(vis, sprite, 1.95f, 9);
         }
-        go.transform.position = new Vector2(x, G + altura / 2f);
+        go.transform.position = new Vector2(x, G + 0.975f);
         var d = go.AddComponent<NPCDialogue>();
         Set(d, "speakerName", quien);
+        Set(d, "portrait", sprite);
         SetStrings(d, "lines", lineas);
-        Set(d, "talkRange", sprite != null ? 2.5f : 4f);
+        Set(d, "talkRange", automatico ? 4f : 2.2f);
+        Set(d, "autoStart", automatico);
     }
 
     static GameObject Jefe(Nivel n, string prefab, float x, float y, float arenaMin, float arenaMax, float hover)
@@ -605,7 +770,7 @@ public static class CrearJuego
         Set(boss, "arenaMaxX", arenaMax);
         Set(boss, "hoverHeight", hover);
         Set(boss, "rewardPosition", new Vector2(x, G + 0.8f));
-        Set(boss, "activationRange", 13f);
+        Set(boss, "activationRange", 11f);
         return go;
     }
 
@@ -617,6 +782,7 @@ public static class CrearJuego
         exit.transform.localScale = new Vector3(1.5f, 3f, 1f);
         portal.color = new Color(0.6f, 0.4f, 1f, 0.6f);
         exit.AddComponent<BoxCollider2D>().isTrigger = true;
+        Light(exit, 3, new Color(0.7f, 0.5f, 1f), 1.5f, 3f);
         var le = exit.AddComponent<LevelExit>();
         Set(le, "requiredDefeat", requerido);
         Set(le, "portalRenderer", portal);
@@ -631,28 +797,30 @@ public static class CrearJuego
 
     static string Nivel1()
     {
-        var n = NuevoNivel("ALA_DE_APRENDIZAJE.png", -12f, 62f, new Vector2(-8f, 0f),
-            new Color(0.25f, 0.2f, 0.32f), new Color(0.55f, 0.4f, 0.25f), new Color(0.08f, 0.06f, 0.12f));
+        var n = NuevoNivel(Aprendizaje, "Ala de Aprendizaje", -12f, 62f, new Vector2(-7f, 0f));
 
         Suelo(n, -12, 22); Suelo(n, 25, 62);
         Plat(n, 6, -2, 3); Plat(n, 10, 0, 3); Plat(n, 14, -2, 3);
         Plat(n, 30, -2, 4); Plat(n, 35, 0, 3); Plat(n, 40, 2, 3); Plat(n, 44.5f, 4, 2.5f);
+        Antorchas(n, -9, 1, 12, 20, 28, 38, 48, 57);
 
-        Dialogo(n, -10.5f, "Maestra Sable", "Characters/Maestra Sable.png", 1.9f,
+        Dialogo(n, -10f, "Maestra Sable", "Characters/Maestra Sable.png", true, false,
             "Ese grimorio perteneció a alguien que intentó ir más allá de lo permitido. Ten cuidado con lo que despiertas, Lira.",
             "Empecemos por lo básico. Repite conmigo el primer sello arcano.",
-            "A/D para moverte, Espacio para saltar y 1 para lanzar el hechizo Arcano. Con Q cambias el hechizo equipado.");
+            "Muévete con A/D o el stick, salta con Espacio o X, lanza el hechizo con J o Cuadrado y esquiva con Shift o Círculo.");
 
         var cofre = new GameObject("Cofre_Secreto");
         cofre.transform.SetParent(n.items, false);
-        var csr = AddSprite(cofre, square, 0.9f, 3);
-        cofre.transform.localScale = new Vector3(1.2f, 0.9f, 1f);
-        csr.color = new Color(0.5f, 0.32f, 0.15f);
-        cofre.transform.position = new Vector2(-6f, G + 0.45f);
+        cofre.transform.position = new Vector2(-4f, G + 0.45f);
+        var cuerpo = Tiled(cofre.transform, "Cuerpo", new Vector2(-4f, G + 0.45f), new Vector2(1.2f, 0.9f), tablas, new Color(0.55f, 0.35f, 0.18f), 3);
+        cuerpo.transform.SetParent(cofre.transform, true);
+        var cerradura = new GameObject("Cerradura");
+        cerradura.transform.SetParent(cofre.transform, false);
+        AddSprite(cerradura, circle, 0.25f, 4).color = new Color(1f, 0.85f, 0.3f);
         cofre.AddComponent<SecretChest>();
 
-        Enemigo(n, "Espectro", 2); Enemigo(n, "Espectro", 10, 0, 1); Enemigo(n, "Espectro", 28); Enemigo(n, "Espectro", 38);
-        Volador(n, "Mota", 18, 1.5f); Volador(n, "Mota", 33, 2.5f);
+        Enemigo(n, "Espectro", 3); Enemigo(n, "Espectro", 10, 0, 1); Enemigo(n, "Espectro", 28); Enemigo(n, "Espectro", 38);
+        Volador(n, "Mota", 18, 0.5f); Volador(n, "Mota", 33, 1.5f);
         var mayor = Enemigo(n, "Mayor", 52, G, 2);
 
         Objeto(n, "Cristal de Maná", 14, -2);
@@ -666,12 +834,12 @@ public static class CrearJuego
 
     static string Nivel2()
     {
-        var n = NuevoNivel("Ala de Fuego.jpg", -12f, 92f, new Vector2(-9f, 0f),
-            new Color(0.22f, 0.12f, 0.1f), new Color(0.45f, 0.2f, 0.1f), new Color(0.15f, 0.05f, 0.03f));
+        var n = NuevoNivel(Fuego, "Ala de Fuego", -12f, 92f, new Vector2(-9f, 0f));
 
         Suelo(n, -12, 15); Suelo(n, 18, 40); Suelo(n, 43, 92);
-        Decoracion(n, 15, 18, new Color(1f, 0.4f, 0.05f)); Decoracion(n, 40, 43, new Color(1f, 0.4f, 0.05f));
+        Lava(n, 15, 18); Lava(n, 40, 43);
         Plat(n, 8, -2, 3); Plat(n, 24, -2, 3); Plat(n, 28, 0, 3); Plat(n, 32, -2, 3); Plat(n, 52, -2, 3);
+        Antorchas(n, -6, 4, 22, 35, 48, 58, 68, 78, 88);
 
         Enemigo(n, "Centinela", 5, G, 2); Enemigo(n, "Salamandra", 12); Enemigo(n, "Centinela", 22, G, 2);
         Enemigo(n, "Salamandra", 35); Enemigo(n, "Centinela", 47, G, 2); Enemigo(n, "Salamandra", 55);
@@ -680,8 +848,10 @@ public static class CrearJuego
         Objeto(n, "Poción Menor de Vida", 52, -2);
         PuntoReaparicion(n, 60);
 
-        Dialogo(n, 64, "Kaelor", null, 2f, "Los ecos no perdonan a quien despierta el fuego dormido.");
-        var kaelor = Jefe(n, "Kaelor", 80, G + 1.6f, 66, 90, 0);
+        Dialogo(n, 66, "Kaelor", "Enemies/Kaelor.png", false, true,
+            "¿Otra aprendiz que despierta el fuego dormido?",
+            "Los ecos no perdonan a quien despierta el fuego dormido.");
+        var kaelor = Jefe(n, "Kaelor", 82, G + 1.6f, 68, 90, 0);
 
         Salida(n, 90, kaelor.GetComponent<Health>(), "Nivel3_AlaDeHielo", true, Elemento.Hielo);
         return Guardar(n, "Nivel2_AlaDeFuego");
@@ -689,11 +859,11 @@ public static class CrearJuego
 
     static string Nivel3()
     {
-        var n = NuevoNivel("Ala de Hielo.png", -12f, 92f, new Vector2(-9f, 0f),
-            new Color(0.35f, 0.5f, 0.65f), new Color(0.7f, 0.85f, 0.95f), new Color(0.05f, 0.08f, 0.15f));
+        var n = NuevoNivel(Hielo, "Ala de Hielo", -12f, 92f, new Vector2(-9f, 0f));
 
         Suelo(n, -12, 20); Suelo(n, 23, 45); Suelo(n, 48, 92);
         Plat(n, 6, -2, 3); Plat(n, 10, 0, 3); Plat(n, 30, -2, 3); Plat(n, 34, 0, 3); Plat(n, 38, 2, 3);
+        Antorchas(n, -6, 8, 18, 28, 40, 55, 70, 85);
 
         Enemigo(n, "Escarchado", 4); Enemigo(n, "Cristal", 16); Enemigo(n, "Escarchado", 27);
         Enemigo(n, "Cristal", 43); Enemigo(n, "Escarchado", 52); Enemigo(n, "Cristal", 57);
@@ -703,8 +873,10 @@ public static class CrearJuego
         Objeto(n, "Nota cifrada de Elenora", 38, 2);
         PuntoReaparicion(n, 62);
 
-        Dialogo(n, 64, "Isolde", null, 2f, "Fui aprendiz de la Archimaga Elenora. Desde que sellaron los hechizos, nadie cruza esta ala.");
-        var isolde = Jefe(n, "Isolde", 80, G + 1.5f, 66, 90, 0);
+        Dialogo(n, 66, "Isolde", "Enemies/Isolde.png", false, true,
+            "Fui aprendiz de la Archimaga Elenora.",
+            "Desde que sellaron los hechizos, nadie cruza esta ala. Tú tampoco lo harás.");
+        var isolde = Jefe(n, "Isolde", 82, G + 1.5f, 68, 90, 0);
         Set(isolde.GetComponent<IsoldeBoss>(), "groundY", G);
 
         Salida(n, 90, isolde.GetComponent<Health>(), "Nivel4_AlaDeViento", true, Elemento.Viento);
@@ -713,8 +885,7 @@ public static class CrearJuego
 
     static string Nivel4()
     {
-        var n = NuevoNivel("Ala de Viento.jpg", -12f, 100f, new Vector2(-9f, 0f),
-            new Color(0.55f, 0.6f, 0.6f), new Color(0.85f, 0.9f, 0.9f), new Color(0.35f, 0.55f, 0.75f));
+        var n = NuevoNivel(Viento, "Ala de Viento", -12f, 100f, new Vector2(-9f, 0f));
 
         Suelo(n, -12, 10); Suelo(n, 18, 28); Suelo(n, 38, 48); Suelo(n, 58, 100);
         PlatMovil(n, 12.5f, G, 3, new Vector2(4f, 0f), 2f);
@@ -731,7 +902,9 @@ public static class CrearJuego
         Objeto(n, "Poción Menor de Vida", 60, G);
         PuntoReaparicion(n, 66);
 
-        Dialogo(n, 69, "Threnody", null, 2f, "Los cuatro guardianes fuimos aprendices de la Archimaga Elenora antes de que desapareciera.");
+        Dialogo(n, 70, "Threnody", "Enemies/Threnody.png", false, true,
+            "Los cuatro guardianes fuimos aprendices de la Archimaga Elenora antes de que desapareciera.",
+            "Si quieres la verdad, tendrás que ganártela en el aire.");
         var threnody = Jefe(n, "Threnody", 88, 2f, 72, 98, 2f);
 
         Salida(n, 98, threnody.GetComponent<Health>(), "Nivel5_CorazonDelGrimorio", false, Elemento.Arcano);
@@ -740,16 +913,16 @@ public static class CrearJuego
 
     static string Nivel5()
     {
-        var n = NuevoNivel("Corazón del Grimorio.jpg", -12f, 92f, new Vector2(-7f, 0f),
-            new Color(0.2f, 0.12f, 0.3f), new Color(0.65f, 0.5f, 0.2f), new Color(0.06f, 0.03f, 0.1f));
+        var n = NuevoNivel(Corazon, "Corazón del Grimorio", -12f, 92f, new Vector2(-6f, 0f));
 
         Suelo(n, -12, 92);
         Plat(n, 8, -2, 3); Plat(n, 16, 0, 3); Plat(n, 24, -2, 3);
         Plat(n, 66, -2, 3); Plat(n, 74, 0, 3); Plat(n, 82, -2, 3);
+        Antorchas(n, -8, 4, 14, 26, 36, 46, 58, 70, 84);
 
-        Dialogo(n, -9.5f, "Maestra Sable", "Characters/Maestra Sable.png", 1.9f,
+        Dialogo(n, -9.5f, "Maestra Sable", "Characters/Maestra Sable.png", true, false,
             "Lira, el eco de Elenora te espera en el corazón del grimorio.",
-            "Ella dominaba los cuatro elementos. Combínalos como te enseñé y no la dejes resistir el mismo hechizo dos veces.");
+            "Ella dominaba los cuatro elementos y resiste el que está usando. Combínalos como te enseñé.");
 
         Enemigo(n, "Eco", 6); Enemigo(n, "Eco", 16, 0, 1); Enemigo(n, "Eco", 30); Enemigo(n, "Espejo", 40); Enemigo(n, "Eco", 48);
 
@@ -757,7 +930,9 @@ public static class CrearJuego
         Objeto(n, "Poción Mayor de Vida", 52, G);
         PuntoReaparicion(n, 56);
 
-        Dialogo(n, 60, "Eco de Elenora", null, 2f, "¿Viniste a terminar lo que yo empecé, aprendiz?");
+        Dialogo(n, 61, "Eco de Elenora", "Enemies/Eco_Archimaga_Elenora.png", false, true,
+            "¿Viniste a terminar lo que yo empecé, aprendiz?",
+            "Entonces demuéstrame que entiendes el grimorio mejor que yo.");
         var elenora = Jefe(n, "Elenora", 76, 2f, 62, 90, 2f);
         Set(elenora.GetComponent<ElenoraBoss>(), "groundY", G);
 
@@ -766,8 +941,11 @@ public static class CrearJuego
     }
 
     // =====================================================================
-    // Interfaz: HUD, menú y créditos
+    // Interfaz: HUD, paneles, menú y créditos
     // =====================================================================
+
+    static readonly Color Dorado = new Color(1f, 0.88f, 0.6f);
+    static readonly Color Oscuro = new Color(0.05f, 0.03f, 0.1f, 0.88f);
 
     static Canvas NuevoCanvas(string name, int order)
     {
@@ -795,12 +973,22 @@ public static class CrearJuego
         return rt;
     }
 
+    static RectTransform Estirar(string name, Transform parent)
+    {
+        var rt = UI(name, parent, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.sizeDelta = Vector2.zero;
+        return rt;
+    }
+
     static Image Img(string name, Transform parent, Vector2 anchor, Vector2 pos, Vector2 size, Sprite sprite, Color color)
     {
         var img = UI(name, parent, anchor, pos, size).gameObject.AddComponent<Image>();
         img.sprite = sprite;
         img.color = color;
         img.preserveAspect = sprite != null && sprite != square;
+        img.raycastTarget = false;
         return img;
     }
 
@@ -811,55 +999,114 @@ public static class CrearJuego
         t.text = text;
         t.fontSize = fontSize;
         t.alignment = align;
-        t.color = new Color(1f, 0.92f, 0.7f);
+        t.color = Dorado;
+        t.supportRichText = true;
+        t.raycastTarget = false;
         t.horizontalOverflow = HorizontalWrapMode.Wrap;
         t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.gameObject.AddComponent<Shadow>().effectDistance = new Vector2(2, -2);
+        t.gameObject.AddComponent<Outline>().effectColor = new Color(0f, 0f, 0f, 0.8f);
+        t.gameObject.AddComponent<Shadow>().effectDistance = new Vector2(2, -3);
         return t;
     }
 
-    static Image Barra(Transform parent, string name, string spritePath, Vector2 pos)
+    static Image Barra(Transform parent, string name, string spritePath, Vector2 pos, float w, Color fallback)
     {
         var sprite = LoadSprite(spritePath);
-        float w = 420f, h = sprite != null ? w * sprite.rect.height / sprite.rect.width : 40f;
+        float h = sprite != null ? w * sprite.rect.height / sprite.rect.width : 34f;
         var tl = new Vector2(0, 1);
-        Img(name + "_Fondo", parent, tl, pos, new Vector2(w, h), sprite, new Color(0.3f, 0.3f, 0.3f, 0.9f));
-        var fill = Img(name, parent, tl, pos, new Vector2(w, h), sprite, Color.white);
+        Img(name + "_Fondo", parent, tl, pos, new Vector2(w, h), sprite != null ? sprite : square, sprite != null ? new Color(0.25f, 0.25f, 0.3f, 0.9f) : new Color(0, 0, 0, 0.6f));
+        var fill = Img(name, parent, tl, pos, new Vector2(w, h), sprite != null ? sprite : square, sprite != null ? Color.white : fallback);
         fill.type = Image.Type.Filled;
         fill.fillMethod = Image.FillMethod.Horizontal;
         fill.fillOrigin = (int)Image.OriginHorizontal.Left;
         return fill;
     }
 
-    static void HUD(GameObject lira)
+    static void EventSystem()
+    {
+        var go = new GameObject("EventSystem");
+        go.AddComponent<UnityEngine.EventSystems.EventSystem>();
+        go.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+    }
+
+    static Button Boton(Transform parent, string texto, Vector2 pos, UnityAction accion)
+    {
+        var img = Img("Boton_" + texto, parent, new Vector2(0.5f, 0.5f), pos, new Vector2(440, 74), square, Color.white);
+        img.raycastTarget = true;
+        var btn = img.gameObject.AddComponent<Button>();
+        var colors = btn.colors;
+        colors.normalColor = new Color(0.16f, 0.09f, 0.28f, 0.95f);
+        colors.highlightedColor = new Color(0.42f, 0.26f, 0.68f, 1f);
+        colors.selectedColor = new Color(0.62f, 0.44f, 0.16f, 1f);  // seleccionado con el control
+        colors.pressedColor = new Color(0.85f, 0.65f, 0.2f, 1f);
+        colors.disabledColor = new Color(0.2f, 0.2f, 0.2f, 0.6f);
+        colors.colorMultiplier = 1f;
+        btn.colors = colors;
+        Txt("Texto", img.transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(440, 74), texto, 32, TextAnchor.MiddleCenter);
+        UnityEventTools.AddPersistentListener(btn.onClick, accion);
+        return btn;
+    }
+
+    static GameObject Panel(Transform parent, string name, Color dim)
+    {
+        var rt = Estirar(name, parent);
+        var bg = rt.gameObject.AddComponent<Image>();
+        bg.sprite = square;
+        bg.color = dim;
+        return rt.gameObject;
+    }
+
+    static VerticalLayoutGroup Lista(Transform parent, Vector2 pos, Vector2 size)
+    {
+        var lista = UI("Lista", parent, new Vector2(0.5f, 0.5f), pos, size);
+        var layout = lista.gameObject.AddComponent<VerticalLayoutGroup>();
+        layout.spacing = 4;
+        layout.childControlHeight = false;
+        layout.childControlWidth = false;
+        layout.childForceExpandHeight = false;
+        return layout;
+    }
+
+    static void HUD(GameObject lira, string titulo)
     {
         var canvas = NuevoCanvas("HUD", 0);
         var hud = canvas.gameObject.AddComponent<HUD>();
+        var ui = canvas.gameObject.AddComponent<UIManager>();
         var t = canvas.transform;
         var tl = new Vector2(0, 1);
+        var c = new Vector2(0.5f, 0.5f);
 
-        var vida = Barra(t, "BarraVida", Sprites + "UI/Barra de vida.png", new Vector2(30, -30));
-        var mana = Barra(t, "BarraMana", Sprites + "UI/Barra de maná.png", new Vector2(30, -120));
+        // Viñeta: oscurece las orillas de la pantalla
+        var vin = Estirar("Vineta", t).gameObject.AddComponent<Image>();
+        vin.sprite = vineta;
+        vin.raycastTarget = false;
+
+        // Retrato de Lira con marco, barras y hechizos equipados
+        var marcoRetrato = LoadSprite(Sprites + "UI/Marco de retrato.png");
+        Img("Retrato", t, tl, new Vector2(38, -36), new Vector2(118, 118), LoadSprite(Sprites + "Characters/Lira.png"), Color.white);
+        Img("MarcoRetrato", t, tl, new Vector2(20, -20), new Vector2(155, 155), marcoRetrato, Color.white);
+
+        var vida = Barra(t, "BarraVida", Sprites + "UI/Barra de vida.png", new Vector2(185, -22), 380, new Color(0.85f, 0.15f, 0.2f));
+        var mana = Barra(t, "BarraMana", Sprites + "UI/Barra de maná.png", new Vector2(185, -82), 380, new Color(0.2f, 0.45f, 1f));
 
         var icons = new Image[3];
         var frames = new Image[3];
         for (int i = 0; i < 3; i++)
         {
-            var pos = new Vector2(30 + i * 100, -215);
-            frames[i] = Img("Espacio_" + (i + 1), t, tl, pos, new Vector2(88, 88), square, new Color(0, 0, 0, 0.5f));
-            icons[i] = Img("Icono_" + (i + 1), frames[i].transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(74, 74), null, Color.white);
+            var pos = new Vector2(30 + i * 92, -190);
+            frames[i] = Img("Espacio_" + (i + 1), t, tl, pos, new Vector2(82, 82), square, new Color(0, 0, 0, 0.5f));
+            icons[i] = Img("Icono_" + (i + 1), frames[i].transform, c, Vector2.zero, new Vector2(70, 70), null, Color.white);
             icons[i].preserveAspect = true;
-            Txt("Tecla", frames[i].transform, new Vector2(0, 1), new Vector2(4, -2), new Vector2(30, 30), (i + 1).ToString(), 20, TextAnchor.UpperLeft);
+            Txt("Tecla", frames[i].transform, tl, new Vector2(4, -2), new Vector2(30, 30), (i + 1).ToString(), 20, TextAnchor.UpperLeft);
         }
-
-        var fragments = Txt("Fragmentos", t, tl, new Vector2(30, -315), new Vector2(400, 36), "Fragmentos: 0/5", 28, TextAnchor.MiddleLeft);
+        var fragments = Txt("Fragmentos", t, tl, new Vector2(310, -205), new Vector2(360, 50), "Fragmentos: 0/5", 28, TextAnchor.MiddleLeft);
 
         // Barra del jefe
         var top = new Vector2(0.5f, 1);
-        var panel = UI("Jefe", t, top, new Vector2(0, -30), new Vector2(820, 80));
-        var bossName = Txt("Nombre", panel, top, Vector2.zero, new Vector2(820, 34), "Jefe", 26, TextAnchor.MiddleCenter);
-        Img("Fondo", panel, top, new Vector2(0, -40), new Vector2(800, 26), square, new Color(0, 0, 0, 0.7f));
-        var bossFill = Img("Vida", panel, top, new Vector2(0, -40), new Vector2(800, 26), square, new Color(0.8f, 0.15f, 0.25f));
+        var panel = UI("Jefe", t, top, new Vector2(0, -24), new Vector2(820, 80));
+        var bossName = Txt("Nombre", panel, top, Vector2.zero, new Vector2(820, 36), "Jefe", 28, TextAnchor.MiddleCenter);
+        Img("Fondo", panel, top, new Vector2(0, -42), new Vector2(806, 30), square, new Color(0, 0, 0, 0.75f));
+        var bossFill = Img("Vida", panel, top, new Vector2(0, -45), new Vector2(800, 24), square, new Color(0.85f, 0.15f, 0.3f));
         bossFill.type = Image.Type.Filled;
         bossFill.fillMethod = Image.FillMethod.Horizontal;
 
@@ -877,27 +1124,82 @@ public static class CrearJuego
         Set(hud, "bossPanel", panel.gameObject);
         Set(hud, "bossFill", bossFill);
         Set(hud, "bossName", bossName);
-    }
 
-    static void EventSystem()
-    {
-        var go = new GameObject("EventSystem");
-        go.AddComponent<UnityEngine.EventSystems.EventSystem>();
-        go.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
-    }
+        // ---- Mensajes ----
+        var msg = UI("Mensaje", t, top, new Vector2(0, -120), new Vector2(1000, 64));
+        msg.gameObject.AddComponent<Image>().color = Oscuro;
+        var msgText = Txt("Texto", msg, c, Vector2.zero, new Vector2(980, 60), "", 28, TextAnchor.MiddleCenter);
+        var msgGroup = msg.gameObject.AddComponent<CanvasGroup>();
 
-    static Button Boton(Transform parent, string texto, Vector2 pos, UnityAction accion)
-    {
-        var img = Img("Boton_" + texto, parent, new Vector2(0.5f, 0.5f), pos, new Vector2(420, 70), square, new Color(0.18f, 0.1f, 0.3f, 0.9f));
-        var btn = img.gameObject.AddComponent<Button>();
-        var colors = btn.colors;
-        colors.highlightedColor = new Color(0.45f, 0.3f, 0.7f);
-        colors.pressedColor = new Color(0.7f, 0.55f, 0.2f);
-        colors.disabledColor = new Color(0.3f, 0.3f, 0.3f, 0.5f);
-        btn.colors = colors;
-        Txt("Texto", img.transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(420, 70), texto, 32, TextAnchor.MiddleCenter);
-        UnityEventTools.AddPersistentListener(btn.onClick, accion);
-        return btn;
+        var title = UI("Titulo", t, c, new Vector2(0, 170), new Vector2(1400, 140));
+        var titleText = Txt("Texto", title, c, Vector2.zero, new Vector2(1400, 140), titulo, 84, TextAnchor.MiddleCenter);
+        var titleGroup = title.gameObject.AddComponent<CanvasGroup>();
+
+        var prompt = Txt("Aviso", t, new Vector2(0.5f, 0f), new Vector2(0, 300), new Vector2(900, 50), "", 30, TextAnchor.MiddleCenter);
+
+        // ---- Diálogo ----
+        var dlg = UI("Dialogo", t, new Vector2(0.5f, 0f), new Vector2(0, 30), new Vector2(1500, 250));
+        dlg.gameObject.AddComponent<Image>().color = Oscuro;
+        var retrato = Img("Retrato", dlg, new Vector2(0, 0.5f), new Vector2(35, 0), new Vector2(170, 200), null, Color.white);
+        retrato.preserveAspect = true;
+        Img("Marco", dlg, new Vector2(0, 0.5f), new Vector2(15, 0), new Vector2(215, 230), marcoRetrato, Color.white);
+        var dlgName = Txt("Nombre", dlg, tl, new Vector2(260, -18), new Vector2(1000, 44), "", 34, TextAnchor.MiddleLeft);
+        var dlgBody = Txt("Texto", dlg, tl, new Vector2(260, -70), new Vector2(1200, 140), "", 30, TextAnchor.UpperLeft);
+        dlgBody.color = Color.white;
+        var dlgHint = Txt("Ayuda", dlg, new Vector2(1, 0), new Vector2(-24, 14), new Vector2(500, 36), "", 22, TextAnchor.LowerRight);
+
+        // ---- Pausa ----
+        var marcoMenu = LoadSprite(Sprites + "UI/Marco de menú.png");
+        var pause = Panel(t, "Pausa", new Color(0, 0, 0, 0.6f));
+        Img("Marco", pause.transform, c, Vector2.zero, new Vector2(700, 660), marcoMenu, Color.white);
+        Txt("Titulo", pause.transform, c, new Vector2(0, 200), new Vector2(600, 90), "PAUSA", 64, TextAnchor.MiddleCenter);
+        var reanudar = Boton(pause.transform, "Reanudar", new Vector2(0, 90), ui.BotonReanudar);
+        Boton(pause.transform, "Logros", new Vector2(0, 0), ui.BotonLogros);
+        Boton(pause.transform, "Reiniciar nivel", new Vector2(0, -90), ui.BotonReiniciar);
+        Boton(pause.transform, "Menú principal", new Vector2(0, -180), ui.BotonMenu);
+
+        var logros = Panel(t, "Logros", new Color(0, 0, 0, 0.75f));
+        Img("Marco", logros.transform, c, new Vector2(0, -10), new Vector2(1150, 1000), marcoMenu, Color.white);
+        Txt("Titulo", logros.transform, c, new Vector2(0, 430), new Vector2(800, 80), "LOGROS", 60, TextAnchor.MiddleCenter);
+        var lista = Lista(logros.transform, new Vector2(0, 40), new Vector2(900, 680));
+        var volver = Boton(logros.transform, "Volver", new Vector2(0, -400), ui.BotonVolverPausa);
+
+        // ---- Game Over ----
+        var over = Panel(t, "GameOver", new Color(0.25f, 0f, 0.05f, 0.7f));
+        Txt("Titulo", over.transform, c, new Vector2(0, 160), new Vector2(1200, 120), "Lira ha caído", 84, TextAnchor.MiddleCenter);
+        var reintentar = Boton(over.transform, "Reintentar", new Vector2(0, 0), ui.BotonReiniciar);
+        Boton(over.transform, "Menú principal", new Vector2(0, -95), ui.BotonMenu);
+
+        // ---- Aviso de logro ----
+        var toast = UI("AvisoLogro", t, new Vector2(1, 0), new Vector2(-24, 24), new Vector2(480, 120));
+        toast.gameObject.AddComponent<Image>().color = Oscuro;
+        var toastIcon = Img("Icono", toast, new Vector2(0, 0.5f), new Vector2(12, 0), new Vector2(96, 96), null, Color.white);
+        toastIcon.preserveAspect = true;
+        var toastText = Txt("Texto", toast, new Vector2(0, 0.5f), new Vector2(120, 0), new Vector2(350, 100), "", 24, TextAnchor.MiddleLeft);
+        var toastGroup = toast.gameObject.AddComponent<CanvasGroup>();
+
+        Set(ui, "font", font);
+        Set(ui, "levelTitle", titulo);
+        Set(ui, "messageGroup", msgGroup);
+        Set(ui, "messageText", msgText);
+        Set(ui, "titleGroup", titleGroup);
+        Set(ui, "titleText", titleText);
+        Set(ui, "promptText", prompt);
+        Set(ui, "dialoguePanel", dlg.gameObject);
+        Set(ui, "dialoguePortrait", retrato);
+        Set(ui, "dialogueName", dlgName);
+        Set(ui, "dialogueBody", dlgBody);
+        Set(ui, "dialogueHint", dlgHint);
+        Set(ui, "pausePanel", pause);
+        Set(ui, "pauseFirst", reanudar.gameObject);
+        Set(ui, "achievementsPanel", logros);
+        Set(ui, "achievementsList", lista.transform);
+        Set(ui, "achievementsFirst", volver.gameObject);
+        Set(ui, "gameOverPanel", over);
+        Set(ui, "gameOverFirst", reintentar.gameObject);
+        Set(ui, "toastGroup", toastGroup);
+        Set(ui, "toastIcon", toastIcon);
+        Set(ui, "toastText", toastText);
     }
 
     static string CrearMenu()
@@ -917,38 +1219,42 @@ public static class CrearJuego
         var t = canvas.transform;
         var c = new Vector2(0.5f, 0.5f);
 
-        var fondo = Img("Fondo", t, c, Vector2.zero, new Vector2(1920, 1080), LoadSprite(Sprites + "Backgrounds/Corazón del Grimorio.jpg"), Color.white);
-        fondo.preserveAspect = false;
-        Img("Oscurecer", t, c, Vector2.zero, new Vector2(1920, 1080), square, new Color(0, 0, 0, 0.45f));
+        var fondo = Estirar("Fondo", t).gameObject.AddComponent<Image>();
+        fondo.sprite = LoadSprite(Sprites + "Backgrounds/Corazón del Grimorio.jpg");
+        fondo.raycastTarget = false;
+        var dim = Estirar("Oscurecer", t).gameObject.AddComponent<Image>();
+        dim.sprite = vineta;
+        dim.raycastTarget = false;
 
         var menu = canvas.gameObject.AddComponent<MainMenu>();
         var marco = LoadSprite(Sprites + "UI/Marco de menú.png");
 
         var main = UI("Principal", t, c, Vector2.zero, new Vector2(1920, 1080));
-        Txt("Titulo", main, c, new Vector2(0, 360), new Vector2(1400, 140), "ECOS DEL GRIMORIO", 96, TextAnchor.MiddleCenter);
-        Img("Marco", main, c, new Vector2(0, -60), new Vector2(700, 640), marco, Color.white);
-        Boton(main, "Nueva Partida", new Vector2(0, 120), menu.NuevaPartida);
+        Img("Lira", main, c, new Vector2(-620, -120), new Vector2(380, 620), LoadSprite(Sprites + "Characters/Lira.png"), Color.white);
+        Img("Elenora", main, c, new Vector2(620, -80), new Vector2(420, 640), LoadSprite(Sprites + "Enemies/Eco_Archimaga_Elenora.png"), new Color(1f, 1f, 1f, 0.85f));
+        Txt("Titulo", main, c, new Vector2(0, 380), new Vector2(1400, 140), "ECOS DEL GRIMORIO", 104, TextAnchor.MiddleCenter);
+        Img("Marco", main, c, new Vector2(0, -70), new Vector2(680, 640), marco, Color.white);
+        var nueva = Boton(main, "Nueva Partida", new Vector2(0, 120), menu.NuevaPartida);
         var cont = Boton(main, "Continuar", new Vector2(0, 30), menu.Continuar);
         Boton(main, "Logros", new Vector2(0, -60), menu.ShowAchievements);
         Boton(main, "Créditos", new Vector2(0, -150), menu.Creditos);
         Boton(main, "Salir", new Vector2(0, -240), menu.Salir);
+        Txt("Ayuda", main, new Vector2(0.5f, 0f), new Vector2(0, 30), new Vector2(1400, 40),
+            "Teclado o control de PS4 / Xbox", 24, TextAnchor.MiddleCenter);
 
         var logros = UI("Logros", t, c, Vector2.zero, new Vector2(1920, 1080));
         Img("Marco", logros, c, new Vector2(0, -20), new Vector2(1150, 1000), marco, Color.white);
         Txt("Titulo", logros, c, new Vector2(0, 430), new Vector2(800, 80), "LOGROS", 60, TextAnchor.MiddleCenter);
-        var lista = UI("Lista", logros, c, new Vector2(0, 40), new Vector2(900, 680));
-        var layout = lista.gameObject.AddComponent<VerticalLayoutGroup>();
-        layout.spacing = 4;
-        layout.childControlHeight = false;
-        layout.childControlWidth = false;
-        layout.childForceExpandHeight = false;
-        Boton(logros, "Volver", new Vector2(0, -400), menu.ShowMain);
+        var lista = Lista(logros, new Vector2(0, 40), new Vector2(900, 680));
+        var volver = Boton(logros, "Volver", new Vector2(0, -400), menu.ShowMain);
 
         Set(menu, "continueButton", cont);
         Set(menu, "mainPanel", main.gameObject);
         Set(menu, "achievementsPanel", logros.gameObject);
-        Set(menu, "achievementsList", lista);
+        Set(menu, "achievementsList", lista.transform);
         Set(menu, "font", font);
+        Set(menu, "firstButton", nueva.gameObject);
+        Set(menu, "achievementsBack", volver.gameObject);
 
         string path = $"{Scenes}/{GameManager.MenuScene}.unity";
         EditorSceneManager.SaveScene(scene, path);
@@ -969,11 +1275,13 @@ public static class CrearJuego
 
         var canvas = NuevoCanvas("Creditos", 0);
         var t = canvas.transform;
-        var c = new Vector2(0.5f, 0.5f);
-        var fondo = Img("Fondo", t, c, Vector2.zero, new Vector2(1920, 1080), LoadSprite(Sprites + "Backgrounds/ALA_DE_APRENDIZAJE.png"), new Color(0.4f, 0.4f, 0.5f));
-        fondo.preserveAspect = false;
+        var fondo = Estirar("Fondo", t).gameObject.AddComponent<Image>();
+        fondo.sprite = LoadSprite(Sprites + "Backgrounds/ALA_DE_APRENDIZAJE.png");
+        fondo.color = new Color(0.35f, 0.35f, 0.45f);
+        var vin = Estirar("Vineta", t).gameObject.AddComponent<Image>();
+        vin.sprite = vineta;
 
-        var texto = Txt("Texto", t, new Vector2(0.5f, 0f), new Vector2(0, -900), new Vector2(1400, 1800), "", 38, TextAnchor.UpperCenter);
+        var texto = Txt("Texto", t, new Vector2(0.5f, 0f), new Vector2(0, -900), new Vector2(1400, 1800), "", 40, TextAnchor.UpperCenter);
         texto.rectTransform.pivot = new Vector2(0.5f, 1f);
 
         var credits = canvas.gameObject.AddComponent<CreditsScreen>();

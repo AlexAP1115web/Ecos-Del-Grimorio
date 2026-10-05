@@ -38,6 +38,14 @@ public class Health : MonoBehaviour, IDamageable
     public float MaxHealth => maxHealth;
     public float Percent => maxHealth > 0 ? currentHealth / maxHealth : 0f;
     public bool IsDead { get; private set; }
+    public bool IsInvulnerable => Time.time < invulnerableUntil;
+    public float LastHitTime { get; private set; } = -10f;
+
+    // Invulnerabilidad extra (por ejemplo durante el esquive)
+    public void SetInvulnerable(float seconds)
+    {
+        invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + seconds);
+    }
 
     void Awake()
     {
@@ -114,6 +122,7 @@ public class Health : MonoBehaviour, IDamageable
 
         currentHealth = Mathf.Max(currentHealth, 0f);
         invulnerableUntil = Time.time + invulnerableTime;
+        LastHitTime = Time.time;
 
         Damaged?.Invoke(finalDamage);
         OnHealthChanged.Invoke(Percent);

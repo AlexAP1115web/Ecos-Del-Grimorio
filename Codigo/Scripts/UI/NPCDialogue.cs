@@ -1,23 +1,22 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-// Diálogo sencillo de un personaje no jugable (Maestra Sable).
-// Cuando Lira se acerca aparece el texto; con E avanza a la siguiente línea.
+// Diálogo de un personaje (Maestra Sable) o de un jefe antes del combate.
+// Con autoStart se inicia solo al acercarse (jefes); si no, aparece el aviso para hablar.
 public class NPCDialogue : MonoBehaviour
 {
     [SerializeField] private string speakerName = "Maestra Sable";
+    [SerializeField] private Sprite portrait;
     [TextArea(2, 4)]
     [SerializeField] private string[] lines =
     {
-        "Ese grimorio perteneció a alguien que intentó ir más allá de lo permitido. Ten cuidado con lo que despiertas, Lira.",
-        "Empecemos por lo básico. Repite conmigo el primer sello arcano.",
-        "Usa A/D para moverte, Espacio para saltar y 1 para lanzar el hechizo Arcano. Con Q cambias el hechizo equipado."
+        "Ese grimorio perteneció a alguien que intentó ir más allá de lo permitido. Ten cuidado con lo que despiertas, Lira."
     };
     [SerializeField] private float talkRange = 2.5f;
+    [SerializeField] private bool autoStart = false;
 
     private Transform player;
-    private int index;
-    private bool finished;
+    private bool talked;
+    private bool promptShown;
 
     void Start()
     {
@@ -29,22 +28,35 @@ public class NPCDialogue : MonoBehaviour
 
     void Update()
     {
-        if (finished || !PlayerNear) return;
-        var kb = Keyboard.current;
-        if (kb != null && kb.eKey.wasPressedThisFrame)
+        var ui = UIManager.Instance;
+        if (ui == null || ui.InDialogue || Time.timeScale == 0f) return;
+
+        bool near = PlayerNear;
+
+        if (autoStart)
         {
-            index++;
-            if (index >= lines.Length) finished = true;
+            if (!talked && near) Talk(ui);
+            return;
         }
+
+        if (near && !promptShown)
+        {
+            ui.ShowPrompt($"{Controles.TextoInteractuar}  Hablar con {speakerName}");
+            promptShown = true;
+        }
+        else if (!near && promptShown)
+        {
+            ui.HidePrompt();
+            promptShown = false;
+        }
+
+        if (near && Controles.InteractuarPresionado) Talk(ui);
     }
 
-    void OnGUI()
+    void Talk(UIManager ui)
     {
-        if (finished || !PlayerNear || lines.Length == 0 || Time.timeScale == 0f) return;
-
-        var style = new GUIStyle(GUI.skin.box) { fontSize = 18, alignment = TextAnchor.UpperLeft, wordWrap = true };
-        style.padding = new RectOffset(16, 16, 12, 12);
-        var rect = new Rect(40, Screen.height - 170, Screen.width - 80, 130);
-        GUI.Box(rect, $"{speakerName}:\n{lines[index]}\n\n(E para continuar)", style);
+        talked = true;
+        promptShown = false;
+        ui.StartDialogue(speakerName, portrait, lines, null);
     }
 }

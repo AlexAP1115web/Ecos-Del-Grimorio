@@ -30,6 +30,9 @@ public class SpellProjectile : MonoBehaviour
             sr.flipX = direction.x < 0f;
         }
 
+        var trail = GetComponent<EstelaProyectil>();
+        if (trail != null) trail.SetColor(ElementoColor.Get(data.element) * new Color(1f, 1f, 1f, 0.7f));
+
         Destroy(gameObject, data.lifetime);
     }
 
@@ -40,6 +43,7 @@ public class SpellProjectile : MonoBehaviour
 
         if (other.CompareTag("Ground"))
         {
+            Particula.Rafaga(transform.position, ElementoColor.Get(data.element), 6, 3f, 0.14f, 0.3f);
             Destroy(gameObject);
             return;
         }
@@ -53,8 +57,13 @@ public class SpellProjectile : MonoBehaviour
         if (enemy != null)
         {
             if (data.slowFactor < 1f) enemy.ApplySlow(data.slowFactor, data.slowDuration);
-            if (data.knockback > 0f) enemy.Knockback(direction * data.knockback);
+            float push = data.knockback > 0f ? data.knockback : 2.5f;
+            enemy.Knockback(new Vector2(direction.x, 0.3f) * push);
         }
+
+        Particula.Rafaga(transform.position, ElementoColor.Get(data.element), 10, 5f, 0.18f, 0.35f);
+        CameraFollow.Shake(0.06f, 0.08f);
+        Controles.Vibrar(0.15f, 0.3f, 0.06f);
 
         if (!piercing) Destroy(gameObject);
     }
