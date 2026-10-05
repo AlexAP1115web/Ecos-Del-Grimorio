@@ -46,7 +46,8 @@ public class GrimorioUI : MonoBehaviour
 
         // ---- Mejoras y habilidades
         Titulo("MEJORAS Y HABILIDADES", izq, -45f);
-        Fila(esquive, "Esquive", "Shift o Círculo: un instante sin recibir daño", izq, -105f, true);
+        Fila(esquive, "Esquive y planear", Tiene(Elemento.Viento) ? "Esquive: Shift o Círculo.  Planear: mantén saltar al caer"
+                                                                  : "Esquive: Shift o Círculo, un instante sin recibir daño", izq, -105f, true);
         string[] efectos = { "+30% de daño con Fuego", "Recibes menos daño de fuego", "Saltas más alto" };
         for (int i = 0; i < mejoras.Length; i++)
         {
@@ -93,9 +94,9 @@ public class GrimorioUI : MonoBehaviour
     {
         switch (e)
         {
-            case Elemento.Fuego: return "quema fuerte";
-            case Elemento.Hielo: return "ralentiza";
-            case Elemento.Viento: return "empuja";
+            case Elemento.Fuego: return "quema zarzas y derrite hielo";
+            case Elemento.Hielo: return "al 3er golpe congela";
+            case Elemento.Viento: return "empuja cajas y te deja planear";
             default: return "rápido";
         }
     }
@@ -162,11 +163,14 @@ public class GrimorioUI : MonoBehaviour
         trt.sizeDelta = new Vector2(552f, 62f);
         var t = textGo.AddComponent<Text>();
         t.font = font;
-        t.fontSize = 23;
+        t.fontSize = 22;
         t.supportRichText = true;
         t.alignment = TextAnchor.MiddleLeft;
         t.horizontalOverflow = HorizontalWrapMode.Wrap;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
+        t.verticalOverflow = VerticalWrapMode.Truncate;
+        t.resizeTextForBestFit = true;
+        t.resizeTextMinSize = 15;
+        t.resizeTextMaxSize = 22;
         t.color = activo ? Color.white : Apagado;
         t.text = $"<b><color=#{ColorUtility.ToHtmlStringRGB(activo ? Dorado : Apagado)}>{nombre}</color></b>\n{(activo ? detalle : (string.IsNullOrEmpty(detalle) ? "Bloqueado" : detalle))}";
         t.raycastTarget = false;

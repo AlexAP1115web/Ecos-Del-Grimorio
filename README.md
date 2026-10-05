@@ -57,6 +57,7 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 | Combo rápido | C | L2 |
 | Cambiar hechizo equipado | Q | R2 |
 | Esquive | Shift / K | Círculo |
+| Planear (con Viento) | Mantener Espacio al caer | Mantener X al caer |
 | Hablar / abrir cofre | E | Triángulo |
 | Pausa | Esc | Options |
 | Modo Archimaga (código secreto) | F, H, V, A, Intro | Mantener L1 + R1 y presionar Triángulo |

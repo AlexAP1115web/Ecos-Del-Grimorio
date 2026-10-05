@@ -45,6 +45,16 @@ public class SpellProjectile : MonoBehaviour
         if (data == null) return;
         if (other.CompareTag("Player") || other.GetComponent<SpellProjectile>() != null) return;
 
+        // El viento empuja cajas y objetos sueltos
+        var empujable = other.GetComponentInParent<Empujable>();
+        if (empujable != null)
+        {
+            empujable.Empujar(direction, data.element);
+            Particula.Rafaga(transform.position, ElementoColor.Get(data.element), 8, 4f, 0.14f, 0.3f);
+            if (!piercing) Destroy(gameObject);
+            return;
+        }
+
         if (other.CompareTag("Ground"))
         {
             Particula.Rafaga(transform.position, ElementoColor.Get(data.element), 6, 3f, 0.14f, 0.3f);
@@ -62,6 +72,7 @@ public class SpellProjectile : MonoBehaviour
         if (enemy != null)
         {
             if (data.slowFactor < 1f) enemy.ApplySlow(data.slowFactor, data.slowDuration);
+            if (data.element == Elemento.Hielo) enemy.GolpeDeHielo();
             float push = data.knockback > 0f ? data.knockback : 2.5f;
             enemy.Knockback(new Vector2(direction.x, 0.3f) * push);
         }

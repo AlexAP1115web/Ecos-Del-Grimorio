@@ -28,6 +28,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float dashTime = 0.18f;
     [SerializeField] private float dashCooldown = 0.6f;
 
+    [Header("Planear (con el hechizo de Viento)")]
+    [SerializeField] private float velocidadPlaneo = 2.2f;
+
     [Header("Agacharse")]
     [SerializeField] private float crouchSpeed = 3.2f;
     [Tooltip("Altura del collider agachada (fracción de la altura de pie)")]
@@ -90,16 +93,20 @@ public class PlayerController : MonoBehaviour
     private float walkPhase;
     private int lastStep;
     private SpriteRenderer shadow;
+    private SpellCaster caster;
+    private float nextGlideFx;
 
     public bool FacingRight { get; private set; } = true;
     public bool IsGrounded => isGrounded;
     public bool IsDashing => Time.time < dashUntil;
     public bool IsCrouching { get; private set; }
+    public bool IsGliding { get; private set; }
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         health = GetComponent<Health>();
+        caster = GetComponent<SpellCaster>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         visual = spriteRenderer != null && spriteRenderer.transform != transform ? spriteRenderer.transform : null;
         if (visual != null)
@@ -267,7 +274,18 @@ public class PlayerController : MonoBehaviour
             jumpCutPending = false;
         }
 
-        rb.gravityScale = vy < 0f ? baseGravity * fallGravityMultiplier : baseGravity;
+        // Planear: con el Viento aprendido, mantener saltar mientras cae baja la velocidad de caída
+        IsGliding = !isGrounded && vy < 0f && controlsEnabled && Controles.SaltarSostenido
+                    && caster != null && caster.IsUnlocked(Elemento.Viento);
+        if (IsGliding)
+        {
+            rb.gravityScale = baseGravity * 0.25f;
+            vy = Mathf.Max(vy, -velocidadPlaneo);
+        }
+        else
+        {
+            rb.gravityScale = vy < 0f ? baseGravity * fallGravityMultiplier : baseGravity;
+        }
         vy = Mathf.Max(vy, -maxFallSpeed);
 
         rb.linearVelocity = new Vector2(newX + externalVelocity.x + platformX, vy);
@@ -365,6 +383,12 @@ public class PlayerController : MonoBehaviour
         float tilt = IsDashing ? -12f * dashDirection : -6f * horizontalInput * (isGrounded ? 1f : 0.5f) * (IsCrouching ? 0.3f : 1f);
         visual.localRotation = Quaternion.Lerp(visual.localRotation, Quaternion.Euler(0f, 0f, tilt), 15f * Time.deltaTime);
 
+        if (IsGliding && Time.time >= nextGlideFx)
+        {
+            nextGlideFx = Time.time + 0.06f;
+            Particula.Rafaga((Vector2)transform.position + Vector2.up * 0.4f, new Color(0.7f, 1f, 0.8f, 0.6f), 1, 1f, 0.06f, 0.5f, 1f);
+        }
+
         if (IsDashing && Time.time >= nextGhostTime)
         {
             nextGhostTime = Time.time + 0.03f;
@@ -384,6 +408,7 @@ public class PlayerController : MonoBehaviour
         float a = 0f, b = 0f;
         if (IsDashing) { a = 32f; b = -26f; }
         else if (IsCrouching) { a = 8f; b = -8f; }
+        else if (IsGliding) { a = 14f; b = -14f; }
         else if (!isGrounded)
         {
             bool up = rb.linearVelocity.y > 0f;

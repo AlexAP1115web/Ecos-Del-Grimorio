@@ -38,6 +38,12 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text dialogueHint;
     [SerializeField] private RetratoPersonaje[] retratos = new RetratoPersonaje[0];
 
+    [Header("Resultados")]
+    [SerializeField] private GameObject resultsPanel;
+    [SerializeField] private Text resultsTitle;
+    [SerializeField] private Text resultsBody;
+    [SerializeField] private GameObject resultsFirst;
+
     [Header("Pantallas")]
     [SerializeField] private GameObject pausePanel;
     [SerializeField] private GameObject pauseFirst;
@@ -48,6 +54,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject controlsFirst;
     [SerializeField] private GameObject grimorioPanel;
     [SerializeField] private GameObject grimorioFirst;
+    [SerializeField] private GameObject optionsPanel;
+    [SerializeField] private GameObject optionsFirst;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject gameOverFirst;
 
@@ -72,10 +80,12 @@ public class UIManager : MonoBehaviour
     private string currentText = "";
     private string currentSpeaker = "";
     private float nextVoiceTime;
+    private Action onResultsContinue;
     private PlayerController playerController;
     private SpellCaster playerCaster;
 
     public bool InDialogue => dialoguePanel != null && dialoguePanel.activeSelf;
+    public string LevelTitle => levelTitle;
 
     void Awake()
     {
@@ -103,6 +113,8 @@ public class UIManager : MonoBehaviour
         SetActive(achievementsPanel, false);
         SetActive(controlsPanel, false);
         SetActive(grimorioPanel, false);
+        SetActive(optionsPanel, false);
+        SetActive(resultsPanel, false);
         SetActive(gameOverPanel, false);
         if (messageGroup != null) messageGroup.alpha = 0f;
         if (toastGroup != null) toastGroup.alpha = 0f;
@@ -325,6 +337,7 @@ public class UIManager : MonoBehaviour
         SetActive(achievementsPanel, false);
         SetActive(controlsPanel, false);
         SetActive(grimorioPanel, false);
+        SetActive(optionsPanel, false);
         SetActive(gameOverPanel, state == GameState.GameOver);
 
         if (state == GameState.Pausa) Select(pauseFirst);
@@ -354,6 +367,36 @@ public class UIManager : MonoBehaviour
         Select(achievementsFirst);
     }
 
+    // Pantalla de resultados al terminar un ala
+    public void ShowResults(string title, string body, Action onContinue)
+    {
+        onResultsContinue = onContinue;
+        if (resultsTitle != null) resultsTitle.text = $"¡{title} completada!";
+        if (resultsBody != null) resultsBody.text = body;
+        HidePrompt();
+        SetActive(dialoguePanel, false);
+        SetActive(resultsPanel, true);
+        Select(resultsFirst);
+        Time.timeScale = 0f;
+        AudioManager.Play(Sfx.Logro);
+    }
+
+    public void BotonContinuarResultados()
+    {
+        if (onResultsContinue == null) return;
+        var callback = onResultsContinue;
+        onResultsContinue = null;
+        AudioManager.Play(Sfx.Portal);
+        callback();
+    }
+
+    public void BotonOpciones()
+    {
+        SetActive(pausePanel, false);
+        SetActive(optionsPanel, true);
+        Select(optionsFirst);
+    }
+
     public void BotonGrimorio()
     {
         SetActive(pausePanel, false);
@@ -373,6 +416,7 @@ public class UIManager : MonoBehaviour
         SetActive(achievementsPanel, false);
         SetActive(controlsPanel, false);
         SetActive(grimorioPanel, false);
+        SetActive(optionsPanel, false);
         SetActive(pausePanel, true);
         Select(pauseFirst);
     }

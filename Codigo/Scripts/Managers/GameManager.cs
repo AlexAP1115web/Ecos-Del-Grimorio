@@ -59,6 +59,12 @@ public class GameManager : MonoBehaviour
     private Vector3 checkpointPosition;
     private float hitStopUntil;
 
+    // Datos del nivel actual para la pantalla de resultados
+    private int enemigosDerrotados;
+    private float danoRecibido;
+    private int secretosEncontrados;
+    private int secretosTotales;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -71,6 +77,8 @@ public class GameManager : MonoBehaviour
         Load();
         SceneManager.sceneLoaded += OnSceneLoaded;
         BossController.BossActivated += OnBossActivated;
+        EnemyBase.Died += _ => enemigosDerrotados++;
+        Rompible.SecretoEncontrado += () => secretosEncontrados++;
     }
 
     void OnDestroy()
@@ -103,6 +111,12 @@ public class GameManager : MonoBehaviour
         SetState(GameState.Jugando);
         levelStartTime = Time.time;
         tookDamageThisLevel = false;
+        enemigosDerrotados = 0;
+        danoRecibido = 0f;
+        secretosEncontrados = 0;
+        secretosTotales = 0;
+        foreach (var r in FindObjectsByType<Rompible>())
+            if (r.EsSecreto) secretosTotales++;
         if (checkpointScene != scene.name) checkpointScene = null;
 
         var player = GameObject.FindGameObjectWithTag("Player");
@@ -115,7 +129,7 @@ public class GameManager : MonoBehaviour
         {
             health.OnDeath.RemoveListener(OnPlayerDeath);
             health.OnDeath.AddListener(OnPlayerDeath);
-            health.Damaged += _ => tookDamageThisLevel = true;
+            health.Damaged += d => { tookDamageThisLevel = true; danoRecibido += d; };
         }
     }
 
@@ -327,30 +341,59 @@ public class GameManager : MonoBehaviour
     public void CompleteLevel(string nextScene, Elemento spellToUnlock, bool unlocksSpell)
     {
         string current = SceneManager.GetActiveScene().name;
-        LevelCompleted?.Invoke(current, Time.time - levelStartTime, tookDamageThisLevel);
+        float segundos = Time.time - levelStartTime;
+        LevelCompleted?.Invoke(current, segundos, tookDamageThisLevel);
 
-        if (unlocksSpell)
-        {
-            UnlockSpell(spellToUnlock);
-            ShowMessage(unlockedSpells.Count > 3
-                ? $"Hechizo de {spellToUnlock} desbloqueado. Usa Q para equiparlo."
-                : $"Hechizo de {spellToUnlock} desbloqueado", 5f);
-        }
-
+        if (unlocksSpell) UnlockSpell(spellToUnlock);
         checkpointScene = null;
-
         if (nextScene == CreditsScene) GameFinished?.Invoke();
 
-        if (!string.IsNullOrEmpty(nextScene) && Application.CanStreamedLevelBeLoaded(nextScene))
+        bool puedeCargar = !string.IsNullOrEmpty(nextScene) && Application.CanStreamedLevelBeLoaded(nextScene);
+        if (puedeCargar && nextScene != CreditsScene) PlayerPrefs.SetString("eg_nivel", nextScene);
+        Save();
+
+        void Continuar()
         {
-            if (nextScene != CreditsScene) PlayerPrefs.SetString("eg_nivel", nextScene);
-            Save();
-            SceneManager.LoadScene(nextScene);
+            if (puedeCargar) SceneManager.LoadScene(nextScene);
+        }
+
+        // Pantalla de resultados del ala antes de pasar a la siguiente
+        var ui = UIManager.Instance;
+        if (ui == null)
+        {
+            Continuar();
             return;
         }
 
-        Save();
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            var pc = player.GetComponent<PlayerController>();
+            if (pc != null) pc.SetControlsEnabled(false);
+            var h = player.GetComponent<Health>();
+            if (h != null) h.SetInvulnerable(999f);
+        }
         SetState(GameState.NivelCompletado);
+        ui.ShowResults(ui.LevelTitle, Resumen(current, segundos, unlocksSpell, spellToUnlock), Continuar);
+    }
+
+    string Resumen(string scene, float segundos, bool unlocksSpell, Elemento spell)
+    {
+        int min = Mathf.FloorToInt(segundos / 60f), seg = Mathf.FloorToInt(segundos % 60f);
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Tiempo:  {min:00}:{seg:00}");
+        sb.AppendLine($"Enemigos derrotados:  {enemigosDerrotados}");
+        sb.AppendLine(tookDamageThisLevel ? $"Daño recibido:  {Mathf.RoundToInt(danoRecibido)}" : "Daño recibido:  ninguno  ★");
+        sb.AppendLine($"Páginas Perdidas del ala:  {PagesInScene(scene)}/{PagesPerLevel}");
+        if (secretosTotales > 0) sb.AppendLine($"Salas secretas:  {secretosEncontrados}/{secretosTotales}");
+        sb.AppendLine($"Fragmentos de grimorio:  {Fragments}/5");
+        if (unlocksSpell)
+        {
+            sb.AppendLine();
+            sb.Append($"<color=#FFD27F>Nuevo hechizo: {spell}</color>");
+            if (unlockedSpells.Count > 3) sb.Append($"\n<size=26>Solo caben 3 equipados: cámbialo con Q o R2</size>");
+        }
+        return sb.ToString();
     }
 
     // ---------- Guardado ----------

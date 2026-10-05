@@ -486,6 +486,59 @@ public static class EditorHelpers
         return c;
     }, 32, 96, 24);
 
+    // ---------- Acertijos elementales ----------
+
+    // Zarzas de tinta que tapan un camino; solo el Fuego las quema
+    public static Sprite Zarzas() => TiledTexture("Zarzas", (x, y) =>
+    {
+        float a = 0f;
+        for (int k = 0; k < 6; k++)
+        {
+            float cx = 6 + k * 10 + Mathf.Sin(y * 0.11f + k * 2.1f) * 5f;
+            float d = Mathf.Abs(x - cx);
+            if (d < 2.2f) a = 1f;
+            // espinas
+            if ((y + k * 7) % 11 == 0 && d < 5f && x > cx) a = Mathf.Max(a, 1f - d / 5f);
+        }
+        float hoja = Hash(x / 4, y / 4);
+        if (a < 0.5f && hoja > 0.82f) a = 0.9f;
+        if (a < 0.1f) return new Color(0, 0, 0, 0);
+        float v = 0.25f + Hash(x, y) * 0.15f;
+        return new Color(v * 1.2f, v * 0.7f, v * 1.4f, a);
+    }, 64, 96, 32);
+
+    // Bloque de hielo grueso; el Fuego lo derrite
+    public static Sprite MuroHielo() => TiledTexture("MuroHielo", (x, y) =>
+    {
+        float v = 0.78f + Mathf.Sin((x + y) * 0.15f) * 0.06f + (Hash(x / 6, y / 6) - 0.5f) * 0.12f;
+        bool grieta = Mathf.Abs((x * 0.6f + y) % 23 - 11) < 0.7f && Hash(x / 5, y / 9) > 0.4f;
+        bool brillo = (x + y * 2) % 37 < 2;
+        if (grieta) v -= 0.25f;
+        if (brillo) v += 0.2f;
+        return new Color(v * 0.85f, v * 0.95f, Mathf.Min(1f, v * 1.1f), 0.88f);
+    }, 64, 64, 32);
+
+    // Caja de madera que se empuja con el Viento
+    public static Sprite Caja() => TiledTexture("Caja", (x, y) =>
+    {
+        bool marco = x < 3 || x > 28 || y < 3 || y > 28;
+        bool diagonal = Mathf.Abs(x - y) < 2 || Mathf.Abs(x - (31 - y)) < 2;
+        float v = 0.62f + Hash(x / 2, y / 8) * 0.12f;
+        if (marco) v = 0.45f;
+        else if (diagonal) v = 0.5f;
+        if ((x == 5 || x == 26) && (y == 5 || y == 26)) v = 0.85f;   // clavos
+        return new Color(v * 1.05f, v * 0.78f, v * 0.5f, 1f);
+    }, 32, 32, 32);
+
+    // Placa de presión con una runa
+    public static Sprite Placa() => TiledTexture("Placa", (x, y) =>
+    {
+        if (y > 9 || x < 2 || x > 61) return new Color(0, 0, 0, 0);
+        bool runa = y > 3 && y < 8 && (Mathf.Abs(x - 32) < 10) && ((x / 3) % 2 == 0);
+        float v = runa ? 0.95f : 0.55f + Hash(x / 3, y) * 0.1f;
+        return new Color(v, v, v, 1f);
+    }, 64, 12, 32);
+
     // Luz 2D de URP agregada desde el editor (tipo: 3 = puntual, 4 = global)
     public static Component Light(GameObject go, int type, Color color, float intensity, float radius = 0f)
     {

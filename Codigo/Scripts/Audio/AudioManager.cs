@@ -9,7 +9,8 @@ public enum Sfx
     Arcano, Fuego, Hielo, Viento, Combo,
     GolpeEnemigo, MuerteEnemigo, DanoLira,
     Objeto, ObjetoEspecial, Pagina, Checkpoint, Cofre, Romper,
-    MenuMover, MenuAceptar, Logro, Portal, GameOver, JefeAparece, Paso, Victoria, Geiser, Hielazo, Viento2
+    MenuMover, MenuAceptar, Logro, Portal, GameOver, JefeAparece, Paso, Victoria, Geiser, Hielazo, Viento2,
+    JefeDerrotado
 }
 
 public enum VozLira { Dano, Esfuerzo, Caida }
@@ -78,6 +79,12 @@ public class AudioManager : MonoBehaviour
         set { volumenEfectos = Mathf.Clamp01(value); PlayerPrefs.SetFloat("eg_vol_efectos", volumenEfectos); }
     }
 
+    public float VolumenVoces
+    {
+        get => volumenVoces;
+        set { volumenVoces = Mathf.Clamp01(value); PlayerPrefs.SetFloat("eg_vol_voces", volumenVoces); }
+    }
+
     void Awake()
     {
         // El GameManager duplicado se destruye solo; aquí solo evitamos inicializarlo
@@ -86,6 +93,7 @@ public class AudioManager : MonoBehaviour
 
         volumenMusica = PlayerPrefs.GetFloat("eg_vol_musica", volumenMusica);
         volumenEfectos = PlayerPrefs.GetFloat("eg_vol_efectos", volumenEfectos);
+        volumenVoces = PlayerPrefs.GetFloat("eg_vol_voces", volumenVoces);
 
         for (int i = 0; i < 2; i++)
         {
@@ -179,6 +187,7 @@ public class AudioManager : MonoBehaviour
 
     void OnBossDefeated(string bossName)
     {
+        Play(Sfx.JefeDerrotado);   // S4: estinger al derrotar a un guardián
         PlayMusic(musicaNivel);
     }
 

@@ -13,6 +13,8 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private GameObject achievementsBack;
     [SerializeField] private GameObject controlsPanel;
     [SerializeField] private GameObject controlsBack;
+    [SerializeField] private GameObject optionsPanel;
+    [SerializeField] private GameObject optionsFirst;
 
     void Start()
     {
@@ -50,8 +52,17 @@ public class MainMenu : MonoBehaviour
         if (mainPanel != null) mainPanel.SetActive(true);
         if (achievementsPanel != null) achievementsPanel.SetActive(false);
         if (controlsPanel != null) controlsPanel.SetActive(false);
+        if (optionsPanel != null) optionsPanel.SetActive(false);
         if (firstButton != null && UnityEngine.EventSystems.EventSystem.current != null)
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(firstButton);
+    }
+
+    public void ShowOptions()
+    {
+        if (mainPanel != null) mainPanel.SetActive(false);
+        if (optionsPanel != null) optionsPanel.SetActive(true);
+        if (optionsFirst != null && UnityEngine.EventSystems.EventSystem.current != null)
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(optionsFirst);
     }
 
     public void ShowControls()

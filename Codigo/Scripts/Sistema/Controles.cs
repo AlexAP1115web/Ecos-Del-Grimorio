@@ -143,9 +143,15 @@ public static class Controles
 
     static VibracionControl runner;
 
+    public static bool VibracionActiva
+    {
+        get => PlayerPrefs.GetInt("eg_vibracion", 1) == 1;
+        set => PlayerPrefs.SetInt("eg_vibracion", value ? 1 : 0);
+    }
+
     public static void Vibrar(float bajo, float alto, float segundos)
     {
-        if (Pad == null) return;
+        if (Pad == null || !VibracionActiva) return;
         if (runner == null)
         {
             var go = new GameObject("Vibracion");

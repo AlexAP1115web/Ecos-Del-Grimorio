@@ -1,7 +1,8 @@
 using UnityEngine;
 
-// Objeto que se rompe con los hechizos de Lira: vasijas con botín y muros agrietados
-// que esconden pasadizos secretos. Al romperse puede soltar ítems, mostrar un mensaje
+// Objeto que se rompe con los hechizos de Lira: vasijas con botín, muros agrietados
+// que esconden pasadizos secretos y barreras elementales (zarzas o hielo que solo
+// se quitan con Fuego). Al romperse puede soltar ítems, mostrar un mensaje
 // y desvanecer la "roca" que tapaba la sala escondida.
 [RequireComponent(typeof(Health))]
 public class Rompible : MonoBehaviour
@@ -15,6 +16,12 @@ public class Rompible : MonoBehaviour
     [Tooltip("Sprites que tapan la sala secreta y se desvanecen al romper el muro")]
     [SerializeField] private SpriteRenderer[] revelar = new SpriteRenderer[0];
 
+    [Header("Barrera elemental")]
+    [Tooltip("Mensaje que aparece si se golpea con un elemento que no le hace nada")]
+    [SerializeField] private string pista = "";
+    [Tooltip("Al romperse se quema (fuego) en lugar de desmoronarse")]
+    [SerializeField] private bool seQuema;
+
     [Header("Efecto")]
     [SerializeField] private Color colorParticulas = new Color(0.8f, 0.6f, 0.4f, 1f);
     [Tooltip("Las vasijas también se rompen si Lira las atraviesa con el esquive")]
@@ -25,6 +32,10 @@ public class Rompible : MonoBehaviour
     private Color[] colores;
     private Vector3 basePos;
     private float sacudida;
+    private float siguientePista;
+
+    public static event System.Action SecretoEncontrado;
+    public bool EsSecreto => revelar != null && revelar.Length > 0;
 
     void Awake()
     {
@@ -39,6 +50,15 @@ public class Rompible : MonoBehaviour
     {
         health.OnDeath.AddListener(Romper);
         health.Damaged += _ => { sacudida = 1f; AudioManager.Play(Sfx.GolpeEnemigo, 0.5f, 0.8f); };
+        health.Resisted += _ =>
+        {
+            sacudida = 0.4f;
+            if (!string.IsNullOrEmpty(pista) && Time.time >= siguientePista && GameManager.Instance != null)
+            {
+                GameManager.Instance.ShowMessage(pista, 3f);
+                siguientePista = Time.time + 4f;
+            }
+        };
     }
 
     void Update()
@@ -64,6 +84,14 @@ public class Rompible : MonoBehaviour
         var col = GetComponent<Collider2D>();
         if (col != null) centro = col.bounds.center;
 
+        if (seQuema)
+        {
+            // Llamas que suben y humo
+            for (int i = 0; i < 4; i++)
+                Particula.Rafaga(centro + Vector2.up * (i * 0.6f - 0.9f), new Color(1f, 0.55f, 0.1f, 1f), 10, 3f, 0.16f, 0.8f, -4f);
+            Particula.Rafaga(centro, new Color(0.2f, 0.18f, 0.18f, 0.7f), 14, 2f, 0.3f, 1.2f, -2f);
+            AudioManager.Play(Sfx.Fuego, 1f, 0.7f);
+        }
         Particula.Rafaga(centro, colorParticulas, 20, 5f, 0.18f, 0.7f, 3f);
         Particula.Polvo(centro, new Color(0.8f, 0.75f, 0.7f, 0.6f));
         CameraFollow.Shake(revelar.Length > 0 ? 0.25f : 0.08f, 0.2f);
@@ -77,6 +105,7 @@ public class Rompible : MonoBehaviour
 
         if (revelar.Length > 0)
         {
+            SecretoEncontrado?.Invoke();
             AudioManager.Play(Sfx.ObjetoEspecial, 0.7f);
             foreach (var sr in revelar)
                 if (sr != null) sr.gameObject.AddComponent<Desvanecer>();

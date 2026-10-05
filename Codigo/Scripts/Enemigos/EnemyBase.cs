@@ -7,6 +7,9 @@ using UnityEngine;
 [RequireComponent(typeof(Health))]
 public abstract class EnemyBase : MonoBehaviour
 {
+    // Aviso global cuando muere cualquier enemigo (para contar en la pantalla de resultados)
+    public static event System.Action<EnemyBase> Died;
+
     [SerializeField] protected EnemyData data;
     [SerializeField] protected float contactDamage = 10f;
     [SerializeField] protected float moveSpeed = 2f;
@@ -20,6 +23,9 @@ public abstract class EnemyBase : MonoBehaviour
     private float slowMultiplier = 1f;
     private float slowUntil;
     private float stunUntil;
+    private float frozenUntil;
+    private int iceHits;
+    private float lastIceHit = -10f;
     private Color baseColor = Color.white;
 
     protected float SpeedMultiplier => Time.time < slowUntil ? slowMultiplier : 1f;
@@ -117,6 +123,7 @@ public abstract class EnemyBase : MonoBehaviour
         {
             // Destello rojo al recibir daño, azul si está ralentizado, gris si está aturdido
             if (Time.time - health.LastHitTime < 0.1f) spriteRenderer.color = new Color(1f, 0.45f, 0.45f, 1f);
+            else if (Time.time < frozenUntil) spriteRenderer.color = new Color(0.55f, 0.85f, 1f, 1f);
             else if (IsStunned) spriteRenderer.color = baseColor * new Color(0.6f, 0.6f, 0.6f, 1f);
             else if (Time.time < slowUntil) spriteRenderer.color = baseColor * new Color(0.6f, 0.8f, 1f, 1f);
             else spriteRenderer.color = baseColor;
@@ -176,6 +183,24 @@ public abstract class EnemyBase : MonoBehaviour
         slowUntil = Time.time + duration;
     }
 
+    // El hielo congela al enemigo si lo golpea 3 veces seguidas (sección 2.11)
+    public void GolpeDeHielo()
+    {
+        if (Time.time - lastIceHit > 4f) iceHits = 0;
+        lastIceHit = Time.time;
+        iceHits++;
+        if (iceHits < 3) return;
+
+        iceHits = 0;
+        float duracion = this is BossController ? 1f : 2.5f;
+        frozenUntil = Time.time + duracion;
+        Stun(duracion);
+        Vector2 centro = spriteRenderer != null ? (Vector2)spriteRenderer.bounds.center : (Vector2)transform.position;
+        Particula.Rafaga(centro, new Color(0.75f, 0.95f, 1f, 1f), 16, 3f, 0.12f, 0.6f);
+        AudioManager.Play(Sfx.Hielazo, 0.8f, 0.8f);
+        if (GameManager.Instance != null && !(this is BossController)) GameManager.Instance.ShowMessage("¡Congelado!", 1.2f);
+    }
+
     public virtual void Stun(float duration)
     {
         stunUntil = Time.time + duration;
@@ -204,6 +229,7 @@ public abstract class EnemyBase : MonoBehaviour
 
     protected virtual void OnDeath()
     {
+        Died?.Invoke(this);
         Vector2 center = spriteRenderer != null ? (Vector2)spriteRenderer.bounds.center : (Vector2)transform.position;
         Particula.Rafaga(center, baseColor * new Color(0.8f, 0.6f, 1f, 1f), 18, 6f, 0.2f, 0.6f, 4f);
         Particula.Rafaga(center, new Color(0.1f, 0.05f, 0.15f, 0.9f), 10, 3f, 0.3f, 0.8f);

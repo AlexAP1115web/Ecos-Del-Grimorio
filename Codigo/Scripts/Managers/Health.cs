@@ -30,6 +30,8 @@ public class Health : MonoBehaviour, IDamageable
     public UnityEvent<float> OnHealthChanged = new UnityEvent<float>();
     public UnityEvent OnDeath = new UnityEvent();
     public event Action<float> Damaged;
+    // Se lanza cuando un golpe no hace daño por la resistencia al elemento (barreras que solo quema el fuego)
+    public event Action<Elemento?> Resisted;
 
     private float currentHealth;
     private int hitsTaken;
@@ -123,7 +125,11 @@ public class Health : MonoBehaviour, IDamageable
         if (IsDead || Time.time < invulnerableUntil) return;
 
         float finalDamage = amount * GetMultiplier(element) * damageTakenMultiplier;
-        if (finalDamage <= 0f) return; // inmune a ese elemento
+        if (finalDamage <= 0f)
+        {
+            Resisted?.Invoke(element); // inmune a ese elemento
+            return;
+        }
 
         if (hitsToKill > 0)
         {

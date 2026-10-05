@@ -50,6 +50,13 @@ Todo lo que se usó e instaló para desarrollar *Ecos del Grimorio*.
 | GitHub | Repositorio en línea: https://github.com/AlexAP1115web/Ecos-Del-Grimorio |
 | Control de código fuente de VS Code | Hacer commits, *Publish Branch* y *Sync Changes* |
 
+## Fuentes
+
+| Fuente | Licencia | Para qué se usa |
+|---|---|---|
+| Poppins Bold | SIL Open Font License 1.1 | Todos los textos de la interfaz |
+| DejaVu Sans Bold | Bitstream Vera (libre) | Respaldo para símbolos como □ |
+
 ## Arte
 
 | Herramienta | Para qué se usa |

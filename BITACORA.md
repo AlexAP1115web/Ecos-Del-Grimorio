@@ -103,6 +103,21 @@
 
 - Créditos corregidos: el texto empezaba fuera de la pantalla y tardaba como 15 segundos en aparecer; ahora se ve desde el inicio y al terminar regresa solo al menú.
 
+- Lo que faltaba del documento de diseño:
+  - Pantalla de **Opciones** (2.5 y 2.6) en el menú principal y en la pausa: volumen de música, efectos y voces, pantalla completa y vibración del control.
+  - Habilidades de la sección 2.11:
+    - **Fuego** quema zarzas de tinta y derrite muros de hielo.
+    - **Hielo** congela a un enemigo al tercer golpe seguido.
+    - **Viento** empuja cajas y permite **planear** si se mantiene saltar mientras se cae.
+  - Acertijos ambientales (2.1 y 2.3), cada hechizo abre rutas que antes estaban bloqueadas:
+    - Ala de Fuego y Corazón: pasadizos sellados con zarzas.
+    - Ala de Hielo: pasadizo sellado con hielo.
+    - Ala de Viento: caja, placa de presión y puertas rúnicas.
+  - Los Ecos Menores también atacan con las Garras de Tinta Corrosiva (2.12).
+  - Estinger musical al derrotar a un guardián (2.17, S4).
+- Pantalla de **resultados** al terminar cada ala: tiempo, enemigos derrotados, daño recibido, Páginas Perdidas, salas secretas, fragmentos y el hechizo nuevo.
+- Nueva fuente de la interfaz: **Poppins Bold**, más clara, con DejaVu Sans Bold de respaldo para el símbolo □ del control.
+
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
 - Subir capturas a `Evidencias`.

@@ -20,6 +20,7 @@ public static class CrearJuego
 
     static Sprite square, circle, ladrillo, tablas, borde, vineta, pagina, vasija, grietas, panelUI, vinetaBlanca;
     static Sprite estante, cadena, carambanos, carambanoGrande, cristales, enredadera, hierba, runaCirculo, monticulo, llama;
+    static Sprite zarzas, muroHielo, caja, placa;
     static PhysicsMaterial2D noFriction;
     static Font font;
     static readonly Dictionary<Elemento, SpellData> spells = new Dictionary<Elemento, SpellData>();
@@ -92,7 +93,8 @@ public static class CrearJuego
         estante = Estante(); cadena = Cadena(); carambanos = Carambanos(); carambanoGrande = CarambanoGrande();
         cristales = Cristales(); enredadera = Enredadera(); hierba = Hierba(); runaCirculo = RunaCirculo();
         monticulo = Monticulo(); llama = Llama();
-        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        zarzas = Zarzas(); muroHielo = MuroHielo(); caja = Caja(); placa = Placa();
+        font = Fuente();
 
         noFriction = AssetDatabase.LoadAssetAtPath<PhysicsMaterial2D>(Data + "/SinFriccion.physicsMaterial2D");
         if (noFriction == null)
@@ -179,7 +181,8 @@ public static class CrearJuego
             ai => { Set(ai, "jumpAttack", true); Set(ai, "jumpAttackForce", 8f); });
         P["Escarchado"] = Walker("Espectro_Escarchado", "Enemies/Espectros_Escarchados.png", 1.7f, escarchado);
         P["Eco"] = Walker("Eco_Menor", "Enemies/Ecos_Menores.png", 1.4f, eco,
-            ai => Set(ai, "projectilePrefab", P["ProyEnemigo"]), typeof(EcoMenorAI));
+            ai => { Set(ai, "projectilePrefab", P["ProyEnemigo"]);
+                    Arma(ai.gameObject, garras, TipoGolpe.Zarpazo, 1.5f, 8f, 2.2f, 1.1f, 0f, null); }, typeof(EcoMenorAI));
         P["Espejo"] = Walker("Guardian_Espejo", "Enemies/Guardian_Espejo.png", 2.1f, espejo,
             ai => Set(ai, "projectilePrefab", P["ProyEnemigo"]), typeof(MirrorEnemyAI));
 
@@ -237,6 +240,26 @@ public static class CrearJuego
 
         P["Lira"] = LiraPrefab();
         P["GameManager"] = GameManagerPrefab();
+    }
+
+    // Poppins Bold para toda la interfaz (más clara que la fuente por defecto) y
+    // DejaVu Sans Bold como respaldo para símbolos como el □ del control
+    static Font Fuente()
+    {
+        var respaldo = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/DejaVuSans-Bold.ttf");
+        var imp = AssetImporter.GetAtPath("Assets/Fonts/Poppins-Bold.ttf");
+        var refs = imp != null ? imp.GetType().GetProperty("fontReferences") : null;   // TrueTypeFontImporter.fontReferences
+        if (refs != null && respaldo != null)
+        {
+            var actuales = refs.GetValue(imp) as Font[];
+            if (actuales == null || actuales.Length == 0)
+            {
+                refs.SetValue(imp, new[] { respaldo });
+                imp.SaveAndReimport();
+            }
+        }
+        var f = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Poppins-Bold.ttf");
+        return f != null ? f : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
     }
 
     static SpellData Spell(string name, Elemento element, float cost, float damage, float cooldown, float speed,
@@ -1211,6 +1234,72 @@ public static class CrearJuego
 
     static void Pagina(Nivel n, float x, float sobre) => Objeto(n, "Página Perdida", x, sobre);
 
+    // ---------- Acertijos elementales (secciones 2.1, 2.3 y 2.11) ----------
+
+    // Barrera que solo se quita con Fuego: zarzas de tinta o un bloque de hielo
+    static void BarreraFuego(Nivel n, float x, bool esHielo, float alto = 1.3f, float ancho = 0.8f)
+    {
+        var go = Tiled(n.geo, esHielo ? "Muro_de_Hielo" : "Zarzas_de_Tinta", new Vector2(x, G + alto / 2f), new Vector2(ancho, alto),
+                       esHielo ? muroHielo : zarzas, Color.white, 6);
+        go.AddComponent<BoxCollider2D>().size = new Vector2(ancho, alto);
+        var r = go.AddComponent<Rompible>();
+        var h = go.GetComponent<Health>();
+        Set(h, "maxHealth", 20f);
+        SetResistances(h, (Elemento.Arcano, 0f), (Elemento.Hielo, 0f), (Elemento.Viento, 0f), (Elemento.Fuego, 1f));
+        Set(r, "seQuema", true);
+        Set(r, "colorParticulas", esHielo ? new Color(0.8f, 0.95f, 1f, 1f) : new Color(0.4f, 0.2f, 0.5f, 1f));
+        Set(r, "pista", esHielo ? "El hielo es muy grueso... el fuego podría derretirlo." : "Las zarzas de tinta no se rompen... tal vez se quemen.");
+        Set(r, "mensaje", esHielo ? "¡El hielo se derritió!" : "¡Las zarzas se quemaron!");
+        if (esHielo) Light(go, 3, new Color(0.6f, 0.9f, 1f), 0.5f, 1.8f);
+    }
+
+    // Pasadizo bajo cerrado en las dos entradas con barreras de fuego
+    static void TunelSellado(Nivel n, float x1, float x2, bool esHielo)
+    {
+        Tunel(n, x1, x2);
+        BarreraFuego(n, x1 + 0.45f, esHielo);
+        BarreraFuego(n, x2 - 0.45f, esHielo);
+    }
+
+    // Caja + placa de presión + puertas rúnicas: se resuelve empujando la caja con el Viento
+    static void AcertijoViento(Nivel n, float xCaja, float xPlaca, params float[] xPuertas)
+    {
+        var box = new GameObject("Caja");
+        box.transform.SetParent(n.items, false);
+        AddSprite(box, caja, 1f, 5);
+        box.transform.position = new Vector2(xCaja, G + 0.5f);
+        var rb = box.AddComponent<Rigidbody2D>();
+        rb.mass = 30f;
+        rb.gravityScale = 3f;
+        rb.freezeRotation = true;
+        rb.linearDamping = 1.5f;
+        box.AddComponent<BoxCollider2D>().size = caja.bounds.size * 0.98f;
+        box.AddComponent<Empujable>();
+
+        var puertas = new List<Object>();
+        foreach (var xp in xPuertas)
+        {
+            var door = Tiled(n.geo, "Puerta_Runica", new Vector2(xp, G + 0.65f), new Vector2(0.8f, 1.3f), ladrillo, n.tema.piedra * new Color(0.8f, 0.9f, 1.1f, 1f), 6);
+            door.AddComponent<BoxCollider2D>().size = new Vector2(0.8f, 1.3f);
+            var runa = new GameObject("Runa");
+            runa.transform.SetParent(door.transform, false);
+            AddSprite(runa, runaCirculo, 0.7f, 7).color = new Color(0.6f, 1f, 0.8f, 0.9f);
+            Light(door, 3, new Color(0.6f, 1f, 0.8f), 0.5f, 1.6f);
+            puertas.Add(door.AddComponent<PuertaRunica>());
+        }
+
+        var plate = new GameObject("Placa_de_Presion");
+        plate.transform.SetParent(n.items, false);
+        var sr = AddSprite(plate, placa, 0.38f, 4);
+        plate.transform.position = new Vector2(xPlaca, G + 0.15f);
+        var col = plate.AddComponent<BoxCollider2D>();
+        col.isTrigger = true;
+        col.size = new Vector2(placa.bounds.size.x, placa.bounds.size.y * 4f);
+        var p = plate.AddComponent<PlacaPresion>();
+        SetArray(p, "puertas", puertas.ToArray());
+        Set(p, "runa", sr);
+    }
+
     // =====================================================================
     // Niveles (sección 2.7). Cada ala tiene 3 Páginas Perdidas escondidas:
     // una en una sala secreta (muro agrietado), una en un pasadizo bajo (agacharse)
@@ -1298,7 +1387,8 @@ public static class CrearJuego
         Antorchas(n, -6, 4, 22, 35, 48, 58, 68, 88, 98, 108, 118, 128);
 
         Escondite(n, -22, -13, true);
-        Tunel(n, 77, 83);
+        TunelSellado(n, 77, 83, false);
+        Narracion(n, 73.5f, "Lira: Zarzas de tinta tapan el pasadizo... mi hechizo de Fuego debería quemarlas.");
 
         Narracion(n, -7f,
             "Lira: El Ala de Fuego... la forja antigua sigue encendida después de tantos años.",
@@ -1345,13 +1435,14 @@ public static class CrearJuego
         Antorchas(n, -6, 8, 18, 28, 40, 55, 68, 90, 100, 112, 124);
 
         Escondite(n, -22, -13, true);
-        Tunel(n, 77, 83);
+        TunelSellado(n, 77, 83, true);
 
         Narracion(n, -7f,
             "Lira: Hace tanto frío que el tiempo parece detenido.",
-            "Lira: Fuego y Hielo juntos deberían crear vapor. Con eso podría cegar a los enemigos.");
+            "Lira: Fuego y Hielo juntos deberían crear vapor. Con eso podría cegar a los enemigos.",
+            "Lira: Y si golpeo tres veces seguidas con Hielo, puedo congelar a un enemigo.");
         Narracion(n, 33f, "Eco: Ella escribía de noche... notas que nadie podía leer...");
-        Narracion(n, 74f, "Lira: Otro pasadizo bajo... Agachada quepo, y de paso me escondo de las esquirlas.");
+        Narracion(n, 74f, "Lira: El pasadizo está sellado con hielo grueso. Mi Fuego podría derretirlo.");
 
         Enemigo(n, "Escarchado", 4); Enemigo(n, "Cristal", 16); Enemigo(n, "Escarchado", 27);
         Enemigo(n, "Cristal", 43); Enemigo(n, "Escarchado", 51, G, 2); Enemigo(n, "Cristal", 67);
@@ -1399,10 +1490,13 @@ public static class CrearJuego
 
         Escondite(n, -22, -13, true);
         Tunel(n, 93, 99);
+        AcertijoViento(n, 89.6f, 91.6f, 93.45f, 98.55f);
+        Narracion(n, 86f, "Lira: Una puerta rúnica cierra el pasadizo... si empujo esa caja hasta la placa con mi Viento, quizá se abra.");
 
         Narracion(n, -7f,
             "Lira: El Ala de Viento está abierta al cielo... las plataformas flotan sobre las corrientes.",
-            "Lira: Ya tengo cuatro hechizos pero solo puedo llevar tres. Con Q o R2 cambio el que tengo equipado.");
+            "Lira: Ya tengo cuatro hechizos pero solo puedo llevar tres. Con Q o R2 cambio el que tengo equipado.",
+            "Lira: Con el Viento también puedo planear: si mantengo saltar mientras caigo, bajo despacio.");
         Narracion(n, 40f, "Eco: Sus aprendices la buscaron... pero nunca miraron dentro del libro...");
         Narracion(n, 60f, "Lira: Esa corriente de aire sube hasta lo más alto... y algo brilla en la plataforma de arriba.");
 
@@ -1447,7 +1541,7 @@ public static class CrearJuego
         Antorchas(n, -8, 4, 14, 26, 36, 46, 58, 80, 92, 104, 116, 126);
 
         Escondite(n, -22, -13, true);
-        Tunel(n, 70, 76);
+        TunelSellado(n, 70, 76, false);
 
         Narracion(n, -6f,
             "Lira: Maestra Sable... ¿usted sabía todo esto?",
@@ -1561,7 +1655,7 @@ public static class CrearJuego
         t.horizontalOverflow = HorizontalWrapMode.Wrap;
         t.verticalOverflow = VerticalWrapMode.Overflow;
         t.gameObject.AddComponent<Outline>().effectColor = new Color(0f, 0f, 0f, 0.8f);
-        t.gameObject.AddComponent<Shadow>().effectDistance = new Vector2(2, -3);
+        t.gameObject.AddComponent<Shadow>().effectDistance = new Vector2(1, -2);
         return t;
     }
 
@@ -1744,14 +1838,19 @@ public static class CrearJuego
         // ---- Pausa ----
         var marcoMenu = LoadSprite(Sprites + "UI/Marco de menú.png");
         var pause = Panel(t, "Pausa", new Color(0, 0, 0, 0.6f));
-        Img("Marco", pause.transform, c, Vector2.zero, new Vector2(760, 740), marcoMenu, Color.white);
-        Txt("Titulo", pause.transform, c, new Vector2(0, 268), new Vector2(600, 90), "PAUSA", 60, TextAnchor.MiddleCenter);
-        var reanudar = Boton(pause.transform, "Reanudar", new Vector2(0, 178), ui.BotonReanudar);
-        Boton(pause.transform, "Grimorio", new Vector2(0, 96), ui.BotonGrimorio);
-        Boton(pause.transform, "Controles", new Vector2(0, 14), ui.BotonControles);
-        Boton(pause.transform, "Logros", new Vector2(0, -68), ui.BotonLogros);
-        Boton(pause.transform, "Reiniciar nivel", new Vector2(0, -150), ui.BotonReiniciar);
-        Boton(pause.transform, "Menú principal", new Vector2(0, -232), ui.BotonMenu);
+        Img("Marco", pause.transform, c, Vector2.zero, new Vector2(820, 820), marcoMenu, Color.white);
+        Txt("Titulo", pause.transform, c, new Vector2(0, 300), new Vector2(600, 90), "PAUSA", 58, TextAnchor.MiddleCenter);
+        var reanudar = Boton(pause.transform, "Reanudar", new Vector2(0, 215), ui.BotonReanudar);
+        Boton(pause.transform, "Grimorio", new Vector2(0, 137), ui.BotonGrimorio);
+        Boton(pause.transform, "Controles", new Vector2(0, 59), ui.BotonControles);
+        Boton(pause.transform, "Opciones", new Vector2(0, -19), ui.BotonOpciones);
+        Boton(pause.transform, "Logros", new Vector2(0, -97), ui.BotonLogros);
+        Boton(pause.transform, "Reiniciar nivel", new Vector2(0, -175), ui.BotonReiniciar);
+        Boton(pause.transform, "Menú principal", new Vector2(0, -253), ui.BotonMenu);
+
+        var opciones = PanelOpciones(t, true, ui.BotonVolverPausa, out var primeraOpcion);
+        Set(ui, "optionsPanel", opciones);
+        Set(ui, "optionsFirst", primeraOpcion);
 
         // Grimorio: hechizos, combos, mejoras y armas de los enemigos
         var grimorio = Panel(t, "Grimorio", new Color(0, 0, 0, 0.75f));
@@ -1781,6 +1880,18 @@ public static class CrearJuego
         var logros = PanelLogros(t, true, ui.BotonVolverPausa, out var lista, out var volver);
 
         // ---- Game Over ----
+        // ---- Resultados del ala ----
+        var res = Panel(t, "Resultados", new Color(0f, 0f, 0f, 0.7f));
+        Recuadro("Fondo", res.transform, c, Vector2.zero, new Vector2(1040, 780));
+        var resTitulo = Txt("Titulo", res.transform, c, new Vector2(0, 300), new Vector2(980, 90), "", 50, TextAnchor.MiddleCenter);
+        var resTexto = Txt("Texto", res.transform, c, new Vector2(0, 20), new Vector2(860, 440), "", 34, TextAnchor.MiddleCenter);
+        resTexto.color = Color.white;
+        var continuar = Boton(res.transform, "Continuar", new Vector2(0, -305), ui.BotonContinuarResultados);
+        Set(ui, "resultsPanel", res);
+        Set(ui, "resultsTitle", resTitulo);
+        Set(ui, "resultsBody", resTexto);
+        Set(ui, "resultsFirst", continuar.gameObject);
+
         var over = Panel(t, "GameOver", new Color(0.25f, 0f, 0.05f, 0.7f));
         Txt("Titulo", over.transform, c, new Vector2(0, 160), new Vector2(1200, 120), "Lira ha caído", 84, TextAnchor.MiddleCenter);
         var reintentar = Boton(over.transform, "Reintentar", new Vector2(0, 0), ui.BotonReiniciar);
@@ -1838,6 +1949,84 @@ public static class CrearJuego
         so.ApplyModifiedPropertiesWithoutUndo();
     }
 
+    // Pantalla de Opciones (menú principal y pausa): volúmenes, pantalla completa y vibración
+    static GameObject PanelOpciones(Transform parent, bool oscurecer, UnityAction volver, out GameObject primero)
+    {
+        var c = new Vector2(0.5f, 0.5f);
+        var panel = oscurecer ? Panel(parent, "Opciones", new Color(0, 0, 0, 0.75f))
+                              : UI("Opciones", parent, c, Vector2.zero, new Vector2(1920, 1080)).gameObject;
+        var t = panel.transform;
+        Recuadro("Fondo", t, c, new Vector2(0, -10), new Vector2(1100, 780));
+        Txt("Titulo", t, c, new Vector2(0, 300), new Vector2(800, 80), "OPCIONES", 58, TextAnchor.MiddleCenter);
+
+        var porcentajes = new Text[3];
+        Slider CrearSlider(string nombre, float y, int i)
+        {
+            Txt(nombre, t, c, new Vector2(-300, y), new Vector2(360, 50), nombre, 32, TextAnchor.MiddleLeft);
+            var root = UI("Slider_" + nombre, t, c, new Vector2(130, y), new Vector2(440, 36));
+            var slider = root.gameObject.AddComponent<Slider>();
+            var fondo = Img("Fondo", root, c, Vector2.zero, new Vector2(440, 14), square, new Color(0.1f, 0.06f, 0.18f, 1f));
+            var area = UI("Relleno", root, new Vector2(0, 0.5f), Vector2.zero, new Vector2(440, 14));
+            var fill = Img("Barra", area, new Vector2(0, 0.5f), Vector2.zero, new Vector2(0, 14), square, new Color(0.93f, 0.76f, 0.38f, 1f));
+            fill.rectTransform.anchorMin = new Vector2(0, 0); fill.rectTransform.anchorMax = new Vector2(0, 1);
+            fill.rectTransform.sizeDelta = Vector2.zero;
+            var areaHandle = UI("AreaPerilla", root, c, Vector2.zero, new Vector2(410, 36));
+            var handle = Img("Perilla", areaHandle, c, Vector2.zero, new Vector2(36, 36), circle, Color.white);
+            handle.raycastTarget = true;
+            handle.rectTransform.sizeDelta = new Vector2(36, 0);
+            fondo.raycastTarget = true;
+            slider.fillRect = fill.rectTransform;
+            slider.handleRect = handle.rectTransform;
+            slider.targetGraphic = handle;
+            slider.minValue = 0f; slider.maxValue = 1f; slider.value = 0.7f;
+            var colors = slider.colors;
+            colors.normalColor = new Color(0.85f, 0.85f, 0.9f);
+            colors.highlightedColor = Color.white;
+            colors.selectedColor = new Color(1f, 0.8f, 0.3f);
+            slider.colors = colors;
+            root.gameObject.AddComponent<SonidoBoton>();
+            porcentajes[i] = Txt("Porcentaje", t, c, new Vector2(420, y), new Vector2(120, 50), "70%", 30, TextAnchor.MiddleLeft);
+            porcentajes[i].color = Color.white;
+            return slider;
+        }
+
+        Toggle CrearCasilla(string nombre, float y)
+        {
+            Txt(nombre, t, c, new Vector2(-300, y), new Vector2(360, 50), nombre, 32, TextAnchor.MiddleLeft);
+            var root = UI("Toggle_" + nombre, t, c, new Vector2(-60, y), new Vector2(46, 46));
+            var toggle = root.gameObject.AddComponent<Toggle>();
+            var fondo = Img("Caja", root, c, Vector2.zero, new Vector2(46, 46), square, Color.white);
+            fondo.raycastTarget = true;
+            var marca = Img("Marca", root, c, Vector2.zero, new Vector2(28, 28), square, new Color(0.93f, 0.76f, 0.38f, 1f));
+            toggle.targetGraphic = fondo;
+            toggle.graphic = marca;
+            var colors = toggle.colors;
+            colors.normalColor = new Color(0.1f, 0.06f, 0.18f, 1f);
+            colors.highlightedColor = new Color(0.3f, 0.2f, 0.45f, 1f);
+            colors.selectedColor = new Color(0.55f, 0.4f, 0.15f, 1f);
+            toggle.colors = colors;
+            root.gameObject.AddComponent<SonidoBoton>();
+            return toggle;
+        }
+
+        var musica = CrearSlider("Música", 190, 0);
+        var efectos = CrearSlider("Efectos", 110, 1);
+        var voces = CrearSlider("Voces", 30, 2);
+        var completa = CrearCasilla("Pantalla completa", -60);
+        var vibracion = CrearCasilla("Vibración del control", -140);
+        var boton = Boton(t, "Volver", new Vector2(0, -300), volver);
+
+        var ui = panel.AddComponent<OpcionesUI>();
+        Set(ui, "musica", musica);
+        Set(ui, "efectos", efectos);
+        Set(ui, "voces", voces);
+        Set(ui, "pantallaCompleta", completa);
+        Set(ui, "vibracion", vibracion);
+        SetArray(ui, "porcentajes", porcentajes);
+        primero = musica.gameObject;
+        return panel;
+    }
+
     // Pantalla de controles (menú principal y pausa)
     static GameObject PanelControles(Transform parent, bool oscurecer, UnityAction volver, out Button botonVolver)
     {
@@ -1859,17 +2048,18 @@ public static class CrearJuego
             ("Combo rápido", "C", "L2"),
             ("Cambiar hechizo equipado", "Q", "R2"),
             ("Esquive (invulnerable)", "Shift o K", "Círculo"),
+            ("Planear (con Viento)", "Mantén Espacio al caer", "Mantén X al caer"),
             ("Hablar / abrir cofres", "E", "Triángulo"),
             ("Pausa", "Esc", "Options"),
         };
         for (int i = 0; i < filas.Length; i++)
         {
-            float y = 305 - i * 54;
+            float y = 310 - i * 50;
             if (i > 0 && i % 2 == 0)
-                Img("Franja", t, c, new Vector2(0, y), new Vector2(1320, 50), square, new Color(1f, 1f, 1f, 0.05f));
-            Txt("Accion", t, c, new Vector2(-370, y), new Vector2(560, 50), filas[i].accion, 32, TextAnchor.MiddleLeft);
-            Txt("Teclado", t, c, new Vector2(150, y), new Vector2(420, 50), filas[i].teclado, 32, TextAnchor.MiddleLeft).color = Color.white;
-            Txt("Control", t, c, new Vector2(510, y), new Vector2(300, 50), filas[i].control, 32, TextAnchor.MiddleLeft).color = Color.white;
+                Img("Franja", t, c, new Vector2(0, y), new Vector2(1320, 46), square, new Color(1f, 1f, 1f, 0.05f));
+            Txt("Accion", t, c, new Vector2(-370, y), new Vector2(560, 46), filas[i].accion, 28, TextAnchor.MiddleLeft);
+            Txt("Teclado", t, c, new Vector2(150, y), new Vector2(420, 46), filas[i].teclado, 28, TextAnchor.MiddleLeft).color = Color.white;
+            Txt("Control", t, c, new Vector2(510, y), new Vector2(300, 46), filas[i].control, 28, TextAnchor.MiddleLeft).color = Color.white;
         }
         Txt("Consejos", t, c, new Vector2(0, -322), new Vector2(1300, 90),
             "Combos: lanza dos elementos distintos seguidos (menos de 1 segundo) o usa el combo rápido.\n" +
@@ -1910,13 +2100,14 @@ public static class CrearJuego
         Img("Lira", main, c, new Vector2(-620, -120), new Vector2(380, 620), LoadSprite(Sprites + "Characters/Lira.png"), Color.white);
         Img("Elenora", main, c, new Vector2(620, -80), new Vector2(420, 640), LoadSprite(Sprites + "Enemies/Eco_Archimaga_Elenora.png"), new Color(1f, 1f, 1f, 0.85f));
         Txt("Titulo", main, c, new Vector2(0, 380), new Vector2(1400, 140), "ECOS DEL GRIMORIO", 104, TextAnchor.MiddleCenter);
-        Img("Marco", main, c, new Vector2(0, -70), new Vector2(680, 640), marco, Color.white);
-        var nueva = Boton(main, "Nueva Partida", new Vector2(0, 150), menu.NuevaPartida);
-        var cont = Boton(main, "Continuar", new Vector2(0, 65), menu.Continuar);
-        Boton(main, "Controles", new Vector2(0, -20), menu.ShowControls);
-        Boton(main, "Logros", new Vector2(0, -105), menu.ShowAchievements);
-        Boton(main, "Créditos", new Vector2(0, -190), menu.Creditos);
-        Boton(main, "Salir", new Vector2(0, -275), menu.Salir);
+        Img("Marco", main, c, new Vector2(0, -70), new Vector2(760, 740), marco, Color.white);
+        var nueva = Boton(main, "Nueva Partida", new Vector2(0, 190), menu.NuevaPartida);
+        var cont = Boton(main, "Continuar", new Vector2(0, 112), menu.Continuar);
+        Boton(main, "Controles", new Vector2(0, 34), menu.ShowControls);
+        Boton(main, "Opciones", new Vector2(0, -44), menu.ShowOptions);
+        Boton(main, "Logros", new Vector2(0, -122), menu.ShowAchievements);
+        Boton(main, "Créditos", new Vector2(0, -200), menu.Creditos);
+        Boton(main, "Salir", new Vector2(0, -278), menu.Salir);
         Txt("Ayuda", main, new Vector2(0.5f, 0f), new Vector2(0, 30), new Vector2(1400, 40),
             "Teclado o control de PS4 / Xbox", 24, TextAnchor.MiddleCenter);
 
@@ -1932,6 +2123,9 @@ public static class CrearJuego
         var controlesMenu = PanelControles(t, false, menu.ShowMain, out var volverMenu);
         Set(menu, "controlsPanel", controlesMenu);
         Set(menu, "controlsBack", volverMenu.gameObject);
+        var opcionesMenu = PanelOpciones(t, false, menu.ShowMain, out var primeraMenu);
+        Set(menu, "optionsPanel", opcionesMenu);
+        Set(menu, "optionsFirst", primeraMenu);
 
         string path = $"{Scenes}/{GameManager.MenuScene}.unity";
         EditorSceneManager.SaveScene(scene, path);

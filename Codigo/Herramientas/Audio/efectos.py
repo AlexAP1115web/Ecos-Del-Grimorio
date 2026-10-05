@@ -261,6 +261,17 @@ def viento2():
     return efecto(y, 0.2) * 0.8
 
 
+def jefe_derrotado():
+    # Estinger corto al vencer a un guardian: golpe de timbal y acorde que sube
+    golpe = timbal(1.0, 70)
+    arp = notas([midi(n) for n in ('D5', 'F#5', 'A5', 'D6')], lambda f, d: metales(f, 0.14), 0.08)
+    acorde_ = mezclar(*[metales(mtof(midi(n)), 0.9) for n in ('D4', 'A4', 'D5', 'F#5')])
+    brillo = notas([midi('A6'), midi('D7')], lambda f, d: campana(f, d, 1, 1.0, 0.8, 2.5), 0.1)
+    ini = int(0.32 * SR)
+    y = mezclar(golpe * 0.8, arp, np.concatenate([np.zeros(ini), acorde_ * 0.75]), np.concatenate([np.zeros(ini), brillo * 0.5]))
+    return efecto(y, 0.45, 1.6)
+
+
 EFECTOS = [
     ('Salto', salto), ('Aterrizaje', aterrizaje), ('Esquive', esquive),
     ('Arcano', arcano), ('Fuego', fuego), ('Hielo', hielo), ('Viento', viento), ('Combo', combo),
@@ -269,6 +280,7 @@ EFECTOS = [
     ('Cofre', cofre), ('Romper', romper), ('MenuMover', menu_mover), ('MenuAceptar', menu_aceptar),
     ('Logro', logro), ('Portal', portal), ('GameOver', game_over), ('JefeAparece', jefe_aparece),
     ('Paso', paso), ('Victoria', victoria), ('Geiser', geiser), ('Hielazo', hielazo), ('Viento2', viento2),
+    ('JefeDerrotado', jefe_derrotado),
 ]
 
 if __name__ == '__main__':

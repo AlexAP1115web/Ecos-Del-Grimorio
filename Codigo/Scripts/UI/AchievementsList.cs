@@ -45,6 +45,9 @@ public static class AchievementsList
             text.fontSize = 24;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.resizeTextForBestFit = true;   // si la condición es larga, la letra se ajusta para que quepa
+            text.resizeTextMinSize = 16;
+            text.resizeTextMaxSize = 24;
             text.alignment = TextAnchor.MiddleLeft;
             text.color = got ? new Color(1f, 0.9f, 0.6f) : new Color(0.7f, 0.7f, 0.7f);
             text.text = $"<b>{logro.nombre}</b>  {(got ? "(obtenido)" : "")}\n{logro.condicion}";
