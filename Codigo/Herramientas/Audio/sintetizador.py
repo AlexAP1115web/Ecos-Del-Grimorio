@@ -1,5 +1,7 @@
-# sintetizador para la musica y los efectos del juego
-# cada pista son acordes + melodia con instrumentos hechos por sintesis
+# Sintetizador sencillo para generar la música y los efectos de sonido del juego.
+# Cada pista se escribe como progresión de acordes + melodía (nombres de notas)
+# y se renderiza con instrumentos hechos por síntesis (cuerdas, arpa, campanas, flauta,
+# bajo, metales y percusión). Las pistas se guardan listas para repetirse en bucle.
 import numpy as np
 from scipy.signal import butter, sosfilt, fftconvolve
 
@@ -12,7 +14,7 @@ NOTAS = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
 
 
 def midi(nombre):
-    # 'C#5' -> 73, 'Bb4' -> 70
+    """'C#5' -> 73, 'Bb4' -> 70"""
     n = NOTAS[nombre[0]]
     i = 1
     while i < len(nombre) and nombre[i] in '#b':
@@ -57,7 +59,7 @@ def bp(x, f1, f2, orden=2):
 
 
 def env(n, a, d, s, r, sostener):
-    # aDSR: a, d, r en segundos; sostener = segundos hasta soltar la nota
+    """ADSR: a, d, r en segundos; sostener = segundos hasta soltar la nota."""
     t = np.arange(n) / SR
     e = np.ones(n) * s
     e = np.where(t < a, t / max(a, 1e-4), e)
@@ -95,7 +97,7 @@ def ruido(n):
 
 
 # ---------------------------------------------------------------- instrumentos
-# cada instrumento devuelve para una frecuencia y duracion
+# Cada instrumento devuelve (muestras mono) para una frecuencia y duración.
 
 def cuerdas(f, dur, vel=1.0, brillo=1800):
     n = int((dur + 1.4) * SR)
@@ -193,7 +195,7 @@ def ostinato(f, dur, vel=1.0):
     return y * np.exp(-t * 9) * np.clip(t / 0.003, 0, 1) * vel * 0.3
 
 
-# percusion
+# percusión
 
 def bombo(vel=1.0):
     n = int(0.45 * SR)
@@ -249,7 +251,7 @@ def timbal(vel=1.0, f0=80):
     return y * vel * 0.6
 
 
-# ---------------------------------------------------------------- cancion
+# ---------------------------------------------------------------- canción
 
 class Cancion:
     def __init__(self, bpm, compases):
@@ -296,7 +298,7 @@ class Cancion:
                 self.poner(inst(mtof(notas[idx]), paso * self.spb * 1.5), self.t(inicio + k, j * paso), vol, pan, rev)
 
     def bajo(self, inicio, prog, inst, ritmo, vol=1.0, octava=2, rev=0.1):
-        # ritmo: lista de
+        # ritmo: lista de (tiempo, duración, intervalo en semitonos desde la raíz)
         for k, nombre in enumerate(prog):
             raiz = acorde(nombre, octava)[0]
             for (tt, d, iv) in ritmo:
@@ -360,7 +362,7 @@ class Cancion:
 
 
 def efecto(y, rev=0.2, rt=1.2):
-    # normaliza un efecto mono y le agrega un poco de reverberacion
+    """Normaliza un efecto mono y le agrega un poco de reverberación."""
     n = int(rt * SR)
     t = np.arange(n) / SR
     ir = lp(ruido(n), 5000) * np.exp(-t * 6.9 / rt)

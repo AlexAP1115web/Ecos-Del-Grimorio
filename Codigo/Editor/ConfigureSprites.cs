@@ -2,8 +2,9 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-// Ecos del Grimorio > Configurar sprites
-// pone todas las imagenes de Sprites como Sprite con filtro bilinear
+// Menú: Ecos del Grimorio > Configurar sprites
+// Pone todas las imágenes de Assets/Sprites como Sprite (2D and UI) con filtro Bilinear,
+// que es el que mejor se ve con el arte vectorial (Point es para pixel art).
 public static class ConfigureSprites
 {
     [MenuItem("Ecos del Grimorio/Configurar sprites")]

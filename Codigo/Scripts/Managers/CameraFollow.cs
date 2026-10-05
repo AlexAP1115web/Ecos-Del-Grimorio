@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// camara que sigue a Lira, con limites del nivel y temblor
+// Cámara que sigue a Lira con suavizado, mira un poco hacia donde camina,
+// no se sale de los límites del nivel y puede temblar con los golpes fuertes.
 [RequireComponent(typeof(Camera))]
 public class CameraFollow : MonoBehaviour
 {
@@ -66,7 +67,7 @@ public class CameraFollow : MonoBehaviour
         float dir = playerController != null && !playerController.FacingRight ? -1f : 1f;
         lookAhead = Mathf.Lerp(lookAhead, offset.x * dir, 3f * Time.deltaTime);
 
-        // solo sube o baja la camara cuando Lira se aleja de la zona muerta o esta en el suelo
+        // Solo sube o baja la cámara cuando Lira se aleja de la zona muerta o está en el suelo
         float dy = target.position.y - focusY;
         if (Mathf.Abs(dy) > verticalDeadZone || (playerController != null && playerController.IsGrounded))
             focusY = Mathf.Lerp(focusY, target.position.y, 4f * Time.deltaTime);

@@ -1,10 +1,11 @@
-# voces de los personajes estilo RPG (silabas cortas) y quejidos de Lira
+# Voces de los personajes por síntesis de formantes (estilo RPG: sílabas cortas
+# que suenan mientras aparece el texto) y quejidos de Lira al recibir daño.
 import sys
 import wave
 from scipy.signal import lfilter
 from sintetizador import *
 
-# formantes aproximados de las vocales del español (voz adulta media)
+# Formantes aproximados de las vocales del español (voz adulta media)
 VOCALES = {
     'a': [(800, 90), (1250, 110), (2600, 160)],
     'e': [(480, 70), (1850, 100), (2600, 150)],
@@ -15,7 +16,7 @@ VOCALES = {
 
 
 def resonador(x, f, bw):
-    # filtro resonante de dos polos (un formante)
+    """Filtro resonante de dos polos (un formante)."""
     r = np.exp(-np.pi * bw / SR)
     th = 2 * np.pi * f / SR
     a = [1, -2 * r * np.cos(th), r * r]
@@ -24,11 +25,11 @@ def resonador(x, f, bw):
 
 
 def glotal(f0, n, jitter=0.01, respiro=0.05, aspereza=0.0):
-    # fuente de voz: tren de pulsos suavizado con algo de aire
+    """Fuente de voz: tren de pulsos suavizado con algo de aire."""
     t = np.arange(n) / SR
     f = f0 * (1 + jitter * np.sin(2 * np.pi * 5.5 * t) + jitter * 0.5 * rng.standard_normal(n).cumsum() / np.sqrt(np.arange(1, n + 1)))
     ph = np.cumsum(f) / SR % 1.0
-    pulso = np.where(ph < 0.6, np.sin(np.pi * ph / 0.6) ** 2, 0.0)  # abre y cierra la glotis
+    pulso = np.where(ph < 0.6, np.sin(np.pi * ph / 0.6) ** 2, 0.0)   # abre y cierra la glotis
     pulso = np.diff(pulso, prepend=0) * 40
     if aspereza:
         pulso *= 1 + aspereza * np.sign(np.sin(2 * np.pi * f0 * 0.5 * t))
@@ -38,7 +39,7 @@ def glotal(f0, n, jitter=0.01, respiro=0.05, aspereza=0.0):
 def vocal(v, f0, dur, escala=1.0, curva=0.0, respiro=0.05, aspereza=0.0, cierre=0.04):
     n = int(dur * SR)
     t = np.arange(n) / SR
-    f0s = f0 * (1 + curva * (t / dur))  # entonacion que sube o baja
+    f0s = f0 * (1 + curva * (t / dur))          # entonación que sube o baja
     fuente = glotal(f0s, n, respiro=respiro, aspereza=aspereza)
     y = np.zeros(n)
     for i, (f, bw) in enumerate(VOCALES[v]):
@@ -61,7 +62,7 @@ def silaba(c, v, f0, escala, curva, dur=0.1, **kw):
     pre = consonante(c, escala)
     y = vocal(v, f0, dur, escala, curva, **kw)
     if c in 'mnl':
-        y[: int(0.025 * SR)] *= np.linspace(0.2, 1, int(0.025 * SR))  # entrada suave
+        y[: int(0.025 * SR)] *= np.linspace(0.2, 1, int(0.025 * SR))   # entrada suave
     return np.concatenate([pre, y])
 
 
@@ -70,7 +71,7 @@ def normalizar(y, pico=0.8, lowcut=90):
     return y / (np.max(np.abs(y)) + 1e-9) * pico
 
 
-# cada personaje: tono base (Hz), escala de formantes, aire y aspereza
+# Cada personaje: tono base (Hz), escala de formantes, aire y aspereza
 PERSONAJES = {
     'Lira': dict(f0=330, escala=1.18, respiro=0.06, aspereza=0.0),
     'Sable': dict(f0=205, escala=1.08, respiro=0.08, aspereza=0.0),
@@ -100,12 +101,12 @@ def voces_personaje(nombre):
         f0 = p['f0'] * rng.uniform(0.94, 1.08)
         y = silaba(c, v, f0, p['escala'], curva, dur, respiro=p['respiro'], aspereza=p['aspereza'])
         if nombre == 'Elenora':
-            y = eco(y)  # voz fantasmal con eco
+            y = eco(y)                                 # voz fantasmal con eco
             y = y + 0.4 * np.roll(y, int(0.012 * SR))  # coro ligero
         if nombre == 'Eco':
-            y = eco(bp(y, 400, 5000), 0.09, 2, 0.5)  # susurro
+            y = eco(bp(y, 400, 5000), 0.09, 2, 0.5)    # susurro
         if nombre == 'Kaelor':
-            y = np.tanh(y / np.max(np.abs(y)) * 2.0)  # voz mas ronca
+            y = np.tanh(y / np.max(np.abs(y)) * 2.0)   # voz más ronca
         clips.append(normalizar(y, 0.75))
     return clips
 

@@ -2,7 +2,9 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// items que se recogen al tocarlos, los unicos no vuelven a salir
+// Ítem que Lira recoge al tocarlo. El efecto depende del ItemData asignado.
+// Los coleccionables y mejoras solo se recogen una vez: si Lira muere y reinicia
+// el nivel, ya no vuelven a aparecer.
 [RequireComponent(typeof(Collider2D))]
 public class Pickup : MonoBehaviour
 {
@@ -18,7 +20,7 @@ public class Pickup : MonoBehaviour
     public ItemData Item => item;
 
     bool IsUnique => item != null && item.type != TipoItem.Mana && item.type != TipoItem.Vida;
-    // las Paginas Perdidas comparten el mismo ItemData, asi que su id incluye la posicion
+    // Las Páginas Perdidas comparten el mismo ItemData, así que su id incluye la posición
     string Id => SceneManager.GetActiveScene().name + ":" + item.itemName +
                  (item.type == TipoItem.PaginaPerdida ? $":{Mathf.RoundToInt(startPosition.x * 2f)}:{Mathf.RoundToInt(startPosition.y * 2f)}" : "");
 
@@ -33,7 +35,7 @@ public class Pickup : MonoBehaviour
 
     void Update()
     {
-        // pequeña animacion de flotar
+        // Pequeña animación de flotar
         transform.position = startPosition + Vector3.up * Mathf.Sin(Time.time * bobSpeed) * bobHeight;
     }
 
@@ -50,7 +52,7 @@ public class Pickup : MonoBehaviour
 
         AudioManager.Play(item.type == TipoItem.PaginaPerdida ? Sfx.Pagina : IsUnique ? Sfx.ObjetoEspecial : Sfx.Objeto);
 
-        // los fragmentos, la nota y el diario cuentan parte de la historia de Elenora
+        // Los fragmentos, la nota y el diario cuentan parte de la historia de Elenora
         if (item.type == TipoItem.PaginaPerdida)
         {
             if (gm != null)
@@ -68,7 +70,7 @@ public class Pickup : MonoBehaviour
         Destroy(gameObject);
     }
 
-    // devuelve false si el item no se pudo usar (ej. vida llena)
+    // Devuelve false si el ítem no se pudo usar (ej. vida llena)
     bool Apply(GameObject player)
     {
         var gm = GameManager.Instance;

@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// mejoras: Nucleo de Ascua, Anillo de Escarcha y Pluma Ligera
+// Mejoras permanentes de los ítems especiales:
+// Núcleo de Ascua (+daño de Fuego), Anillo de Escarcha (-daño de Fuego recibido), Pluma Ligera (+salto).
 public class PlayerUpgrades : MonoBehaviour
 {
     [SerializeField] private float fireDamageMultiplier = 1.3f;
@@ -24,10 +25,10 @@ public class PlayerUpgrades : MonoBehaviour
 
     void Start()
     {
-        // recuperar las mejoras obtenidas en niveles anteriores
+        // Recuperar las mejoras obtenidas en niveles anteriores
         if (GameManager.Instance == null) return;
 
-        // cada Pagina Perdida encontrada da vida maxima extra
+        // Cada Página Perdida encontrada da vida máxima extra
         int pages = GameManager.Instance.PagesFound;
         if (pages > 0 && health != null)
         {
@@ -37,7 +38,7 @@ public class PlayerUpgrades : MonoBehaviour
 
         foreach (var upgrade in new System.Collections.Generic.List<TipoItem>(GameManager.Instance.Upgrades)) Apply(upgrade);
 
-        // mejora cosmetica del cofre secreto
+        // Mejora cosmética del cofre secreto
         if (GameManager.Instance.HasCollectible("Capa dorada"))
         {
             if (controller != null) controller.Tint(new Color(1f, 0.92f, 0.7f));

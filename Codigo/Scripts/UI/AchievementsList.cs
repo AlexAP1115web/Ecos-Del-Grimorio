@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-// llena la lista de logros (menu y pausa)
+// Llena una lista de la interfaz con los 10 logros. Los que faltan se ven apagados.
+// La usan el menú principal y el menú de pausa.
 public static class AchievementsList
 {
     public static void Fill(Transform list, Font font)
@@ -11,7 +12,7 @@ public static class AchievementsList
 
         foreach (Transform child in list) Object.Destroy(child.gameObject);
 
-        // las filas usan el ancho de la lista para que el texto no se salga del marco
+        // Las filas usan el ancho de la lista para que el texto no se salga del marco
         float width = ((RectTransform)list).rect.width;
         if (width < 100f) width = 900f;
 

@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// geiser del ala de fuego, avisa con chispas y luego sale la llama
+// Géiser del Ala de Fuego: cada cierto tiempo avisa (brilla y salen chispas)
+// y luego lanza una columna de fuego que quema a Lira si está encima.
 public class GeiserFuego : MonoBehaviour
 {
     [SerializeField] private float intervalo = 3.5f;
@@ -48,7 +49,7 @@ public class GeiserFuego : MonoBehaviour
             if (activo)
             {
                 float k = Mathf.Clamp01((t - intervalo - aviso) / 0.15f);
-                // se escala el pivote para que la llama crezca desde el suelo
+                // Se escala el pivote (en la base) para que la llama crezca desde el suelo
                 var pivote = llama.transform.parent != transform ? llama.transform.parent : llama.transform;
                 pivote.localScale = new Vector3(1f + Mathf.Sin(Time.time * 40f) * 0.08f, k, 1f);
             }

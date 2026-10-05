@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// corriente de aire que sube a Lira (ala de viento)
+// Corriente de aire del Ala de Viento: empuja a Lira hacia arriba mientras esté dentro.
+// Ayuda a subir a las plataformas altas y a alcanzar a Threnody.
 [RequireComponent(typeof(BoxCollider2D))]
 public class CorrienteViento : MonoBehaviour
 {
@@ -20,7 +21,7 @@ public class CorrienteViento : MonoBehaviour
 
     void Update()
     {
-        // rayitas de aire que suben
+        // Rayitas de aire que suben
         if (Time.time >= nextFx)
         {
             nextFx = Time.time + 0.08f;

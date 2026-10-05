@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// hace que algo flote de arriba abajo y gire despacio
+// Hace que algo flote de arriba abajo y gire despacio (runas, espíritus).
 public class Flotar : MonoBehaviour
 {
     [SerializeField] private float altura = 0.2f;

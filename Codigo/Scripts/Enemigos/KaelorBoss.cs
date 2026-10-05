@@ -1,8 +1,10 @@
 using System.Collections;
 using UnityEngine;
 
-// Kaelor, jefe del nivel 2 (fuego)
-// fase 2 a la mitad de vida: mas rapido
+// Kaelor, el Guardián de Fuego (jefe del Nivel 2).
+// Fase 1: embestida incandescente y oleadas de brasas.
+// Fase 2 (menos de la mitad de vida): más rápido y ataca más seguido.
+// Sirve de ejemplo para crear IsoldeBoss, ThrenodyBoss y ElenoraBoss heredando de BossController.
 public class KaelorBoss : BossController
 {
     [Header("Kaelor")]

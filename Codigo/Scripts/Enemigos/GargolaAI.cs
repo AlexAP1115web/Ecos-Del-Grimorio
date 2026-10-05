@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// Gargola de Runa: estatua hasta que Lira se acerca, luego dispara runas
+// Gárgola de Runa: parece una estatua de piedra hasta que Lira se acerca (o la golpea).
+// Entonces despierta, vuela por encima de ella y dispara runas en abanico.
 public class GargolaAI : EnemyBase
 {
     [SerializeField] private GameObject projectilePrefab;

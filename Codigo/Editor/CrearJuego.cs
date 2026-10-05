@@ -7,8 +7,10 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using static EditorHelpers;
 
-// Ecos del Grimorio > Crear juego completo
-// arma prefabs, menu, prologo, los 5 niveles, epilogo y creditos
+// Menú: Ecos del Grimorio > Crear juego completo
+// Genera los datos (hechizos, ítems, enemigos, logros), los prefabs y las escenas:
+// Menú Principal, los 5 niveles de la Torre y los Créditos, y los agrega a Build Settings.
+// Se puede volver a ejecutar cuando cambie el arte: sobreescribe prefabs y escenas.
 public static class CrearJuego
 {
     const string Data = "Assets/Data";
@@ -65,7 +67,9 @@ public static class CrearJuego
             "Abre MenuPrincipal y presiona Play.", "OK");
     }
 
-    // datos y prefabs
+    // =====================================================================
+    // Datos y prefabs
+    // =====================================================================
 
     static void Preparar()
     {
@@ -97,17 +101,17 @@ public static class CrearJuego
             AssetDatabase.CreateAsset(noFriction, Data + "/SinFriccion.physicsMaterial2D");
         }
 
-        // proyectiles
+        // Proyectiles
         P["ProyEnemigo"] = ProjectilePrefab("Proyectil_Enemigo", null, 0.45f, true);
         P["ProyEsquirla"] = ProjectilePrefab("Proyectil_Esquirla", Sprites + "Weapons/Esquirlas de Hielo.png", 0.8f, false);
 
-        // hechizos (seccion 2.11)
+        // Hechizos (sección 2.11)
         spells[Elemento.Arcano] = Spell("Hechizo Arcano", Elemento.Arcano, 10, 15, 0.3f, 12, 1f, 0f, 0f);
         spells[Elemento.Fuego] = Spell("Hechizo de Fuego", Elemento.Fuego, 18, 25, 0.6f, 11, 1f, 0f, 0f);
         spells[Elemento.Hielo] = Spell("Hechizo de Hielo", Elemento.Hielo, 12, 10, 0.5f, 10, 0.5f, 2f, 0f);
         spells[Elemento.Viento] = Spell("Hechizo de Viento", Elemento.Viento, 12, 8, 0.5f, 13, 1f, 0f, 7f);
 
-        // items (seccion 2.13)
+        // Ítems (sección 2.13)
         Item("Cristal de Maná", TipoItem.Mana, 30, "Items/Cristal de Maná.png", "Recupera maná.");
         Item("Cristal de Maná Grande", TipoItem.Mana, 60, "Items/Cristal de Maná Grande.png", "Recupera mucho maná.");
         Item("Poción Menor de Vida", TipoItem.Vida, 50, "Items/Poción de Vida.png", "Restaura parte de la vida.");
@@ -118,11 +122,11 @@ public static class CrearJuego
         string[] romanos = { "I", "II", "III", "IV", "V" };
         string[] fragmentos =
         {
-            "«Los cuatro elementos no deberían pelear entre sí. Si logro unirlos en un solo grimorio, la Torre nunca volverá a temerle a la magia.» (Elenora)",
-            "«Elegí a cuatro aprendices para custodiar cada elemento. Kaelor guardará el fuego: es terco, pero leal.» (Elenora)",
-            "«Isolde y Threnody aprenden rápido. Pero el grimorio empieza a responder solo... escucho ecos de mi propia voz entre las páginas.» (Elenora)",
-            "«Si el grimorio se rompe, cada elemento buscará un guardián. No puedo permitir que mis aprendices paguen por mi error.» (Elenora)",
-            "«Voy a sellarme dentro del grimorio. Si alguien lo abre algún día, que sea alguien que quiera entender y no solo tener poder.» (Elenora)"
+            "«Los cuatro elementos no deberían pelear entre sí. Si logro unirlos en un solo grimorio, la Torre nunca volverá a temerle a la magia.» — Elenora",
+            "«Elegí a cuatro aprendices para custodiar cada elemento. Kaelor guardará el fuego: es terco, pero leal.» — Elenora",
+            "«Isolde y Threnody aprenden rápido. Pero el grimorio empieza a responder solo... escucho ecos de mi propia voz entre las páginas.» — Elenora",
+            "«Si el grimorio se rompe, cada elemento buscará un guardián. No puedo permitir que mis aprendices paguen por mi error.» — Elenora",
+            "«Voy a sellarme dentro del grimorio. Si alguien lo abre algún día, que sea alguien que quiera entender y no solo tener poder.» — Elenora"
         };
         for (int i = 0; i < romanos.Length; i++)
             Item("Fragmento de Grimorio " + romanos[i], TipoItem.FragmentoGrimorio, 1, "Items/Fragmento de Grimorio.png",
@@ -148,7 +152,7 @@ public static class CrearJuego
             P[pair.Key] = PickupPrefab(pair.Value, tint, esPagina ? new Color(0.6f, 0.85f, 1f) : new Color(1f, 0.85f, 0.5f), esPagina ? 1.3f : 0.8f);
         }
 
-        // enemigos (seccion 2.10)
+        // Enemigos (sección 2.10)
         var espectro = Enemy("Espectro de tinta", 30, 0, 10, 1.5f, 3f, 5f, P["Cristal de Maná"], 0.25f);
         var mota = Enemy("Mota Corrupta", 10, 0, 0, 1.5f, 1.5f, 6f);
         var mayor = Enemy("Espectro Mayor", 60, 3, 20, 1f, 2.2f, 6f, P["Poción Menor de Vida"], 1f);
@@ -161,7 +165,7 @@ public static class CrearJuego
         var eco = Enemy("Eco Menor", 30, 0, 10, 1.8f, 3.2f, 7f, P["Cristal de Maná"], 0.3f);
         var espejo = Enemy("Guardián Espejo", 80, 0, 15, 1.5f, 1.5f, 10f, P["Poción Mayor de Vida"], 0.5f);
 
-        // armas de los enemigos (seccion de armas del documento)
+        // Armas de los enemigos (sección de armas del documento)
         var garras = LoadSprite(Sprites + "Weapons/Garras de Tinta Corrosiva.png");
         var lanza = LoadSprite(Sprites + "Weapons/Lanza Incandescente.png");
         var embestida = LoadSprite(Sprites + "Weapons/Embestida Rocosa.png");
@@ -179,7 +183,7 @@ public static class CrearJuego
         P["Espejo"] = Walker("Guardian_Espejo", "Enemies/Guardian_Espejo.png", 2.1f, espejo,
             ai => Set(ai, "projectilePrefab", P["ProyEnemigo"]), typeof(MirrorEnemyAI));
 
-        // personajes nuevos (arte de Arte_EcosDelGrimorio/Faltantes)
+        // Personajes nuevos (arte de Arte_EcosDelGrimorio/Faltantes)
         var coloso = Enemy("Coloso de Raíz", 150, 0, 15, 0.9f, 1.3f, 9f, P["Poción Mayor de Vida"], 0.5f);
         var gargola = Enemy("Gárgola de Runa", 45, 0, 12, 3f, 3f, 8f, P["Cristal de Maná"], 0.4f);
         P["Coloso"] = Walker("Coloso_de_Raiz", "Enemies/Coloso_De_Raiz.png", 3.0f, coloso, ai =>
@@ -205,7 +209,7 @@ public static class CrearJuego
             ai => { Set(ai, "diveSpeed", 6f); Set(ai, "diveCooldown", 3.5f); Set(ai, "hoverRadius", 0.6f);
                     Arma(ai.gameObject, embestida, TipoGolpe.Embestida, 2.2f, 16f, 3f, 1.6f, 0f, null); });
 
-        // jefes
+        // Jefes
         P["Kaelor"] = Boss("Kaelor", "Enemies/Kaelor.png", 3.0f, typeof(KaelorBoss), 260, 20, 1.8f, false, new[] { 0.5f },
             new[] { P["Núcleo de Ascua"], P["Fragmento de Grimorio II"] }, (Elemento.Fuego, 0.5f), (Elemento.Hielo, 1.5f));
         P["Isolde"] = Boss("Isolde", "Enemies/Isolde.png", 2.7f, typeof(IsoldeBoss), 280, 15, 2f, false, new[] { 0.5f },
@@ -241,7 +245,7 @@ public static class CrearJuego
         var s = LoadOrCreate<SpellData>($"{Data}/Hechizos/{FileName(name)}.asset");
         var art = LoadSprite($"{Sprites}Spells/{name}.png");
 
-        // prefab del proyectil con el arte del hechizo
+        // Prefab del proyectil con el arte del hechizo
         var go = new GameObject("Proyectil_" + element);
         AddSprite(go, art != null ? art : circle, art != null ? 0.9f : 0.45f, 15);
         var rb = go.AddComponent<Rigidbody2D>();
@@ -338,7 +342,7 @@ public static class CrearJuego
 
     static GameObject EnemyBody(string name, string sprite, float height, bool flying, out SpriteRenderer sr)
     {
-        // raiz con fisica y un hijo "Visual" con el sprite, para poder animarlo sin mover el collider
+        // Raíz con física y un hijo "Visual" con el sprite, para poder animarlo sin mover el collider
         var go = new GameObject(name);
         go.tag = "Enemy";
         var vis = new GameObject("Visual");
@@ -452,7 +456,7 @@ public static class CrearJuego
         AddSprite(vis, sprite, 1.8f, 10);
         float k = vis.transform.localScale.x;
 
-        // luz calida que acompaña a Lira (el grimorio brilla)
+        // Luz cálida que acompaña a Lira (el grimorio brilla)
         var glow = new GameObject("Luz");
         glow.transform.SetParent(go.transform, false);
         glow.transform.localPosition = new Vector3(0f, 0.2f, 0f);
@@ -531,7 +535,7 @@ public static class CrearJuego
         }
         so.ApplyModifiedPropertiesWithoutUndo();
 
-        // musica y efectos de sonido
+        // Música y efectos de sonido
         var audio = go.AddComponent<AudioManager>();
         Set(audio, "musicaMenu", Audio("Musica/Menu.ogg"));
         SetArray(audio, "musicaNiveles", new Object[]
@@ -547,7 +551,7 @@ public static class CrearJuego
         for (int i = 0; i < nombres.Length; i++) efectos[i] = Audio($"Efectos/{nombres[i]}.wav");
         SetArray(audio, "efectos", efectos);
 
-        // voces de los personajes (silabas) y quejidos de Lira
+        // Voces de los personajes (sílabas) y quejidos de Lira
         var personajes = new (string nombre, string archivo, float volumen)[]
         {
             ("Lira", "Lira", 0.55f), ("Sable", "Sable", 0.6f), ("Kaelor", "Kaelor", 0.7f), ("Isolde", "Isolde", 0.6f),
@@ -577,7 +581,7 @@ public static class CrearJuego
     static AudioClip Audio(string path)
     {
         string full = "Assets/Audio/" + path;
-        // la musica se reproduce desde el disco para no ocupar memoria
+        // La música se reproduce desde el disco (streaming) para no ocupar memoria
         if (path.StartsWith("Musica") && AssetImporter.GetAtPath(full) is AudioImporter imp)
         {
             var cfg = imp.defaultSampleSettings;
@@ -593,7 +597,9 @@ public static class CrearJuego
         return clip;
     }
 
-    // temas visuales de cada ala de la Torre
+    // =====================================================================
+    // Temas visuales de cada ala de la Torre
+    // =====================================================================
 
     class Tema
     {
@@ -645,7 +651,9 @@ public static class CrearJuego
         velAmbiente = new Vector2(0f, 0.5f), tasaAmbiente = 10f, tamAmbiente = 0.07f
     };
 
-    // construccion de escenas
+    // =====================================================================
+    // Construcción de escenas
+    // =====================================================================
 
     class Nivel
     {
@@ -664,7 +672,7 @@ public static class CrearJuego
         PrefabUtility.InstantiatePrefab(P["GameManager"]);
         EventSystem();
 
-        // camara
+        // Cámara
         var camGo = new GameObject("Main Camera");
         camGo.tag = "MainCamera";
         var cam = camGo.AddComponent<Camera>();
@@ -691,7 +699,7 @@ public static class CrearJuego
         n.enemigos = new GameObject("Enemigos").transform;
         n.items = new GameObject("Items").transform;
 
-        // fondo lejano: dos copias que se mueven casi con la camara
+        // Fondo lejano: dos copias (la segunda volteada) que se mueven casi con la cámara
         var bg = LoadSprite(Sprites + "Backgrounds/" + t.fondo);
         if (bg != null)
         {
@@ -713,10 +721,10 @@ public static class CrearJuego
             }
         }
 
-        // capa media: columnas de piedra o nubes que se mueven a media velocidad
+        // Capa media: columnas de piedra o nubes que se mueven a media velocidad
         if (t.pilares)
         {
-            // columnas delgadas y oscuras para que no tapen el fondo
+            // Columnas delgadas y oscuras para que no tapen el fondo
             for (float x = minX + 4f; x <= maxX + 10f; x += 15f)
             {
                 var col = Tiled(n.deco, "Columna", new Vector2(x, G + 4f), new Vector2(0.9f, 20f), ladrillo, t.pilar * new Color(0.7f, 0.7f, 0.7f, 0.75f), -50);
@@ -763,14 +771,14 @@ public static class CrearJuego
         return n;
     }
 
-    // detalles de cada bioma: libreros, cadenas, cristales, runas y monticulos en primer plano
+    // Detalles de cada bioma: libreros, cadenas, cristales, runas y montículos en primer plano
     static void DecorarBioma(Nivel n, float minX, float maxX)
     {
         var rnd = new System.Random(Mathf.RoundToInt(maxX * 7f));
         float R(float a, float b) => a + (float)rnd.NextDouble() * (b - a);
         var t = n.tema;
 
-        // primer plano: monticulos oscuros abajo de la pantalla que se mueven mas rapido
+        // Primer plano: montículos oscuros abajo de la pantalla que se mueven más rápido (profundidad)
         Color frente = t == Hielo ? new Color(0.75f, 0.85f, 0.95f, 1f)
                      : t == Viento ? new Color(0.22f, 0.4f, 0.2f, 1f)
                      : t.piedra * 0.3f;
@@ -838,7 +846,7 @@ public static class CrearJuego
         }
     }
 
-    // peligros de los biomas
+    // ---------- Peligros de los biomas ----------
 
     static void Geiser(Nivel n, float x)
     {
@@ -892,7 +900,7 @@ public static class CrearJuego
         Light(go, 3, new Color(0.7f, 1f, 0.8f), 0.4f, ancho * 1.2f);
     }
 
-    // espiritu de un guardian: habla con Lira y le da una bendicion
+    // Espíritu de un guardián (Corazón del Grimorio): habla con Lira y le da una bendición
     static void Espiritu(Nivel n, float x, string quien, string sprite, float altura, Bendicion bendicion, string mensaje, params string[] lineas)
     {
         var go = new GameObject("Espiritu_" + FileName(quien));
@@ -921,7 +929,7 @@ public static class CrearJuego
         return path;
     }
 
-    // sprite que se repite (no se estira) del tamaño indicado
+    // Sprite que se repite (no se estira) del tamaño indicado
     static GameObject Tiled(Transform parent, string name, Vector2 center, Vector2 size, Sprite sprite, Color color, int order)
     {
         var go = new GameObject(name);
@@ -944,7 +952,7 @@ public static class CrearJuego
         return go;
     }
 
-    // suelo: bloque de ladrillo que llega hasta abajo de la pantalla con un borde arriba
+    // Suelo: bloque de ladrillo que llega hasta abajo de la pantalla con un borde arriba
     static void Suelo(Nivel n, float x1, float x2)
     {
         float w = x2 - x1, cx = (x1 + x2) / 2f;
@@ -959,7 +967,7 @@ public static class CrearJuego
         var go = Solido(n.geo, $"Plataforma_{x}", new Vector2(x, top - 0.25f), new Vector2(w, 0.5f), tablas, n.tema.plataforma);
         go.GetComponent<SpriteRenderer>().sortingOrder = 2;
 
-        // detalles colgando debajo (se mueven con la plataforma)
+        // Detalles colgando debajo (se mueven con la plataforma)
         if (n.tema == Hielo)
             Tiled(go.transform, "Carambanos", new Vector2(x, top - 0.5f - 0.35f), new Vector2(w - 0.3f, 0.75f), carambanos, new Color(0.8f, 0.92f, 1f, 0.95f), 1);
         else if (n.tema == Viento)
@@ -984,7 +992,7 @@ public static class CrearJuego
         Light(glow, 3, new Color(0.6f, 1f, 0.8f), 0.7f, 2.2f);
     }
 
-    // pozo de lava (Ala de Fuego): brilla y suelta brasas
+    // Pozo de lava (Ala de Fuego): brilla y suelta brasas
     static void Lava(Nivel n, float x1, float x2)
     {
         var go = Tiled(n.deco, "Lava", new Vector2((x1 + x2) / 2f, G - 3.5f), new Vector2(x2 - x1, 3f), square, new Color(1f, 0.4f, 0.05f), 0);
@@ -994,7 +1002,7 @@ public static class CrearJuego
         Set(f, "colorChispa", new Color(1f, 0.6f, 0.1f, 1f));
     }
 
-    // antorchas (o cristales en el Ala de Hielo) con luz que parpadea
+    // Antorchas (o cristales en el Ala de Hielo) con luz que parpadea
     static void Antorchas(Nivel n, params float[] xs)
     {
         foreach (var x in xs)
@@ -1027,7 +1035,7 @@ public static class CrearJuego
         return go;
     }
 
-    // enemigo de suelo (y = altura del piso donde esta parado)
+    // Enemigo de suelo (y = altura del piso donde está parado)
     static GameObject Enemigo(Nivel n, string prefab, float x, float suelo = G, float patrulla = 3f)
     {
         var go = Poner(n, prefab, x, suelo + 1.5f, n.enemigos);
@@ -1052,11 +1060,11 @@ public static class CrearJuego
         Light(go, 3, new Color(0.5f, 1f, 1f), 0.8f, 2.5f);
     }
 
-    // personaje con quien se habla o dialogo automatico antes de un jefe
+    // Personaje con quien se habla (Maestra Sable) o diálogo automático antes de un jefe
     static void Dialogo(Nivel n, float x, string quien, string retrato, bool visible, bool automatico, params string[] lineas) =>
         Dialogo(n, x, quien, retrato, visible, automatico, Color.white, lineas);
 
-    // proyeccion magica de la Maestra Sable en las demas alas
+    // Proyección mágica de la Maestra Sable en las demás alas (se ve azulada y transparente)
     static void Proyeccion(Nivel n, float x, params string[] lineas) =>
         Dialogo(n, x, "Maestra Sable", "Characters/Maestra Sable.png", true, false, new Color(0.7f, 0.85f, 1f, 0.7f), lineas);
 
@@ -1085,7 +1093,7 @@ public static class CrearJuego
         Set(d, "autoStart", automatico);
     }
 
-    // dialogo automatico al pasar por un punto
+    // Diálogo automático al pasar por un punto (pensamientos de Lira o susurros de los ecos)
     static void Narracion(Nivel n, float x, params string[] lineas) =>
         Dialogo(n, x, "Lira", "Characters/Lira.png", false, true, lineas);
 
@@ -1118,10 +1126,10 @@ public static class CrearJuego
         Set(le, "spellToUnlock", hechizo);
     }
 
-    // secretos y objetos para explorar
+    // ---------- Secretos y objetos para explorar ----------
 
-    // sala secreta: un bloque de piedra con un muro agrietado que se rompe con cualquier hechizo
-    // mientras no se rompa, una capa de piedra tapa el interior
+    // Sala secreta: un bloque de piedra con un muro agrietado que se rompe con cualquier hechizo.
+    // Mientras no se rompa, una capa de piedra tapa el interior.
     static void Escondite(Nivel n, float x1, float x2, bool entradaDerecha, float alto = 3.6f)
     {
         var roca = n.tema.piedra * 0.75f; roca.a = 1f;
@@ -1146,7 +1154,7 @@ public static class CrearJuego
         SetArray(r, "revelar", new Object[] { tapa.GetComponent<SpriteRenderer>() });
     }
 
-    // pasadizo bajo: Lira solo cabe agachada. Arriba se puede caminar
+    // Pasadizo bajo: Lira solo cabe agachada. Arriba se puede caminar.
     static void Tunel(Nivel n, float x1, float x2, float alto = 1.3f)
     {
         float cx = (x1 + x2) / 2f, grosor = 1.2f;
@@ -1157,7 +1165,7 @@ public static class CrearJuego
         Tiled(n.deco, "Tunel_Fondo", new Vector2(cx, G + alto / 2f), new Vector2(x2 - x1, alto), ladrillo, fondo, -10);
     }
 
-    // vasija que se rompe con un hechizo o atravesandola con el esquive
+    // Vasija que se rompe con un hechizo o atravesándola con el esquive
     static void Vasija(Nivel n, float x, float suelo = G)
     {
         var go = new GameObject("Vasija");
@@ -1181,7 +1189,7 @@ public static class CrearJuego
         foreach (var x in xs) Vasija(n, x);
     }
 
-    // cofre de madera: se abre con E / Triangulo
+    // Cofre de madera: se abre con E / Triángulo
     static void CofreMadera(Nivel n, float x, float suelo, params string[] contenido)
     {
         var go = new GameObject("Cofre");
@@ -1203,7 +1211,11 @@ public static class CrearJuego
 
     static void Pagina(Nivel n, float x, float sobre) => Objeto(n, "Página Perdida", x, sobre);
 
-    // niveles (seccion 2.7), cada ala tiene 3 paginas perdidas escondidas
+    // =====================================================================
+    // Niveles (sección 2.7). Cada ala tiene 3 Páginas Perdidas escondidas:
+    // una en una sala secreta (muro agrietado), una en un pasadizo bajo (agacharse)
+    // y otra en lo alto de una ruta de plataformas.
+    // =====================================================================
 
     static string Nivel1()
     {
@@ -1219,7 +1231,7 @@ public static class CrearJuego
         Escondite(n, -24, -15, true);
         Tunel(n, 61, 67);
 
-        // escena 1 del guion (seccion 2.14)
+        // Escena 1 del guion (sección 2.14)
         Narracion(n, -7f,
             "Lira: ¿Cuánto tiempo llevas aquí abajo...?",
             "Maestra Sable: Aléjate de eso.",
@@ -1452,7 +1464,7 @@ public static class CrearJuego
         Enemigo(n, "Coloso", 79, G, 0);
         Volador(n, "Gargola", 24f, -1.15f); Volador(n, "Gargola", 73f, G + 3.35f);
 
-        // los espiritus de los guardianes ayudan a Lira antes de la batalla final
+        // Los espíritus de los guardianes ayudan a Lira antes de la batalla final
         Espiritu(n, 88.5f, "Kaelor", "Enemies/Kaelor.png", 2.4f, Bendicion.Vida, "Bendición de Kaelor: vida restaurada",
             "Kaelor: Aprendiz... no esperaba volver a verte.",
             "Kaelor: Elenora fue nuestra maestra. Libérala de ese eco.",
@@ -1480,11 +1492,13 @@ public static class CrearJuego
             "Entonces demuéstrame que entiendes el grimorio mejor que yo.");
         var elenora = Jefe(n, "Elenora", 116, 2f, 101, 128, 2f);
         Set(elenora.GetComponent<ElenoraBoss>(), "groundY", G);
-        // al derrotarla el juego termina solo: victoria, epilogo y creditos
+        // Al derrotarla el juego termina solo: victoria, epílogo y créditos
         return Guardar(n, "Nivel5_CorazonDelGrimorio");
     }
 
-    // interfaz: HUD, paneles, menu y creditos
+    // =====================================================================
+    // Interfaz: HUD, paneles, menú y créditos
+    // =====================================================================
 
     static readonly Color Dorado = new Color(1f, 0.88f, 0.6f);
     static readonly Color Oscuro = new Color(0.05f, 0.03f, 0.1f, 0.88f);
@@ -1610,7 +1624,7 @@ public static class CrearJuego
         return layout;
     }
 
-    // panel oscuro con borde dorado que se estira sin deformar las esquinas
+    // Panel oscuro con borde dorado que se estira sin deformar las esquinas
     static Image Recuadro(string name, Transform parent, Vector2 anchor, Vector2 pos, Vector2 size)
     {
         var img = Img(name, parent, anchor, pos, size, panelUI, Color.white);
@@ -1620,7 +1634,7 @@ public static class CrearJuego
         return img;
     }
 
-    // pantalla de logros (menu principal y pausa)
+    // Pantalla de logros (menú principal y pausa)
     static GameObject PanelLogros(Transform parent, bool oscurecer, UnityAction volver, out VerticalLayoutGroup lista, out Button botonVolver)
     {
         var c = new Vector2(0.5f, 0.5f);
@@ -1642,18 +1656,18 @@ public static class CrearJuego
         var tl = new Vector2(0, 1);
         var c = new Vector2(0.5f, 0.5f);
 
-        // viñeta: oscurece las orillas de la pantalla
+        // Viñeta: oscurece las orillas de la pantalla
         var vin = Estirar("Vineta", t).gameObject.AddComponent<Image>();
         vin.sprite = vineta;
         vin.raycastTarget = false;
 
-        // orillas rojas al recibir daño
+        // Orillas rojas al recibir daño
         var dano = Estirar("Dano", t).gameObject.AddComponent<Image>();
         dano.sprite = vinetaBlanca;
         dano.color = new Color(0.85f, 0.05f, 0.1f, 0f);
         dano.raycastTarget = false;
 
-        // retrato de Lira: su cara recortada en un circulo, detras del marco redondo
+        // Retrato de Lira: su cara recortada en un círculo, detrás del marco redondo
         var marcoRetrato = LoadSprite(Sprites + "UI/Marco de retrato.png");
         var mascara = Img("RetratoMascara", t, tl, new Vector2(58, -44), new Vector2(96, 96), circle, new Color(0.16f, 0.1f, 0.26f, 1f));
         mascara.gameObject.AddComponent<Mask>().showMaskGraphic = true;
@@ -1677,7 +1691,7 @@ public static class CrearJuego
         var fragments = Txt("Fragmentos", t, tl, new Vector2(310, -192), new Vector2(420, 46), "Fragmentos: 0/5", 32, TextAnchor.MiddleLeft);
         var paginas = Txt("Paginas", t, tl, new Vector2(310, -236), new Vector2(420, 46), "Páginas del ala: 0/3", 32, TextAnchor.MiddleLeft);
 
-        // barra del jefe
+        // Barra del jefe
         var top = new Vector2(0.5f, 1);
         var panel = UI("Jefe", t, top, new Vector2(0, -24), new Vector2(820, 80));
         var bossName = Txt("Nombre", panel, top, Vector2.zero, new Vector2(820, 44), "Jefe", 34, TextAnchor.MiddleCenter);
@@ -1706,7 +1720,7 @@ public static class CrearJuego
         Set(hud, "bossName", bossName);
         Set(hud, "damageFlash", dano);
 
-        // mensajes
+        // ---- Mensajes ----
         var msg = Recuadro("Mensaje", t, top, new Vector2(0, -125), new Vector2(1250, 96)).rectTransform;
         var msgText = Txt("Texto", msg, c, Vector2.zero, new Vector2(1150, 80), "", 32, TextAnchor.MiddleCenter);
         var msgGroup = msg.gameObject.AddComponent<CanvasGroup>();
@@ -1717,7 +1731,7 @@ public static class CrearJuego
 
         var prompt = Txt("Aviso", t, new Vector2(0.5f, 0f), new Vector2(0, 330), new Vector2(1100, 60), "", 38, TextAnchor.MiddleCenter);
 
-        // dialogo
+        // ---- Diálogo ----
         var dlg = Recuadro("Dialogo", t, new Vector2(0.5f, 0f), new Vector2(0, 30), new Vector2(1700, 300)).rectTransform;
         Img("FondoRetrato", dlg, new Vector2(0, 0.5f), new Vector2(28, 0), new Vector2(230, 250), square, new Color(0.16f, 0.1f, 0.26f, 0.9f));
         var retrato = Img("Retrato", dlg, new Vector2(0, 0.5f), new Vector2(36, 0), new Vector2(214, 236), null, Color.white);
@@ -1727,7 +1741,7 @@ public static class CrearJuego
         dlgBody.color = Color.white;
         var dlgHint = Txt("Ayuda", dlg, new Vector2(1, 0), new Vector2(-24, 14), new Vector2(600, 40), "", 28, TextAnchor.LowerRight);
 
-        // pausa
+        // ---- Pausa ----
         var marcoMenu = LoadSprite(Sprites + "UI/Marco de menú.png");
         var pause = Panel(t, "Pausa", new Color(0, 0, 0, 0.6f));
         Img("Marco", pause.transform, c, Vector2.zero, new Vector2(760, 740), marcoMenu, Color.white);
@@ -1739,7 +1753,7 @@ public static class CrearJuego
         Boton(pause.transform, "Reiniciar nivel", new Vector2(0, -150), ui.BotonReiniciar);
         Boton(pause.transform, "Menú principal", new Vector2(0, -232), ui.BotonMenu);
 
-        // grimorio: hechizos, combos, mejoras y armas de los enemigos
+        // Grimorio: hechizos, combos, mejoras y armas de los enemigos
         var grimorio = Panel(t, "Grimorio", new Color(0, 0, 0, 0.75f));
         Recuadro("Fondo", grimorio.transform, c, new Vector2(0, -15), new Vector2(1500, 960));
         Txt("Titulo", grimorio.transform, c, new Vector2(0, 410), new Vector2(800, 80), "GRIMORIO", 58, TextAnchor.MiddleCenter);
@@ -1766,13 +1780,13 @@ public static class CrearJuego
 
         var logros = PanelLogros(t, true, ui.BotonVolverPausa, out var lista, out var volver);
 
-        // game Over
+        // ---- Game Over ----
         var over = Panel(t, "GameOver", new Color(0.25f, 0f, 0.05f, 0.7f));
         Txt("Titulo", over.transform, c, new Vector2(0, 160), new Vector2(1200, 120), "Lira ha caído", 84, TextAnchor.MiddleCenter);
         var reintentar = Boton(over.transform, "Reintentar", new Vector2(0, 0), ui.BotonReiniciar);
         Boton(over.transform, "Menú principal", new Vector2(0, -95), ui.BotonMenu);
 
-        // aviso de logro
+        // ---- Aviso de logro ----
         var toast = Recuadro("AvisoLogro", t, new Vector2(1, 0), new Vector2(-24, 24), new Vector2(500, 130)).rectTransform;
         var toastIcon = Img("Icono", toast, new Vector2(0, 0.5f), new Vector2(18, 0), new Vector2(96, 96), null, Color.white);
         toastIcon.preserveAspect = true;
@@ -1824,7 +1838,7 @@ public static class CrearJuego
         so.ApplyModifiedPropertiesWithoutUndo();
     }
 
-    // pantalla de controles (menu principal y pausa)
+    // Pantalla de controles (menú principal y pausa)
     static GameObject PanelControles(Transform parent, bool oscurecer, UnityAction volver, out Button botonVolver)
     {
         var c = new Vector2(0.5f, 0.5f);
@@ -1933,7 +1947,7 @@ public static class CrearJuego
         ("Backgrounds/Ala de Fuego.jpg", "Para restaurar el equilibrio, Lira tendrá que recorrer las cinco alas, aprender los cuatro elementos y enfrentar a los guardianes que protegen los secretos de Elenora.")
     });
 
-    // epilogo: se muestra al derrotar al Eco de la Archimaga Elenora y luego pasa a los creditos
+    // Epílogo: se muestra al derrotar al Eco de la Archimaga Elenora y luego pasa a los créditos
     static string CrearEpilogo() => CrearHistoria(GameManager.EpilogueScene, GameManager.CreditsScene, new (string, string)[]
     {
         ("Backgrounds/Corazón del Grimorio.jpg", "El eco de Elenora se desvanece entre las páginas. Por primera vez en muchos años, el grimorio guarda silencio."),

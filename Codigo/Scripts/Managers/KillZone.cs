@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// zona debajo del nivel: si Lira (o un enemigo) cae aqui, muere
+// Zona debajo del nivel: si Lira (o un enemigo) cae aquí, muere.
 [RequireComponent(typeof(Collider2D))]
 public class KillZone : MonoBehaviour
 {

@@ -1,8 +1,12 @@
 using System;
 using UnityEngine;
 
-// movimiento de Lira (correr, saltar, esquive, agacharse)
-// el sprite se parte en cuerpo y piernas para animarla al caminar
+// Movimiento de Lira: correr con aceleración, salto con "coyote time" y búfer,
+// caída más rápida, esquive con invulnerabilidad, agacharse (para pasar por
+// pasadizos bajos y atacar a enemigos pequeños) y animación procedural
+// (estirarse al saltar, aplastarse al caer, inclinarse al correr).
+// El sprite de Lira se separa en cuerpo y dos piernas para que pueda caminar:
+// las piernas giran desde la cadera al correr, saltar y esquivar.
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
 {
@@ -125,7 +129,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // separa el sprite en cuerpo + pierna izquierda + pierna derecha
+    // Separa el sprite en cuerpo + pierna izquierda + pierna derecha (misma textura, sin arte nuevo)
     void SetupParts()
     {
         parts = spriteRenderer != null ? new[] { spriteRenderer } : new SpriteRenderer[0];
@@ -158,7 +162,7 @@ public class PlayerController : MonoBehaviour
         return go.transform;
     }
 
-    // sombra en el piso que se achica cuando Lira esta en el aire
+    // Sombra en el piso que se achica cuando Lira está en el aire
     void CreateShadow()
     {
         var go = new GameObject("Sombra");
@@ -189,7 +193,7 @@ public class PlayerController : MonoBehaviour
         shadow.color = new Color(0f, 0f, 0f, 0.35f * k);
     }
 
-    // cambia el color de todas las partes de Lira
+    // Cambia el color de todas las partes de Lira (capa dorada del cofre secreto)
     public void Tint(Color color)
     {
         foreach (var p in parts) if (p != null) p.color = color;
@@ -233,7 +237,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // correr con aceleracion
+        // Correr con aceleración (se siente más suave que cambiar la velocidad de golpe)
         float speed = (IsCrouching ? crouchSpeed : moveSpeed) * (Time.time < slowUntil ? slowMultiplier : 1f);
         float target = horizontalInput * speed;
         float accel = isGrounded ? groundAcceleration : airAcceleration;
@@ -241,7 +245,7 @@ public class PlayerController : MonoBehaviour
         float newX = Mathf.MoveTowards(currentX, target, accel * Time.fixedDeltaTime);
         float vy = rb.linearVelocity.y;
 
-        // salto con coyote time y bufer
+        // Salto con coyote time (unos milisegundos después de dejar el suelo) y búfer
         bool canJump = Time.time - lastGroundedTime <= coyoteTime && !(IsCrouching && CeilingBlocked());
         bool wantsJump = Time.time - lastJumpPressedTime <= jumpBuffer;
         if (canJump && wantsJump)
@@ -281,7 +285,7 @@ public class PlayerController : MonoBehaviour
         Dashed?.Invoke();
     }
 
-    // agacharse
+    // ---------- Agacharse ----------
 
     void UpdateCrouch(bool wantsCrouch)
     {
@@ -330,7 +334,7 @@ public class PlayerController : MonoBehaviour
         Landed?.Invoke();
     }
 
-    // animacion hecha por codigo porque el arte es una sola imagen por personaje
+    // Animación hecha por código porque el arte es una sola imagen por personaje
     void AnimateVisual()
     {
         if (visual == null) return;
@@ -355,7 +359,7 @@ public class PlayerController : MonoBehaviour
             facing * visualBaseScale.x * squash.x * (1f - stretchY * 0.5f) * crouchX,
             visualBaseScale.y * scaleY,
             visualBaseScale.z);
-        // mantiene los pies en el suelo aunque el sprite se aplaste
+        // Mantiene los pies en el suelo aunque el sprite se aplaste
         visual.localPosition = visualBaseLocalPos + Vector3.up * (visualBottom * (1f - scaleY));
 
         float tilt = IsDashing ? -12f * dashDirection : -6f * horizontalInput * (isGrounded ? 1f : 0.5f) * (IsCrouching ? 0.3f : 1f);
@@ -371,7 +375,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // piernas: caminar, saltar, esquivar
+    // Piernas: caminar (alternan), saltar (una adelante y otra atrás), esquivar (zancada)
     void AnimateLegs()
     {
         if (legL == null) return;
@@ -393,7 +397,7 @@ public class PlayerController : MonoBehaviour
             a = swing;
             b = -swing;
 
-            // pasos: sonido suave y un poco de polvo cada vez que un pie toca el suelo
+            // Pasos: sonido suave y un poco de polvo cada vez que un pie toca el suelo
             int step = Mathf.FloorToInt(walkPhase / Mathf.PI);
             if (step != lastStep)
             {
@@ -430,7 +434,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // voltea a Lira hacia una direccion
+    // Voltea a Lira hacia una dirección (al apuntar con el stick derecho o el mouse)
     public void Face(float dirX)
     {
         if (Mathf.Abs(horizontalInput) > 0.1f) return; // si se está moviendo manda el movimiento
@@ -448,7 +452,7 @@ public class PlayerController : MonoBehaviour
         slowUntil = Time.time + duration;
     }
 
-    // empuja a Lira (golpes de enemigos y rafagas de Threnody o Elenora)
+    // Empuja a Lira (golpes de enemigos y ráfagas de Threnody o Elenora)
     public void Push(Vector2 velocity)
     {
         externalVelocity = new Vector2(velocity.x, 0f);

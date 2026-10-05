@@ -1,8 +1,8 @@
-# pistas de musica del juego (una por ala, menu, jefes y creditos)
+# Pistas de música del juego (una por ala, menú, jefes y créditos).
 import sys
 from sintetizador import *
 
-# patrones de arpegio
+# Patrones de arpegio (índices de nota del acorde extendido; None = silencio)
 ARP_SUBE = [0, 1, 2, 3, 4, 3, 2, 1]
 ARP_ARPA = [0, 2, 1, 3, 2, 4, 3, 5]
 ARP_RAPIDO = [0, 1, 2, 4, 3, 2, 1, 2, 0, 1, 2, 4, 5, 4, 2, 1]
@@ -29,7 +29,7 @@ def menu():
 
 
 def nivel1():
-    # ala de Aprendizaje: La menor / Do mayor, aventura ligera
+    # Ala de Aprendizaje: La menor / Do mayor, aventura ligera
     s = Cancion(100, 28)
     intro = ['Am', 'F', 'C', 'G']
     A = ['Am', 'F', 'C', 'G', 'Am', 'F', 'G', 'E']
@@ -55,7 +55,7 @@ def nivel1():
 
 
 def nivel2():
-    # ala de Fuego: Mi frigio, ritmico con tambores
+    # Ala de Fuego: Mi frigio, rítmico con tambores
     s = Cancion(126, 28)
     intro = ['Em', 'Em', 'F', 'Em']
     A = ['Em', 'Em', 'F', 'Em', 'Am', 'G', 'F', 'E']
@@ -85,7 +85,7 @@ def nivel2():
 
 
 def nivel3():
-    # ala de Hielo: Fa# menor, lento con campanas
+    # Ala de Hielo: Fa# menor, lento con campanas
     s = Cancion(70, 26)
     intro = ['F#m', 'D']
     A = ['F#m', 'D', 'A', 'E', 'Bm', 'D', 'C#sus4', 'C#']
@@ -113,7 +113,7 @@ def nivel3():
 
 
 def nivel4():
-    # ala de Viento: Sol mayor, brillante y con movimiento
+    # Ala de Viento: Sol mayor, brillante y con movimiento
     s = Cancion(112, 28)
     intro = ['G', 'F', 'C', 'G']
     A = ['G', 'F', 'C', 'G', 'Em', 'C', 'D', 'D']
@@ -140,7 +140,7 @@ def nivel4():
 
 
 def nivel5():
-    # corazon del Grimorio: Do menor, oscuro y misterioso
+    # Corazón del Grimorio: Do menor, oscuro y misterioso
     s = Cancion(88, 28)
     intro = ['Cm', 'Ab', 'Fm', 'G']
     A = ['Cm', 'Ab', 'Fm', 'G', 'Cm', 'Bb', 'Ab', 'G']
@@ -168,7 +168,7 @@ def nivel5():
 
 
 def jefe():
-    # combate contra los guardianes: Re menor, rapido e intenso
+    # Combate contra los guardianes: Re menor, rápido e intenso
     s = Cancion(144, 26)
     intro = ['Dm', 'Dm']
     A = ['Dm', 'Bb', 'C', 'A', 'Dm', 'Bb', 'Gm', 'A']
@@ -197,7 +197,7 @@ def jefe():
 
 
 def jefe_final():
-    # eco de la Archimaga Elenora: Si menor, epico con coro
+    # Eco de la Archimaga Elenora: Si menor, épico con coro
     s = Cancion(150, 26)
     intro = ['Bm', 'Bm']
     A = ['Bm', 'G', 'Em', 'F#', 'Bm', 'D', 'A', 'F#']
@@ -225,7 +225,7 @@ def jefe_final():
 
 
 def creditos():
-    # creditos: Fa mayor, calido (el tema del menu en modo mayor)
+    # Créditos: Fa mayor, cálido (el tema del menú en modo mayor)
     s = Cancion(84, 28)
     intro = ['F', 'C', 'Dm', 'Bb']
     A = ['F', 'C', 'Dm', 'Bb', 'F', 'C', 'Bb', 'C']

@@ -1,4 +1,4 @@
-// los cuatro elementos de los hechizos de Lira
+// Los cuatro elementos de los hechizos de Lira (sección 2.11 del documento).
 public enum Elemento
 {
     Arcano,
@@ -7,7 +7,7 @@ public enum Elemento
     Viento
 }
 
-// combos elementales que se forman al lanzar dos hechizos seguidos
+// Combos elementales que se forman al lanzar dos hechizos seguidos.
 public enum TipoCombo
 {
     Ninguno,

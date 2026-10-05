@@ -1,4 +1,4 @@
-# efectos de sonido del juego, en el mismo orden que el enum Sfx de AudioManager.cs
+# Efectos de sonido del juego, en el mismo orden que el enum Sfx de AudioManager.cs
 import sys
 import wave
 from sintetizador import *
@@ -228,7 +228,7 @@ def paso():
 
 
 def victoria():
-    # fanfarria: arpegio de metales que sube y acorde final con campanas
+    # Fanfarria: arpegio de metales que sube y acorde final con campanas
     arp = notas([midi(n) for n in ('C5', 'E5', 'G5', 'C6', 'E6')], lambda f, d: metales(f, 0.16), 0.13)
     acorde_ = mezclar(*[metales(mtof(midi(n)), 1.6) for n in ('C4', 'G4', 'C5', 'E5', 'G5')])
     cuerdas_ = mezclar(*[cuerdas(mtof(midi(n)), 1.8) for n in ('C4', 'E4', 'G4', 'C5')])

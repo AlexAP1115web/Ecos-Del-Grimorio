@@ -1,6 +1,8 @@
 using UnityEngine;
 
-// vasijas y muros agrietados que se rompen con hechizos
+// Objeto que se rompe con los hechizos de Lira: vasijas con botín y muros agrietados
+// que esconden pasadizos secretos. Al romperse puede soltar ítems, mostrar un mensaje
+// y desvanecer la "roca" que tapaba la sala escondida.
 [RequireComponent(typeof(Health))]
 public class Rompible : MonoBehaviour
 {
@@ -41,7 +43,7 @@ public class Rompible : MonoBehaviour
 
     void Update()
     {
-        // tiembla y se ilumina un instante al recibir un golpe
+        // Tiembla y se ilumina un instante al recibir un golpe
         if (sacudida <= 0f) return;
         sacudida = Mathf.MoveTowards(sacudida, 0f, Time.deltaTime * 5f);
         transform.position = basePos + (Vector3)(Random.insideUnitCircle * 0.06f * sacudida);

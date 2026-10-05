@@ -15,7 +15,8 @@ public class ElementResistance
     [Range(0f, 2f)] public float multiplier = 1f;
 }
 
-// vida de Lira y de los enemigos, con resistencias por elemento
+// Vida compartida por Lira y los enemigos. Maneja resistencias por elemento,
+// invulnerabilidad breve después de un golpe y el conteo por impactos (Espectro Mayor).
 public class Health : MonoBehaviour, IDamageable
 {
     [SerializeField] private float maxHealth = 100f;
@@ -43,7 +44,7 @@ public class Health : MonoBehaviour, IDamageable
     public bool IsInvulnerable => Time.time < invulnerableUntil;
     public float LastHitTime { get; private set; } = -10f;
 
-    // invulnerabilidad extra (por ejemplo durante el esquive)
+    // Invulnerabilidad extra (por ejemplo durante el esquive)
     public void SetInvulnerable(float seconds)
     {
         invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + seconds);
@@ -57,14 +58,14 @@ public class Health : MonoBehaviour, IDamageable
 
     void Start()
     {
-        // Lira esta hecha de varias partes (cuerpo y piernas): parpadean todas
+        // Lira está hecha de varias partes (cuerpo y piernas): parpadean todas
         if (invulnerableTime > 0f) blinkRenderers = GetComponentsInChildren<SpriteRenderer>();
         OnHealthChanged.Invoke(Percent);
     }
 
     void Update()
     {
-        // parpadeo mientras es invulnerable
+        // Parpadeo mientras es invulnerable
         if (blinkRenderers != null && invulnerableTime > 0f)
         {
             bool blinking = Time.time < invulnerableUntil;
@@ -81,7 +82,7 @@ public class Health : MonoBehaviour, IDamageable
         OnHealthChanged.Invoke(Percent);
     }
 
-    // aumenta la vida maxima (Paginas Perdidas) y cura esa misma cantidad
+    // Aumenta la vida máxima (Páginas Perdidas) y cura esa misma cantidad
     public void AddMaxHealth(float extra)
     {
         maxHealth += extra;

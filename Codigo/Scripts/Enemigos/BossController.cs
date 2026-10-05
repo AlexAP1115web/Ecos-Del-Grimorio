@@ -1,7 +1,9 @@
 using System;
 using UnityEngine;
 
-// clase base de los jefes: se activa en su arena, cambia de fase y suelta recompensas
+// Base para los jefes (Kaelor, Isolde, Threnody y el Eco de la Archimaga Elenora).
+// Se activa cuando Lira entra a su arena, cambia de fase cuando la vida baja de ciertos
+// porcentajes y ataca cada cierto tiempo. Al morir suelta sus recompensas.
 public abstract class BossController : EnemyBase
 {
     [Header("Jefe")]
@@ -76,14 +78,14 @@ public abstract class BossController : EnemyBase
         }
     }
 
-    // movimiento entre ataques
+    // Movimiento entre ataques
     protected virtual void Move() { }
 
     protected abstract void PerformAttack();
 
     protected abstract void OnPhaseEnter(int phase);
 
-    // vuela hacia un punto encima de Lira sin salir de la arena
+    // Vuela hacia un punto encima de Lira sin salir de la arena (Threnody y Elenora)
     protected void HoverAbovePlayer(float sideOffset, float speed)
     {
         if (player == null) return;

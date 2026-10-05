@@ -1,6 +1,8 @@
 using UnityEngine;
 
-// Ecos Menores: patrullan como EnemyAI y disparan un elemento al azar
+// Ecos Menores (Nivel 5): copias débiles que mezclan patrones de enemigos anteriores.
+// Hereda la patrulla y persecución de EnemyAI y además dispara de vez en cuando
+// un proyectil de un elemento al azar, como los Cristales Vivientes.
 public class EcoMenorAI : EnemyAI
 {
     [SerializeField] private GameObject projectilePrefab;

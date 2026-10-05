@@ -1,7 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
-// Coloso de Raiz: lento, pisoton que se esquiva saltando
+// Coloso de Raíz: lento y muy resistente. Camina hacia Lira y cada cierto tiempo
+// golpea el suelo: la onda de choque daña a quien esté parado cerca, así que
+// se esquiva saltando o con el esquive. El fuego le hace más daño.
 public class ColosoAI : EnemyBase
 {
     [Header("Pisotón")]
@@ -42,7 +44,7 @@ public class ColosoAI : EnemyBase
         float feet = spriteRenderer != null ? spriteRenderer.bounds.min.y : transform.position.y;
         Vector2 suelo = new Vector2(transform.position.x, feet);
 
-        // aviso: tiembla y salen hojas del suelo
+        // Aviso: tiembla y salen hojas del suelo
         for (float t = 0; t < aviso; t += 0.1f)
         {
             Particula.Rafaga(suelo + Vector2.up * 0.1f, new Color(0.5f, 0.8f, 0.3f, 0.8f), 3, 2f, 0.1f, 0.4f, 2f);
@@ -57,7 +59,7 @@ public class ColosoAI : EnemyBase
             Controles.Vibrar(0.6f, 0.3f, 0.2f);
             AudioManager.Play(Sfx.Romper, 1f, 0.6f);
 
-            // solo daña si Lira esta cerca y en el suelo (saltar la esquiva)
+            // Solo daña si Lira está cerca y en el suelo (saltar la esquiva)
             if (player != null)
             {
                 float dx = Mathf.Abs(player.position.x - transform.position.x);

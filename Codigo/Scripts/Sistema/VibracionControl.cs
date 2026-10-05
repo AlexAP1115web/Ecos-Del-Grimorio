@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// apaga la vibracion del control despues de un momento
+// Apaga la vibración del control después de un momento (la usa Controles.Vibrar)
 public class VibracionControl : MonoBehaviour
 {
     Coroutine actual;

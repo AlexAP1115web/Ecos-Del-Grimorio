@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// datos de cada hechizo para moverlos desde el inspector
+// Datos de un hechizo. Se crea un asset por hechizo (Arcano, Fuego, Hielo, Viento)
+// para poder ajustar costo, daño y cooldown desde el Inspector sin tocar código.
 [CreateAssetMenu(fileName = "NuevoHechizo", menuName = "Ecos del Grimorio/Hechizo")]
 public class SpellData : ScriptableObject
 {

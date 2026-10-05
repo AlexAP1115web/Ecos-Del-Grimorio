@@ -1,7 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
-// Threnody, jefe del nivel 4 (viento), invoca aves
+// Threnody, el Guardián del Viento (jefe del Nivel 4).
+// Vuela sobre las plataformas, lanza ráfagas que empujan a Lira, embiste en picada
+// e invoca Aves de Tormenta. En su segunda fase invoca más aves y embiste más rápido.
 public class ThrenodyBoss : BossController
 {
     [Header("Threnody")]

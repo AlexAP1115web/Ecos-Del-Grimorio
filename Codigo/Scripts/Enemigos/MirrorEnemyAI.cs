@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-// Guardian Espejo: imita el ultimo hechizo que lanzo Lira y se lo regresa
+// Guardián Espejo (Nivel 5): imita el último hechizo que lanzó Lira y se lo regresa.
 public class MirrorEnemyAI : EnemyBase
 {
     [SerializeField] private GameObject projectilePrefab;
@@ -53,7 +53,7 @@ public class MirrorEnemyAI : EnemyBase
             return;
         }
 
-        // se mantiene a cierta distancia de Lira, como un reflejo
+        // Se mantiene a cierta distancia de Lira, como un reflejo
         float dx = player.position.x - transform.position.x;
         float dir = Mathf.Abs(dx) > keepDistance + 1f ? Mathf.Sign(dx) : (Mathf.Abs(dx) < keepDistance - 1f ? -Mathf.Sign(dx) : 0f);
         rb.linearVelocity = new Vector2(dir * moveSpeed * SpeedMultiplier, rb.linearVelocity.y);

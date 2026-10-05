@@ -1,6 +1,9 @@
 using UnityEngine;
 
-// enemigo de suelo: patrulla y persigue a Lira
+// Enemigo terrestre: patrulla entre dos puntos y persigue a Lira si la ve cerca.
+// Lo usan los Espectros de tinta, el Espectro Mayor, los Centinelas de Ceniza,
+// los Espectros Escarchados y los Ecos Menores. Con jumpAttack activado sirve
+// para las Salamandras de Forja (saltan y embisten en línea recta).
 public class EnemyAI : EnemyBase
 {
     [Header("Patrulla")]
@@ -60,7 +63,7 @@ public class EnemyAI : EnemyBase
 
         if (jumpAttack && Time.time >= nextJumpTime && Mathf.Abs(rb.linearVelocity.y) < 0.05f)
         {
-            // salto + embestida en linea recta hacia Lira
+            // Salto + embestida en línea recta hacia Lira
             rb.linearVelocity = new Vector2(dir * chaseSpeed * 2f, jumpAttackForce);
             nextJumpTime = Time.time + jumpAttackCooldown;
             return;

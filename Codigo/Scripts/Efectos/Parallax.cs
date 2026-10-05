@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// parallax: 0 se mueve con el mundo, 1 se queda con la camara, negativo = primer plano
+// Efecto de profundidad: la capa se mueve más lento que la cámara.
+// factor 0 = se mueve con el mundo (primer plano), 1 = se queda pegada a la cámara (muy lejos).
 public class Parallax : MonoBehaviour
 {
     [SerializeField] private float factor = 0.5f;

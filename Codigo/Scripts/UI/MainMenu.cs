@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-// Menu principal: Nueva Partida, Continuar, Logros, Creditos y Salir
+// Menú principal (sección 2.6): Nueva Partida, Continuar, Logros, Créditos y Salir.
 public class MainMenu : MonoBehaviour
 {
     [SerializeField] private Button continueButton;

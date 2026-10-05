@@ -1,7 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
-// Isolde, jefa del nivel 3 (hielo)
+// Isolde, la Guardiana de Hielo (jefa del Nivel 3).
+// Congela el suelo para limitar el movimiento de Lira e invoca esquirlas de hielo en área.
+// En su segunda fase congela más suelo y lanza más esquirlas.
 public class IsoldeBoss : BossController
 {
     [Header("Isolde")]
@@ -15,7 +17,7 @@ public class IsoldeBoss : BossController
     protected override void Move()
     {
         if (player == null) return;
-        // mantiene distancia: se acerca si Lira esta lejos y retrocede si esta muy cerca
+        // Mantiene distancia: se acerca si Lira está lejos y retrocede si está muy cerca
         float dx = player.position.x - transform.position.x;
         float dir = Mathf.Abs(dx) > 6f ? Mathf.Sign(dx) : (Mathf.Abs(dx) < 3f ? -Mathf.Sign(dx) : 0f);
         float x = Mathf.Clamp(transform.position.x + dir, arenaMinX, arenaMaxX);

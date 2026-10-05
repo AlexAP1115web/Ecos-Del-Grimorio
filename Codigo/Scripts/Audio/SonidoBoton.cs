@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-// sonido al moverse entre botones y al presionarlos
+// Sonido al moverse entre botones (teclado / control / mouse) y al presionarlos.
 public class SonidoBoton : MonoBehaviour, ISelectHandler, IPointerEnterHandler, ISubmitHandler, IPointerClickHandler
 {
     private static float ultimo;

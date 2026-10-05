@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// estela de particulas detras de los proyectiles
+// Estela de partículas detrás de los proyectiles
 public class EstelaProyectil : MonoBehaviour
 {
     [SerializeField] private Color color = Color.white;

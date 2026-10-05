@@ -2,7 +2,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-// funciones de apoyo para las herramientas del editor (CrearJuego)
+// Funciones de apoyo para las herramientas del editor (CrearJuego).
 public static class EditorHelpers
 {
     public const string Sprites = "Assets/Sprites/";
@@ -30,7 +30,7 @@ public static class EditorHelpers
         tagManager.ApplyModifiedPropertiesWithoutUndo();
     }
 
-    // asigna un campo [SerializeField] (aunque sea privado)
+    // Asigna un campo [SerializeField] (aunque sea privado)
     public static void Set(Object target, string field, object value)
     {
         var so = new SerializedObject(target);
@@ -100,7 +100,8 @@ public static class EditorHelpers
         so.ApplyModifiedPropertiesWithoutUndo();
     }
 
-    // algunos archivos traen espacios raros en el nombre, se busca el equivalente
+    // Algunos archivos de arte traen espacios especiales o acentos con otra codificación
+    // en el nombre; si no se encuentra la ruta exacta se busca el archivo equivalente.
     static string Normalize(string s)
     {
         var sb = new System.Text.StringBuilder();
@@ -171,7 +172,8 @@ public static class EditorHelpers
         return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
-    // textura que se repite, cada nivel la pinta de su color
+    // Textura que se repite (ladrillos, tablas, borde). Se genera una vez en gris claro
+    // y cada nivel la pinta de su color con el SpriteRenderer.
     public static Sprite TiledTexture(string name, System.Func<int, int, Color> pixel, int w, int h, int ppu)
     {
         string path = $"{Sprites}Generados/{name}.png";
@@ -227,7 +229,7 @@ public static class EditorHelpers
 
     public static Sprite Borde() => TiledTexture("Borde", (x, y) =>
     {
-        // franja superior irregular
+        // Franja superior irregular (pasto, nieve, ceniza o runas según el color)
         float edge = 10f + Mathf.Sin(x * 0.7f) * 2f + Hash(x, 1) * 2f;
         if (y > edge) return new Color(1, 1, 1, 0);
         float v = 0.8f + (Hash(x, y) - 0.5f) * 0.25f + (y > edge - 2 ? 0.15f : 0f);
@@ -241,7 +243,7 @@ public static class EditorHelpers
         return new Color(0, 0, 0, Mathf.Clamp01((d - 0.55f) * 1.6f) * 0.85f);
     }, 256, 256, 100);
 
-    // pagina suelta del grimorio (pergamino con renglones)
+    // Página suelta del grimorio (pergamino con renglones)
     public static Sprite Pagina() => TiledTexture("Pagina", (x, y) =>
     {
         float wob = Mathf.Sin(y * 0.5f) * 0.6f;
@@ -259,7 +261,7 @@ public static class EditorHelpers
         return c;
     }, 32, 40, 32);
 
-    // vasija de barro (se pinta del color del ala)
+    // Vasija de barro (se pinta del color del ala)
     public static Sprite Vasija() => TiledTexture("Vasija", (x, y) =>
     {
         float cx = 15.5f;
@@ -277,7 +279,7 @@ public static class EditorHelpers
         return new Color(luz, luz, luz, 1f);
     }, 32, 40, 32);
 
-    // grietas que se ponen encima del ladrillo para marcar un muro que se puede romper
+    // Grietas que se ponen encima del ladrillo para marcar un muro que se puede romper
     static bool[] grietas;
     public static Sprite Grietas()
     {
@@ -304,7 +306,7 @@ public static class EditorHelpers
             : new Color(0, 0, 0, 0), w, h, 32);
     }
 
-    // viñeta blanca (se pinta de rojo para el destello de daño)
+    // Viñeta blanca (se pinta de rojo para el destello de daño)
     public static Sprite VinetaBlanca() => TiledTexture("VinetaBlanca", (x, y) =>
     {
         float dx = (x - 127.5f) / 128f, dy = (y - 127.5f) / 128f;
@@ -312,7 +314,8 @@ public static class EditorHelpers
         return new Color(1, 1, 1, Mathf.Clamp01((d - 0.5f) * 1.8f));
     }, 256, 256, 100);
 
-    // panel oscuro con borde dorado, sliced para que no se deformen las esquinas
+    // Panel oscuro con borde dorado y gemas en las esquinas. Es un sprite de 9 partes
+    // (sliced): las esquinas no se deforman aunque el panel sea muy ancho.
     public static Sprite PanelUI()
     {
         const int S = 128, B = 44;
@@ -347,9 +350,9 @@ public static class EditorHelpers
         return sprite;
     }
 
-    // decoracion de los biomas
+    // ---------- Decoración de los biomas ----------
 
-    // librero con libros de colores (Ala de Aprendizaje)
+    // Librero con libros de colores (Ala de Aprendizaje)
     public static Sprite Estante() => TiledTexture("Estante", (x, y) =>
     {
         var madera = new Color(0.42f, 0.27f, 0.16f, 1f);
@@ -357,7 +360,7 @@ public static class EditorHelpers
         int fila = (y - 3) / 22;
         int yy = (y - 3) % 22;
         if (yy < 3) return madera * 1.1f;                     // repisa
-        // libros: ancho variable segun la posicion
+        // libros: ancho variable según la posición
         int libro = (x - 4 + fila * 7) / 5;
         float alto = 12 + Hash(libro, fila) * 6;
         if (yy - 3 > alto || Hash(libro, fila + 9) < 0.12f) return new Color(0.12f, 0.08f, 0.07f, 1f);   // hueco
@@ -370,7 +373,7 @@ public static class EditorHelpers
         return c;
     }, 64, 96, 32);
 
-    // cadena que cuelga (Ala de Fuego), se repite hacia abajo
+    // Cadena que cuelga (Ala de Fuego); se repite hacia abajo
     public static Sprite Cadena() => TiledTexture("Cadena", (x, y) =>
     {
         float dx = (x - 7.5f) / 4.5f, dy = (y - 8f) / 6.5f;
@@ -380,7 +383,7 @@ public static class EditorHelpers
         return new Color(0, 0, 0, 0);
     }, 16, 32, 32);
 
-    // fila de carambanos pequeños para la parte de abajo de las plataformas
+    // Fila de carámbanos pequeños para la parte de abajo de las plataformas (Ala de Hielo)
     public static Sprite Carambanos() => TiledTexture("Carambanos", (x, y) =>
     {
         int k = x / 8;
@@ -391,7 +394,7 @@ public static class EditorHelpers
         return new Color(v, v, v, 0.9f);
     }, 32, 24, 32);
 
-    // carambano grande que cae
+    // Carámbano grande que cae
     public static Sprite CarambanoGrande() => TiledTexture("CarambanoGrande", (x, y) =>
     {
         float mitad = 7f * Mathf.Pow(y / 39f, 0.8f);
@@ -400,7 +403,7 @@ public static class EditorHelpers
         return new Color(v * 0.85f, v * 0.95f, v, 0.95f);
     }, 16, 40, 32);
 
-    // racimo de cristales (Ala de Hielo y Corazon)
+    // Racimo de cristales (Ala de Hielo y Corazón)
     public static Sprite Cristales() => TiledTexture("Cristales", (x, y) =>
     {
         float[] cx = { 14, 25, 35 }, w = { 9, 12, 8 }, h = { 30, 44, 26 };
@@ -418,7 +421,7 @@ public static class EditorHelpers
         return new Color(0, 0, 0, 0);
     }, 48, 48, 32);
 
-    // enredadera que cuelga de las plataformas, se repite hacia abajo
+    // Enredadera que cuelga de las plataformas (Ala de Viento); se repite hacia abajo
     public static Sprite Enredadera() => TiledTexture("Enredadera", (x, y) =>
     {
         float tallo = 7.5f + Mathf.Sin(y * 0.26f) * 2.5f;
@@ -430,7 +433,7 @@ public static class EditorHelpers
         return new Color(0, 0, 0, 0);
     }, 16, 48, 32);
 
-    // pasto sobre el suelo, se repite a lo ancho y se pinta del color del borde
+    // Pasto sobre el suelo (Ala de Viento); se repite a lo ancho y se pinta del color del borde
     public static Sprite Hierba() => TiledTexture("Hierba", (x, y) =>
     {
         float alto = 5 + Hash(x, 1) * 10 * (0.6f + 0.4f * Mathf.Sin(x * 0.4f));
@@ -439,7 +442,7 @@ public static class EditorHelpers
         return new Color(v, v, v, 1f);
     }, 32, 16, 32);
 
-    // circulo de runas que flota en el Corazon del Grimorio
+    // Círculo de runas que flota en el Corazón del Grimorio
     public static Sprite RunaCirculo() => TiledTexture("RunaCirculo", (x, y) =>
     {
         float dx = x - 63.5f, dy = y - 63.5f;
@@ -459,7 +462,7 @@ public static class EditorHelpers
         return new Color(1, 1, 1, a);
     }, 128, 128, 64);
 
-    // monticulo para el primer plano (rocas, nieve, arbustos segun el color)
+    // Montículo para el primer plano (rocas, nieve, arbustos según el color)
     public static Sprite Monticulo() => TiledTexture("Monticulo", (x, y) =>
     {
         float borde = Mathf.Pow(Mathf.Sin(Mathf.PI * x / 127f), 0.45f);
@@ -469,7 +472,7 @@ public static class EditorHelpers
         return new Color(v, v, v, 1f);
     }, 128, 48, 32);
 
-    // columna de fuego del geiser (de abajo hacia arriba)
+    // Columna de fuego del géiser (de abajo hacia arriba)
     public static Sprite Llama() => TiledTexture("Llama", (x, y) =>
     {
         float t = y / 95f;
@@ -483,7 +486,7 @@ public static class EditorHelpers
         return c;
     }, 32, 96, 24);
 
-    // luz 2D de URP agregada desde el editor (tipo: 3 = puntual, 4 = global)
+    // Luz 2D de URP agregada desde el editor (tipo: 3 = puntual, 4 = global)
     public static Component Light(GameObject go, int type, Color color, float intensity, float radius = 0f)
     {
         var t = System.Type.GetType("UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.2D.Runtime");
