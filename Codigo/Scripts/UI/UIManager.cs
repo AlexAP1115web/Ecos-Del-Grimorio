@@ -46,6 +46,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject achievementsFirst;
     [SerializeField] private GameObject controlsPanel;
     [SerializeField] private GameObject controlsFirst;
+    [SerializeField] private GameObject grimorioPanel;
+    [SerializeField] private GameObject grimorioFirst;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject gameOverFirst;
 
@@ -100,6 +102,7 @@ public class UIManager : MonoBehaviour
         SetActive(pausePanel, false);
         SetActive(achievementsPanel, false);
         SetActive(controlsPanel, false);
+        SetActive(grimorioPanel, false);
         SetActive(gameOverPanel, false);
         if (messageGroup != null) messageGroup.alpha = 0f;
         if (toastGroup != null) toastGroup.alpha = 0f;
@@ -281,7 +284,7 @@ public class UIManager : MonoBehaviour
             if (char.IsLetter(ch) && Time.unscaledTime >= nextVoiceTime)
             {
                 AudioManager.Hablar(currentSpeaker);
-                nextVoiceTime = Time.unscaledTime + 0.09f;
+                nextVoiceTime = Time.unscaledTime + 0.13f;
             }
         }
         dialogueBody.text = line.Substring(0, visibleChars);
@@ -321,6 +324,7 @@ public class UIManager : MonoBehaviour
         SetActive(pausePanel, state == GameState.Pausa);
         SetActive(achievementsPanel, false);
         SetActive(controlsPanel, false);
+        SetActive(grimorioPanel, false);
         SetActive(gameOverPanel, state == GameState.GameOver);
 
         if (state == GameState.Pausa) Select(pauseFirst);
@@ -350,6 +354,13 @@ public class UIManager : MonoBehaviour
         Select(achievementsFirst);
     }
 
+    public void BotonGrimorio()
+    {
+        SetActive(pausePanel, false);
+        SetActive(grimorioPanel, true);
+        Select(grimorioFirst);
+    }
+
     public void BotonControles()
     {
         SetActive(pausePanel, false);
@@ -361,6 +372,7 @@ public class UIManager : MonoBehaviour
     {
         SetActive(achievementsPanel, false);
         SetActive(controlsPanel, false);
+        SetActive(grimorioPanel, false);
         SetActive(pausePanel, true);
         Select(pauseFirst);
     }

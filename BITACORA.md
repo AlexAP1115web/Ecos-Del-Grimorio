@@ -92,6 +92,15 @@
   - Corazón: cristales y círculos de runas flotando.
   - Todas las alas: montículos en primer plano para dar profundidad.
 
+- Tercera prueba con el control:
+  - Apuntar a cualquier dirección con el stick derecho, o con el mouse al dar clic. Arriba y abajo lanzan en diagonal o en vertical.
+  - Cada espacio tiene su propio botón (Cuadrado, R1, L1 / 1, 2, 3) para encadenar combos rápido, y hay un combo rápido con un solo botón (L2 / C).
+  - El HUD muestra el botón de cada hechizo y el combo disponible.
+  - Los enemigos usan las armas del documento: Garras de Tinta Corrosiva (Espectros), Lanza Incandescente (Centinelas) y Embestida Rocosa (Golems).
+  - Pantalla Grimorio en la pausa con hechizos, combos, mejoras, esquive y armas de los enemigos.
+  - El Modo Archimaga ya no se reinicia si se presiona otra tecla mientras se escribe el código; en el control funciona con L1 + R1 + Triángulo en cualquier orden.
+  - Voces más suaves.
+
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
 - Subir capturas a `Evidencias`.

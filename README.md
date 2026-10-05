@@ -51,8 +51,9 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 | Moverse | A / D o flechas | Stick izquierdo o cruceta |
 | Saltar | Espacio / W | X |
 | Agacharse | S / flecha abajo | Stick o cruceta abajo |
-| Lanzar hechizo | J o clic izquierdo | Cuadrado |
-| Hechizos equipados | 1, 2, 3 | L1 / R1 |
+| Hechizos equipados | 1, 2, 3 (J o clic lanza el seleccionado) | Cuadrado, R1, L1 |
+| Apuntar | Flechas o mouse | Stick derecho |
+| Combo rápido | C | L2 |
 | Cambiar hechizo equipado | Q | R2 |
 | Esquive | Shift / K | Círculo |
 | Hablar / abrir cofre | E | Triángulo |

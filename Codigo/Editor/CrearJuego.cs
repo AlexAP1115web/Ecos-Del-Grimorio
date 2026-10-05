@@ -62,7 +62,8 @@ public static class CrearJuego
         EditorUtility.DisplayDialog("Ecos del Grimorio",
             "Juego creado: Menú Principal, 5 niveles y Créditos.\n\n" +
             "Controles (también en el menú > Controles):\nA/D o flechas: moverse    Espacio: saltar    S: agacharse\n" +
-            "J o clic: lanzar    1, 2, 3: hechizos    Q: cambiar hechizo\nShift: esquive    E: hablar / abrir    Esc: pausa\n\n" +
+            "1, 2, 3 (o J / clic): hechizos    C: combo rápido    Q: cambiar hechizo\nShift: esquive    E: hablar / abrir    Esc: pausa\n" +
+            "Control: Cuadrado, R1, L1 hechizos; stick derecho apunta; L2 combo rápido\n\n" +
             "Abre MenuPrincipal y presiona Play.", "OK");
     }
 
@@ -164,9 +165,16 @@ public static class CrearJuego
         var eco = Enemy("Eco Menor", 30, 0, 10, 1.8f, 3.2f, 7f, P["Cristal de Maná"], 0.3f);
         var espejo = Enemy("Guardián Espejo", 80, 0, 15, 1.5f, 1.5f, 10f, P["Poción Mayor de Vida"], 0.5f);
 
-        P["Espectro"] = Walker("Espectro_de_Tinta", "Enemies/Espectro_De_Tinta.png", 1.5f, espectro);
-        P["Mayor"] = Walker("Espectro_Mayor", "Enemies/Espectro_Mayor.png", 2.3f, mayor);
-        P["Centinela"] = Walker("Centinela_de_Ceniza", "Enemies/Centinelas_De_Ceniza.png", 1.9f, centinela);
+        // Armas de los enemigos (sección de armas del documento)
+        var garras = LoadSprite(Sprites + "Weapons/Garras de Tinta Corrosiva.png");
+        var lanza = LoadSprite(Sprites + "Weapons/Lanza Incandescente.png");
+        var embestida = LoadSprite(Sprites + "Weapons/Embestida Rocosa.png");
+        P["Espectro"] = Walker("Espectro_de_Tinta", "Enemies/Espectro_De_Tinta.png", 1.5f, espectro,
+            ai => Arma(ai.gameObject, garras, TipoGolpe.Zarpazo, 1.6f, 10f, 1.8f, 1.2f, 0f, null));
+        P["Mayor"] = Walker("Espectro_Mayor", "Enemies/Espectro_Mayor.png", 2.3f, mayor,
+            ai => Arma(ai.gameObject, garras, TipoGolpe.Zarpazo, 2.2f, 15f, 2.2f, 1.8f, 0f, null));
+        P["Centinela"] = Walker("Centinela_de_Ceniza", "Enemies/Centinelas_De_Ceniza.png", 1.9f, centinela,
+            ai => Arma(ai.gameObject, lanza, TipoGolpe.Estocada, 2.4f, 14f, 2.2f, 2.2f, -45f, Elemento.Fuego));
         P["Salamandra"] = Walker("Salamandra_de_Forja", "Enemies/Salamandras_De_Forja.png", 0.9f, salamandra,
             ai => { Set(ai, "jumpAttack", true); Set(ai, "jumpAttackForce", 8f); });
         P["Escarchado"] = Walker("Espectro_Escarchado", "Enemies/Espectros_Escarchados.png", 1.7f, escarchado);
@@ -198,7 +206,8 @@ public static class CrearJuego
         P["Ave"] = Flyer("Ave_de_Tormenta", "Enemies/Aves_De_Tormenta.png", 1.0f, ave,
             ai => { Set(ai, "diveSpeed", 9f); Set(ai, "diveCooldown", 2.5f); });
         P["Golem"] = Flyer("Golem_de_Piedra", "Enemies/Golems_De_Piedra_Suspendida.png", 1.5f, golem,
-            ai => { Set(ai, "diveSpeed", 6f); Set(ai, "diveCooldown", 3.5f); Set(ai, "hoverRadius", 0.6f); });
+            ai => { Set(ai, "diveSpeed", 6f); Set(ai, "diveCooldown", 3.5f); Set(ai, "hoverRadius", 0.6f);
+                    Arma(ai.gameObject, embestida, TipoGolpe.Embestida, 2.2f, 16f, 3f, 1.6f, 0f, null); });
 
         // Jefes
         P["Kaelor"] = Boss("Kaelor", "Enemies/Kaelor.png", 3.0f, typeof(KaelorBoss), 260, 20, 1.8f, false, new[] { 0.5f },
@@ -366,6 +375,20 @@ public static class CrearJuego
 
         go.AddComponent<Health>();
         return go;
+    }
+
+    static void Arma(GameObject go, Sprite arte, TipoGolpe tipo, float alcance, float dano, float recarga, float tamano, float giro, Elemento? elemento)
+    {
+        var a = go.AddComponent<ArmaEnemigo>();
+        Set(a, "arte", arte);
+        Set(a, "tipo", tipo);
+        Set(a, "alcance", alcance);
+        Set(a, "dano", dano);
+        Set(a, "recarga", recarga);
+        Set(a, "tamano", tamano);
+        Set(a, "rotacionArte", giro);
+        Set(a, "conElemento", elemento.HasValue);
+        if (elemento.HasValue) Set(a, "elemento", elemento.Value);
     }
 
     static GameObject Walker(string name, string sprite, float height, EnemyData data,
@@ -1221,7 +1244,7 @@ public static class CrearJuego
             "Maestra Sable: Empecemos por lo básico. Repite conmigo el primer sello arcano y saca a esos espectros de la biblioteca.");
         Dialogo(n, -10f, "Maestra Sable", "Characters/Maestra Sable.png", true, false,
             "Muévete con A/D o el stick y salta con Espacio o X.",
-            "Lanza el hechizo con J o Cuadrado. Mantén arriba para lanzarlo en diagonal.",
+            "Lanza tus hechizos con 1, 2 y 3, o con Cuadrado, R1 y L1. Apunta a cualquier lado con el stick derecho o con el mouse.",
             "Si un enemigo se acerca demasiado, esquiva con Shift o Círculo: durante el esquive nada te toca.",
             "Agáchate con S o con el stick hacia abajo: así pasas por pasadizos bajos y tus hechizos salen a ras de suelo, contra los enemigos pequeños.",
             "La Torre está llena de secretos. Los muros agrietados se rompen con un hechizo y las vasijas guardan cristales y pociones.",
@@ -1280,7 +1303,7 @@ public static class CrearJuego
         Narracion(n, -7f,
             "Lira: El Ala de Fuego... la forja antigua sigue encendida después de tantos años.",
             "Lira: Ahora tengo el hechizo de Fuego. Si lo lanzo justo después del Arcano, tal vez logre una explosión.",
-            "Lira: (2 o R1 para cambiar de hechizo, y lanzar rápido uno después del otro)");
+            "Lira: (Arcano con 1 o Cuadrado y enseguida Fuego con 2 o R1... o el combo rápido con C o L2)");
         Narracion(n, 30f, "Eco: El fuego fue robado... robado de su laboratorio...");
         Narracion(n, 54f, "Lira: Esas plataformas suben hasta lo alto de la forja. Algo brilla allá arriba.");
 
@@ -1656,13 +1679,14 @@ public static class CrearJuego
 
         var icons = new Image[3];
         var frames = new Image[3];
+        var teclas = new Text[3];
         for (int i = 0; i < 3; i++)
         {
             var pos = new Vector2(30 + i * 92, -190);
             frames[i] = Img("Espacio_" + (i + 1), t, tl, pos, new Vector2(82, 82), square, new Color(0, 0, 0, 0.5f));
             icons[i] = Img("Icono_" + (i + 1), frames[i].transform, c, Vector2.zero, new Vector2(70, 70), null, Color.white);
             icons[i].preserveAspect = true;
-            Txt("Tecla", frames[i].transform, tl, new Vector2(4, -2), new Vector2(30, 30), (i + 1).ToString(), 24, TextAnchor.UpperLeft);
+            teclas[i] = Txt("Tecla", frames[i].transform, tl, new Vector2(4, -2), new Vector2(60, 30), (i + 1).ToString(), 24, TextAnchor.UpperLeft);
         }
         var fragments = Txt("Fragmentos", t, tl, new Vector2(310, -192), new Vector2(420, 46), "Fragmentos: 0/5", 32, TextAnchor.MiddleLeft);
         var paginas = Txt("Paginas", t, tl, new Vector2(310, -236), new Vector2(420, 46), "Páginas del ala: 0/3", 32, TextAnchor.MiddleLeft);
@@ -1682,6 +1706,9 @@ public static class CrearJuego
         Set(hud, "manaFill", mana);
         Set(hud, "fragmentsText", fragments);
         Set(hud, "pagesText", paginas);
+        SetArray(hud, "slotKeys", teclas);
+        var comboHint = Txt("ComboRapido", t, tl, new Vector2(30, -292), new Vector2(520, 40), "", 26, TextAnchor.MiddleLeft);
+        Set(hud, "comboHint", comboHint);
         SetArray(hud, "elementIcons", new Object[]
         {
             spells[Elemento.Arcano].icon, spells[Elemento.Fuego].icon, spells[Elemento.Hielo].icon, spells[Elemento.Viento].icon
@@ -1717,13 +1744,37 @@ public static class CrearJuego
         // ---- Pausa ----
         var marcoMenu = LoadSprite(Sprites + "UI/Marco de menú.png");
         var pause = Panel(t, "Pausa", new Color(0, 0, 0, 0.6f));
-        Img("Marco", pause.transform, c, Vector2.zero, new Vector2(700, 660), marcoMenu, Color.white);
-        Txt("Titulo", pause.transform, c, new Vector2(0, 225), new Vector2(600, 90), "PAUSA", 64, TextAnchor.MiddleCenter);
-        var reanudar = Boton(pause.transform, "Reanudar", new Vector2(0, 125), ui.BotonReanudar);
-        Boton(pause.transform, "Controles", new Vector2(0, 40), ui.BotonControles);
-        Boton(pause.transform, "Logros", new Vector2(0, -45), ui.BotonLogros);
-        Boton(pause.transform, "Reiniciar nivel", new Vector2(0, -130), ui.BotonReiniciar);
-        Boton(pause.transform, "Menú principal", new Vector2(0, -215), ui.BotonMenu);
+        Img("Marco", pause.transform, c, Vector2.zero, new Vector2(760, 740), marcoMenu, Color.white);
+        Txt("Titulo", pause.transform, c, new Vector2(0, 268), new Vector2(600, 90), "PAUSA", 60, TextAnchor.MiddleCenter);
+        var reanudar = Boton(pause.transform, "Reanudar", new Vector2(0, 178), ui.BotonReanudar);
+        Boton(pause.transform, "Grimorio", new Vector2(0, 96), ui.BotonGrimorio);
+        Boton(pause.transform, "Controles", new Vector2(0, 14), ui.BotonControles);
+        Boton(pause.transform, "Logros", new Vector2(0, -68), ui.BotonLogros);
+        Boton(pause.transform, "Reiniciar nivel", new Vector2(0, -150), ui.BotonReiniciar);
+        Boton(pause.transform, "Menú principal", new Vector2(0, -232), ui.BotonMenu);
+
+        // Grimorio: hechizos, combos, mejoras y armas de los enemigos
+        var grimorio = Panel(t, "Grimorio", new Color(0, 0, 0, 0.75f));
+        Recuadro("Fondo", grimorio.transform, c, new Vector2(0, -15), new Vector2(1500, 960));
+        Txt("Titulo", grimorio.transform, c, new Vector2(0, 410), new Vector2(800, 80), "GRIMORIO", 58, TextAnchor.MiddleCenter);
+        var contenidoGrimorio = UI("Contenido", grimorio.transform, c, new Vector2(0, 0), new Vector2(1400, 760));
+        var gui = grimorio.AddComponent<GrimorioUI>();
+        Set(gui, "font", font);
+        Set(gui, "contenido", contenidoGrimorio);
+        SetArray(gui, "hechizos", new Object[] { spells[Elemento.Arcano], spells[Elemento.Fuego], spells[Elemento.Hielo], spells[Elemento.Viento] });
+        SetArray(gui, "combos", new Object[]
+        {
+            LoadSprite(Sprites + "Spells/Explosión Arcana.png"), LoadSprite(Sprites + "Spells/Vapor Cegador.png"),
+            LoadSprite(Sprites + "Spells/Granizo Cortante.png"), LoadSprite(Sprites + "Spells/Tormenta de Ascuas.png")
+        });
+        SetArray(gui, "mejoras", new Object[] { items["Núcleo de Ascua"], items["Anillo de Escarcha"], items["Pluma Ligera"] });
+        Set(gui, "esquive", LoadSprite(Sprites + "Spells/Esquive.png"));
+        SetArray(gui, "armas", new Object[]
+        {
+            LoadSprite(Sprites + "Weapons/Garras de Tinta Corrosiva.png"), LoadSprite(Sprites + "Weapons/Lanza Incandescente.png"),
+            LoadSprite(Sprites + "Weapons/Embestida Rocosa.png"), LoadSprite(Sprites + "Weapons/Esquirlas de Hielo.png")
+        });
+        var volverGrimorio = Boton(grimorio.transform, "Volver", new Vector2(0, -430), ui.BotonVolverPausa);
 
         var controles = PanelControles(t, true, ui.BotonVolverPausa, out var volverControles);
 
@@ -1761,6 +1812,8 @@ public static class CrearJuego
         Set(ui, "achievementsFirst", volver.gameObject);
         Set(ui, "controlsPanel", controles);
         Set(ui, "controlsFirst", volverControles.gameObject);
+        Set(ui, "grimorioPanel", grimorio);
+        Set(ui, "grimorioFirst", volverGrimorio.gameObject);
         Set(ui, "gameOverPanel", over);
         Set(ui, "gameOverFirst", reintentar.gameObject);
         Set(ui, "toastGroup", toastGroup);
@@ -1801,10 +1854,10 @@ public static class CrearJuego
             ("Moverse", "A / D o flechas", "Stick o cruceta"),
             ("Saltar (mantén = más alto)", "Espacio o W", "X"),
             ("Agacharse", "S o flecha abajo", "Stick abajo"),
-            ("Lanzar hechizo", "J o clic", "Cuadrado"),
-            ("Apuntar en diagonal", "Flecha arriba", "Stick arriba"),
-            ("Elegir hechizo equipado", "1, 2, 3", "L1 / R1"),
-            ("Cambiar hechizo del espacio", "Q", "R2"),
+            ("Hechizo 1 / 2 / 3", "1, 2, 3  (J o clic)", "□  /  R1  /  L1"),
+            ("Apuntar a cualquier lado", "Flechas o mouse", "Stick derecho"),
+            ("Combo rápido", "C", "L2"),
+            ("Cambiar hechizo equipado", "Q", "R2"),
             ("Esquive (invulnerable)", "Shift o K", "Círculo"),
             ("Hablar / abrir cofres", "E", "Triángulo"),
             ("Pausa", "Esc", "Options"),
@@ -1819,7 +1872,7 @@ public static class CrearJuego
             Txt("Control", t, c, new Vector2(510, y), new Vector2(300, 50), filas[i].control, 32, TextAnchor.MiddleLeft).color = Color.white;
         }
         Txt("Consejos", t, c, new Vector2(0, -322), new Vector2(1300, 90),
-            "Combos: lanza dos elementos distintos seguidos (menos de 1 segundo entre uno y otro).\n" +
+            "Combos: lanza dos elementos distintos seguidos (menos de 1 segundo) o usa el combo rápido.\n" +
             "Rompe vasijas y muros agrietados con tus hechizos: esconden objetos y Páginas Perdidas.",
             27, TextAnchor.MiddleCenter);
         botonVolver = Boton(t, "Volver", new Vector2(0, -415), volver);

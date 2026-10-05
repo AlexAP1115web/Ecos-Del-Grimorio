@@ -9,13 +9,14 @@ using UnityEngine.InputSystem;
 //  Moverse             A/D o flechas      Stick izquierdo o cruceta
 //  Saltar              Espacio / W        X
 //  Agacharse           S / flecha abajo   Stick o cruceta abajo
-//  Lanzar hechizo      J / clic           Cuadrado
-//  Hechizo 1, 2, 3     1, 2, 3            L1 / R1 (anterior / siguiente)
+//  Hechizo 1, 2, 3     1, 2, 3 (J/clic)   Cuadrado, R1, L1
+//  Apuntar             Flechas / mouse    Stick derecho (360°) o stick izq. arriba/abajo
+//  Combo rápido        C                  L2
 //  Cambiar hechizo     Q                  R2
 //  Esquive             Shift / K          Círculo
 //  Hablar / abrir      E                  Triángulo
 //  Pausa               Esc                Options
-//  Modo Archimaga      F H V A + Enter    L1 + R1 + Triángulo
+//  Modo Archimaga      F H V A + Enter    L1 + R1 + Triángulo (en cualquier orden)
 public static class Controles
 {
     static Keyboard Kb => Keyboard.current;
@@ -49,13 +50,29 @@ public static class Controles
         (Kb != null && (Kb.upArrowKey.isPressed)) ||
         (Pad != null && (Pad.leftStick.y.ReadValue() > 0.6f || Pad.dpad.up.isPressed));
 
+    // Stick derecho para apuntar en cualquier dirección (cero si no se está usando)
+    public static Vector2 ApuntarStick
+    {
+        get
+        {
+            if (Pad == null) return Vector2.zero;
+            var v = Pad.rightStick.ReadValue();
+            return v.magnitude > 0.45f ? v.normalized : Vector2.zero;
+        }
+    }
+
+    // Posición del mouse en pantalla (para apuntar con el clic)
+    public static Vector2 PosicionMouse => Mouse != null ? Mouse.position.ReadValue() : Vector2.zero;
+    public static bool ClicMouse => Mouse != null && Mouse.leftButton.wasPressedThisFrame;
+
     public static bool Abajo =>
         (Kb != null && (Kb.sKey.isPressed || Kb.downArrowKey.isPressed)) ||
         (Pad != null && (Pad.leftStick.y.ReadValue() < -0.6f || Pad.dpad.down.isPressed));
 
-    // Truco con el control: mantener L1 + R1 y presionar Triángulo
+    // Truco con el control: L1 + R1 + Triángulo juntos, en cualquier orden
     public static bool TrucoControl =>
-        Pad != null && Pad.leftShoulder.isPressed && Pad.rightShoulder.isPressed && Pad.buttonNorth.wasPressedThisFrame;
+        Pad != null && Pad.leftShoulder.isPressed && Pad.rightShoulder.isPressed && Pad.buttonNorth.isPressed &&
+        (Pad.leftShoulder.wasPressedThisFrame || Pad.rightShoulder.wasPressedThisFrame || Pad.buttonNorth.wasPressedThisFrame);
 
     public static bool SaltarPresionado =>
         (Kb != null && (Kb.spaceKey.wasPressedThisFrame || Kb.wKey.wasPressedThisFrame)) ||
@@ -65,25 +82,38 @@ public static class Controles
         (Kb != null && (Kb.spaceKey.isPressed || Kb.wKey.isPressed)) ||
         (Pad != null && Pad.buttonSouth.isPressed);
 
+    // Avanza diálogos (y en el teclado lanza el hechizo seleccionado)
     public static bool LanzarPresionado =>
         (Kb != null && Kb.jKey.wasPressedThisFrame) ||
         (Mouse != null && Mouse.leftButton.wasPressedThisFrame) ||
         (Pad != null && Pad.buttonWest.wasPressedThisFrame);
 
+    // J o clic: lanza el hechizo del espacio seleccionado
+    public static bool LanzarSeleccionado =>
+        (Kb != null && Kb.jKey.wasPressedThisFrame) || ClicMouse;
+
+    // Cada espacio tiene su propio botón para poder encadenar combos rápido:
+    // teclado 1, 2, 3 / control Cuadrado, R1, L1
     public static bool EspacioPresionado(int slot)
     {
-        if (Kb == null) return false;
         switch (slot)
         {
-            case 0: return Kb.digit1Key.wasPressedThisFrame;
-            case 1: return Kb.digit2Key.wasPressedThisFrame;
-            case 2: return Kb.digit3Key.wasPressedThisFrame;
+            case 0: return (Kb != null && Kb.digit1Key.wasPressedThisFrame) || (Pad != null && Pad.buttonWest.wasPressedThisFrame);
+            case 1: return (Kb != null && Kb.digit2Key.wasPressedThisFrame) || (Pad != null && Pad.rightShoulder.wasPressedThisFrame && !Pad.leftShoulder.isPressed);
+            case 2: return (Kb != null && Kb.digit3Key.wasPressedThisFrame) || (Pad != null && Pad.leftShoulder.wasPressedThisFrame && !Pad.rightShoulder.isPressed);
             default: return false;
         }
     }
 
-    public static bool SiguienteEspacio => Pad != null && Pad.rightShoulder.wasPressedThisFrame;
-    public static bool AnteriorEspacio => Pad != null && Pad.leftShoulder.wasPressedThisFrame;
+    // Combo rápido: lanza el combo de dos hechizos equipados con un solo botón
+    public static bool ComboRapido =>
+        (Kb != null && Kb.cKey.wasPressedThisFrame) ||
+        (Pad != null && Pad.leftTrigger.wasPressedThisFrame);
+
+    public static string TextoEspacio(int slot) =>
+        HayControl ? (slot == 0 ? "□" : slot == 1 ? "R1" : "L1") : (slot + 1).ToString();
+
+    public static string TextoCombo => HayControl ? "L2" : "C";
 
     public static bool CambiarHechizo =>
         (Kb != null && Kb.qKey.wasPressedThisFrame) ||

@@ -24,6 +24,7 @@ public abstract class EnemyBase : MonoBehaviour
 
     protected float SpeedMultiplier => Time.time < slowUntil ? slowMultiplier : 1f;
     protected bool IsStunned => Time.time < stunUntil;
+    public bool Aturdido => IsStunned;
 
     protected float DistanceToPlayer =>
         player != null ? Vector2.Distance(transform.position, player.position) : Mathf.Infinity;

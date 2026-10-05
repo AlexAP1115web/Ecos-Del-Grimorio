@@ -434,6 +434,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // Voltea a Lira hacia una dirección (al apuntar con el stick derecho o el mouse)
+    public void Face(float dirX)
+    {
+        if (Mathf.Abs(horizontalInput) > 0.1f) return; // si se está moviendo manda el movimiento
+        FacingRight = dirX > 0f;
+    }
+
     public void SetJumpMultiplier(float multiplier)
     {
         jumpMultiplier = multiplier;

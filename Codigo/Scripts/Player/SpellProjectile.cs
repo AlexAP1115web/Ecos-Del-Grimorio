@@ -23,11 +23,15 @@ public class SpellProjectile : MonoBehaviour
         rb.linearVelocity = direction * data.projectileSpeed * speedMultiplier;
 
         // El arte de los hechizos ya viene orientado hacia la derecha, solo se voltea
+        // El arte apunta a la derecha: se gira hacia donde va el hechizo (y se voltea para no quedar de cabeza)
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
         var sr = GetComponentInChildren<SpriteRenderer>();
         if (sr != null)
         {
             sr.color = data.color;
-            sr.flipX = direction.x < 0f;
+            sr.flipX = false;
+            sr.flipY = direction.x < 0f;
         }
 
         var trail = GetComponent<EstelaProyectil>();

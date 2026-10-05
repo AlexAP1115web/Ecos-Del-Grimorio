@@ -11,7 +11,9 @@ public class ModoArchimaga : MonoBehaviour
     public static event Action Activated;
 
     private readonly Key[] code = { Key.F, Key.H, Key.V, Key.A, Key.Enter };
+    private readonly Key[] codeKeys = { Key.F, Key.H, Key.V, Key.A, Key.Enter };
     private int progress;
+    private float lastKeyTime;
     private float endTime;
     private bool active;
     private SpellCaster caster;
@@ -41,24 +43,32 @@ public class ModoArchimaga : MonoBehaviour
         }
 
         var kb = Keyboard.current;
-        if (kb == null || !kb.anyKey.wasPressedThisFrame) return;
+        if (kb == null) return;
 
-        Key expected = code[progress];
-        bool pressedExpected = kb[expected].wasPressedThisFrame || (expected == Key.Enter && kb.numpadEnterKey.wasPressedThisFrame);
+        // Si pasa mucho tiempo entre letras se reinicia el código
+        if (progress > 0 && Time.unscaledTime - lastKeyTime > 4f) progress = 0;
 
-        if (pressedExpected)
+        // Solo cuentan las teclas del código: moverse, saltar o lanzar mientras se escribe no lo reinicia
+        foreach (var key in codeKeys)
         {
-            progress++;
-            if (progress == code.Length)
+            bool pressed = kb[key].wasPressedThisFrame || (key == Key.Enter && kb.numpadEnterKey.wasPressedThisFrame);
+            if (!pressed) continue;
+
+            lastKeyTime = Time.unscaledTime;
+            if (key == code[progress])
             {
-                progress = 0;
-                Activate();
+                progress++;
+                if (progress == code.Length)
+                {
+                    progress = 0;
+                    Activate();
+                }
             }
-        }
-        else
-        {
-            // Si se equivoca vuelve a empezar (pero la F cuenta como primer paso)
-            progress = kb.fKey.wasPressedThisFrame ? 1 : 0;
+            else
+            {
+                progress = key == Key.F ? 1 : 0;
+            }
+            break;
         }
     }
 

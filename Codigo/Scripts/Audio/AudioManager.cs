@@ -48,7 +48,7 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip[] liraDano = new AudioClip[0];
     [SerializeField] private AudioClip[] liraEsfuerzo = new AudioClip[0];
     [SerializeField] private AudioClip liraCaida;
-    [Range(0f, 1f)] [SerializeField] private float volumenVoces = 0.85f;
+    [Range(0f, 1f)] [SerializeField] private float volumenVoces = 0.55f;
 
     [Header("Volumen")]
     [Range(0f, 1f)] [SerializeField] private float volumenMusica = 0.5f;

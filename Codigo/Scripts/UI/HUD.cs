@@ -17,6 +17,9 @@ public class HUD : MonoBehaviour
     [SerializeField] private Sprite[] elementIcons = new Sprite[4];
     [SerializeField] private Image[] slotIcons = new Image[3];
     [SerializeField] private Image[] slotFrames = new Image[3];
+    [Tooltip("Tecla o botón de cada espacio (cambia si se usa teclado o control)")]
+    [SerializeField] private Text[] slotKeys = new Text[3];
+    [SerializeField] private Text comboHint;
 
     [Header("Daño")]
     [Tooltip("Orillas rojas de la pantalla: destellan al recibir daño y laten con poca vida")]
@@ -87,6 +90,16 @@ public class HUD : MonoBehaviour
     void UpdateSlots()
     {
         if (playerCaster == null) return;
+
+        for (int i = 0; i < slotKeys.Length; i++)
+            if (slotKeys[i] != null) slotKeys[i].text = Controles.TextoEspacio(i);
+
+        if (comboHint != null)
+        {
+            var combo = playerCaster.QuickCombo;
+            comboHint.text = combo == TipoCombo.Ninguno ? "" : $"{Controles.TextoCombo}: {SpellCaster.NombreCombo(combo)}";
+        }
+
         for (int i = 0; i < slotIcons.Length; i++)
         {
             bool hasSpell = i < playerCaster.Equipped.Count;

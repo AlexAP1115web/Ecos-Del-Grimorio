@@ -6,10 +6,12 @@ using UnityEngine.Events;
 
 // Maná, hechizos equipados y combos elementales.
 // Según la mecánica del documento, Lira equipa hasta 3 hechizos:
-//   1, 2, 3 -> lanza el hechizo del espacio 1, 2 o 3
-//   J / clic / Cuadrado -> lanza el espacio seleccionado (L1 y R1 cambian de espacio)
+//   1, 2, 3 / Cuadrado, R1, L1 -> lanza el hechizo del espacio 1, 2 o 3
+//   J / clic -> lanza el espacio seleccionado (con el clic apunta hacia el mouse)
+//   C / L2 -> combo rápido con dos de los hechizos equipados
 //   Q / R2 -> cambia el hechizo del espacio seleccionado por otro desbloqueado
-//   Mantener arriba -> lanza en diagonal hacia arriba
+//   Stick derecho -> apunta en cualquier dirección (360°)
+//   Arriba / abajo (en el aire) -> lanza en diagonal o en vertical
 //   Agachada -> el hechizo sale a ras de suelo (para enemigos pequeños)
 // Si se lanzan dos elementos distintos seguidos (dentro de comboWindow) se forma un combo.
 public class SpellCaster : MonoBehaviour
@@ -29,6 +31,7 @@ public class SpellCaster : MonoBehaviour
     [Header("Combos")]
     [SerializeField] private float comboWindow = 0.9f;
     [SerializeField] private float comboManaCost = 15f;
+    [SerializeField] private float quickComboCooldown = 0.8f;
     [Tooltip("Arte de los combos en el orden: Explosión Arcana, Vapor Cegador, Granizo Cortante, Tormenta de Ascuas")]
     [SerializeField] private Sprite[] comboSprites = new Sprite[4];
 
@@ -49,6 +52,8 @@ public class SpellCaster : MonoBehaviour
     private bool archmageMode;
     private PlayerController controller;
     private bool inputEnabled = true;
+    private bool aimAtMouse;
+    private float nextQuickCombo;
 
     public float CurrentMana => currentMana;
     public float ManaPercent => currentMana / maxMana;
@@ -95,13 +100,17 @@ public class SpellCaster : MonoBehaviour
 
         if (!inputEnabled) return;
 
+        aimAtMouse = false;
         if (Controles.EspacioPresionado(0)) CastSlot(0);
         else if (Controles.EspacioPresionado(1)) CastSlot(1);
         else if (Controles.EspacioPresionado(2)) CastSlot(2);
-        else if (Controles.LanzarPresionado) CastSlot(selectedSlot);
+        else if (Controles.LanzarSeleccionado)
+        {
+            aimAtMouse = Controles.ClicMouse;
+            CastSlot(selectedSlot);
+        }
 
-        if (Controles.SiguienteEspacio && equipped.Count > 0) selectedSlot = (selectedSlot + 1) % equipped.Count;
-        if (Controles.AnteriorEspacio && equipped.Count > 0) selectedSlot = (selectedSlot + equipped.Count - 1) % equipped.Count;
+        if (Controles.ComboRapido) TryQuickCombo();
         if (Controles.CambiarHechizo) SwapSelectedSlot();
     }
 
@@ -225,15 +234,97 @@ public class SpellCaster : MonoBehaviour
         return TipoCombo.Ninguno;
     }
 
+    // Primer par de hechizos equipados que forma un combo (el combo rápido usa este)
+    public TipoCombo QuickCombo
+    {
+        get
+        {
+            for (int i = 0; i < equipped.Count; i++)
+                for (int j = i + 1; j < equipped.Count; j++)
+                {
+                    var c = GetCombo(equipped[i], equipped[j]);
+                    if (c != TipoCombo.Ninguno) return c;
+                }
+            return TipoCombo.Ninguno;
+        }
+    }
+
+    public static string NombreCombo(TipoCombo c)
+    {
+        switch (c)
+        {
+            case TipoCombo.ExplosionArcana: return "Explosión Arcana";
+            case TipoCombo.VaporCegador: return "Vapor Cegador";
+            case TipoCombo.GranizoCortante: return "Granizo Cortante";
+            case TipoCombo.TormentaDeAscuas: return "Tormenta de Ascuas";
+            default: return "";
+        }
+    }
+
+    public void TryQuickCombo()
+    {
+        if (Time.time < nextQuickCombo) return;
+        var combo = QuickCombo;
+        if (combo == TipoCombo.Ninguno)
+        {
+            if (GameManager.Instance != null)
+                GameManager.Instance.ShowMessage("Necesitas dos hechizos que se combinen (por ejemplo Arcano + Fuego)", 2.5f);
+            nextQuickCombo = Time.time + 1f;
+            return;
+        }
+        if (!SpendMana(comboManaCost)) return;
+        CastCombo(combo);
+        nextQuickCombo = Time.time + (archmageMode ? 0.2f : quickComboCooldown);
+        lastCastTime = -10f;
+    }
+
     Vector2 Facing => controller == null || controller.FacingRight ? Vector2.right : Vector2.left;
 
     // Dirección de disparo: al frente, o en diagonal hacia arriba si se mantiene arriba
     bool Crouching => controller != null && controller.IsCrouching;
 
-    Vector2 AimDirection => Controles.Arriba && !Crouching ? new Vector2(Facing.x, 1f).normalized : Facing;
+    // Dirección de disparo: stick derecho (360°), mouse, arriba/abajo o al frente
+    Vector2 AimDirection
+    {
+        get
+        {
+            var stick = Controles.ApuntarStick;
+            if (stick != Vector2.zero)
+            {
+                if (controller != null && Mathf.Abs(stick.x) > 0.2f) controller.Face(stick.x);
+                return stick;
+            }
+            if (aimAtMouse && Camera.main != null)
+            {
+                Vector2 m = Camera.main.ScreenToWorldPoint(Controles.PosicionMouse);
+                Vector2 d = m - (Vector2)transform.position;
+                if (d.sqrMagnitude > 0.01f)
+                {
+                    if (controller != null && Mathf.Abs(d.x) > 0.1f) controller.Face(d.x);
+                    return d.normalized;
+                }
+            }
+            if (Crouching) return Facing;
 
-    Vector2 CastPoint => (Vector2)transform.position +
-        new Vector2(castOffset.x * Facing.x, castOffset.y - (Crouching ? crouchCastDrop : 0f));
+            bool moviendo = Mathf.Abs(Controles.Horizontal) > 0.3f;
+            bool enAire = controller != null && !controller.IsGrounded;
+            if (Controles.Arriba) return moviendo ? new Vector2(Facing.x, 1f).normalized : Vector2.up;
+            if (Controles.Abajo && enAire) return moviendo ? new Vector2(Facing.x, -1f).normalized : Vector2.down;
+            return Facing;
+        }
+    }
+
+    Vector2 CastPoint
+    {
+        get
+        {
+            var dir = AimDirection;
+            // Al apuntar hacia arriba o abajo el hechizo sale del centro de Lira
+            float x = Mathf.Abs(dir.x) > 0.5f ? castOffset.x * Mathf.Sign(dir.x) : dir.x * castOffset.x;
+            float y = castOffset.y - (Crouching ? crouchCastDrop : 0f) + dir.y * 0.6f;
+            return (Vector2)transform.position + new Vector2(x, y);
+        }
+    }
 
     void FireProjectile(SpellData spell, float damage, bool pierce, float speedMultiplier)
     {
@@ -269,7 +360,7 @@ public class SpellCaster : MonoBehaviour
             case TipoCombo.ExplosionArcana:
             {
                 // Explosión de área de alto daño frente a Lira
-                Vector2 center = (Vector2)transform.position + Facing * 2f;
+                Vector2 center = (Vector2)transform.position + AimDirection * 2f;
                 AreaEffect.Spawn(center, 2.5f, Color.white, 0.6f, ComboSprite(combo));
                 AreaEffect.Damage(center, 2.5f, 40f, Elemento.Fuego, false);
                 break;
