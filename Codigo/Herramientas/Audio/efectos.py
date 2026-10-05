@@ -227,6 +227,40 @@ def paso():
     return efecto(y, 0.0) * 0.5
 
 
+def victoria():
+    # Fanfarria: arpegio de metales que sube y acorde final con campanas
+    arp = notas([midi(n) for n in ('C5', 'E5', 'G5', 'C6', 'E6')], lambda f, d: metales(f, 0.16), 0.13)
+    acorde_ = mezclar(*[metales(mtof(midi(n)), 1.6) for n in ('C4', 'G4', 'C5', 'E5', 'G5')])
+    cuerdas_ = mezclar(*[cuerdas(mtof(midi(n)), 1.8) for n in ('C4', 'E4', 'G4', 'C5')])
+    campanas = notas([midi(n) for n in ('G6', 'C7', 'E7', 'G7')], lambda f, d: campana(f, d, 1, 1.0, 0.8, 1.8), 0.12)
+    timbal_ = timbal(1.0, 65)
+    inicio = int(0.65 * SR)
+    y = mezclar(arp, np.concatenate([np.zeros(inicio), acorde_ * 0.8]), np.concatenate([np.zeros(inicio), cuerdas_ * 0.6]),
+                np.concatenate([np.zeros(inicio), campanas * 0.5]), np.concatenate([np.zeros(inicio), timbal_ * 0.8]))
+    return efecto(y, 0.5, 2.0)
+
+
+def geiser():
+    n = int(0.9 * SR)
+    t = t_(0.9)
+    rugido = lp(ruido(n), 900) * np.clip(t / 0.05, 0, 1) * np.exp(-t * 2.5) * 1.5
+    silbido = bp(ruido(n), 2000, 6000) * np.exp(-t * 4) * 0.4
+    return efecto(rugido + silbido, 0.2)
+
+
+def hielazo():
+    golpe = bp(ruido(int(0.06 * SR)), 2000, 9000) * caida(0.06, 50)
+    brillo = notas([midi('A6'), midi('E7'), midi('C7')], lambda f, d: campana(f, d, 1, 3.5, 2.0, 9), 0.03)
+    return efecto(mezclar(golpe, brillo * 0.7), 0.25)
+
+
+def viento2():
+    n = int(1.0 * SR)
+    t = t_(1.0)
+    y = bp(ruido(n), 300, 1400) * np.sin(np.pi * t / 1.0) ** 1.5
+    return efecto(y, 0.2) * 0.8
+
+
 EFECTOS = [
     ('Salto', salto), ('Aterrizaje', aterrizaje), ('Esquive', esquive),
     ('Arcano', arcano), ('Fuego', fuego), ('Hielo', hielo), ('Viento', viento), ('Combo', combo),
@@ -234,7 +268,7 @@ EFECTOS = [
     ('Objeto', objeto), ('ObjetoEspecial', objeto_especial), ('Pagina', pagina), ('Checkpoint', checkpoint),
     ('Cofre', cofre), ('Romper', romper), ('MenuMover', menu_mover), ('MenuAceptar', menu_aceptar),
     ('Logro', logro), ('Portal', portal), ('GameOver', game_over), ('JefeAparece', jefe_aparece),
-    ('Paso', paso),
+    ('Paso', paso), ('Victoria', victoria), ('Geiser', geiser), ('Hielazo', hielazo), ('Viento2', viento2),
 ]
 
 if __name__ == '__main__':

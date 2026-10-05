@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -23,6 +24,7 @@ public class GameManager : MonoBehaviour
     public const string FirstLevel = "Nivel1_AlaDeAprendizaje";
     public const string CreditsScene = "Creditos";
     public const string PrologueScene = "Prologo";
+    public const string EpilogueScene = "Epilogo";
     public const int PagesPerLevel = 3;
     public const float HealthPerPage = 5f;
 
@@ -208,6 +210,55 @@ public class GameManager : MonoBehaviour
     }
 
     public bool HasSavedGame => PlayerPrefs.HasKey("eg_nivel");
+    public bool GameCompleted => PlayerPrefs.GetInt("eg_terminado", 0) == 1;
+    private bool finishing;
+
+    // Se llama al derrotar al Eco de Elenora (después de su diálogo final):
+    // pantalla de victoria, recompensas, epílogo y créditos.
+    public void FinishGame()
+    {
+        if (finishing) return;
+        finishing = true;
+        StartCoroutine(FinalSequence());
+    }
+
+    IEnumerator FinalSequence()
+    {
+        string scene = SceneManager.GetActiveScene().name;
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            var pc = player.GetComponent<PlayerController>();
+            if (pc != null) pc.SetControlsEnabled(false);
+            var sc = player.GetComponent<SpellCaster>();
+            if (sc != null) sc.SetInputEnabled(false);
+            var h = player.GetComponent<Health>();
+            if (h != null) h.SetInvulnerable(60f);
+        }
+
+        // Las recompensas del jefe final se entregan aunque Lira no haya alcanzado a recogerlas
+        foreach (var p in FindObjectsByType<Pickup>())
+            if (p.Item != null && (p.Item.itemName == "Fragmento de Grimorio V" || p.Item.itemName == "Grimorio Completo"))
+                Destroy(p.gameObject);
+        string idFragmento = scene + ":Fragmento de Grimorio V";
+        if (!IsPickupTaken(idFragmento)) { MarkPickupTaken(idFragmento); AddFragment(); }
+        MarkPickupTaken(scene + ":Grimorio Completo");
+        AddCollectible("Grimorio Completo");
+
+        AudioManager.Play(Sfx.Victoria);
+        CameraFollow.Shake(0.2f, 0.4f);
+        if (UIManager.Instance != null) UIManager.Instance.ShowBigTitle("¡VICTORIA!", "El grimorio vuelve a estar en equilibrio");
+        yield return new WaitForSecondsRealtime(5f);
+
+        LevelCompleted?.Invoke(scene, Time.time - levelStartTime, tookDamageThisLevel);
+        PlayerPrefs.SetInt("eg_terminado", 1);
+        PlayerPrefs.DeleteKey("eg_nivel");   // la partida terminó: "Continuar" ya no regresa a la batalla final
+        Save();
+        GameFinished?.Invoke();
+
+        finishing = false;
+        SceneManager.LoadScene(Application.CanStreamedLevelBeLoaded(EpilogueScene) ? EpilogueScene : CreditsScene);
+    }
 
     public void ContinueGame()
     {

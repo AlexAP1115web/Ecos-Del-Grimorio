@@ -1,5 +1,7 @@
 using UnityEngine;
 
+public enum Bendicion { Ninguna, Vida, Mana, VidaMaxima }
+
 // Diálogo de un personaje (Maestra Sable) o de un jefe antes del combate.
 // Con autoStart se inicia solo al acercarse (jefes); si no, aparece el aviso para hablar.
 public class NPCDialogue : MonoBehaviour
@@ -13,10 +15,14 @@ public class NPCDialogue : MonoBehaviour
     };
     [SerializeField] private float talkRange = 2.5f;
     [SerializeField] private bool autoStart = false;
+    [Tooltip("Regalo al terminar de hablar (espíritus de los guardianes)")]
+    [SerializeField] private Bendicion bendicion = Bendicion.Ninguna;
+    [SerializeField] private string mensajeBendicion = "";
 
     private Transform player;
     private bool talked;
     private bool promptShown;
+    private bool bendecido;
 
     void Start()
     {
@@ -57,6 +63,24 @@ public class NPCDialogue : MonoBehaviour
     {
         talked = true;
         promptShown = false;
-        ui.StartDialogue(speakerName, portrait, lines, null);
+        ui.StartDialogue(speakerName, portrait, lines, bendicion == Bendicion.Ninguna ? null : (System.Action)Bendecir);
+    }
+
+    void Bendecir()
+    {
+        if (bendecido || player == null) return;
+        bendecido = true;
+        var h = player.GetComponent<Health>();
+        var sc = player.GetComponent<SpellCaster>();
+        switch (bendicion)
+        {
+            case Bendicion.Vida: if (h != null) h.Heal(h.MaxHealth); break;
+            case Bendicion.Mana: if (sc != null) sc.RestoreMana(999f); break;
+            case Bendicion.VidaMaxima: if (h != null) h.AddMaxHealth(25f); break;
+        }
+        AudioManager.Play(Sfx.ObjetoEspecial);
+        Particula.Rafaga(player.position, new Color(0.7f, 0.9f, 1f, 1f), 24, 4f, 0.15f, 0.8f, -2f);
+        if (GameManager.Instance != null && !string.IsNullOrEmpty(mensajeBendicion))
+            GameManager.Instance.ShowMessage(mensajeBendicion, 3.5f);
     }
 }

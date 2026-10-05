@@ -78,6 +78,20 @@
 - Retrato del HUD: la cara de Lira ahora queda recortada dentro del marco redondo.
 - Las orillas de la pantalla se ponen rojas al recibir daño y laten cuando queda poca vida.
 
+- Final del juego corregido: al derrotar al Eco de Elenora sale "¡VICTORIA!", se entregan sus recompensas, sigue un epílogo con imágenes y luego los créditos. Los créditos ya no se saltan por accidente y "Continuar" ya no regresa a la batalla final.
+- Personajes nuevos:
+  - Coloso de Raíz (Ala de Viento y Corazón): lento y resistente; sus pisotones se esquivan saltando.
+  - Gárgola de Runa (Ala de Hielo y Corazón): parece estatua hasta que Lira se acerca.
+  - Proyección de la Maestra Sable antes de cada guardián, con consejos.
+  - Espíritus de Kaelor, Isolde y Threnody antes de la batalla final; cada uno da una bendición (vida, maná o vida máxima).
+- Biomas mejorados:
+  - Aprendizaje: libreros.
+  - Fuego: cadenas y géiseres de fuego.
+  - Hielo: cristales, carámbanos bajo las plataformas y carámbanos que caen.
+  - Viento: pasto, enredaderas y corrientes de aire que impulsan hacia arriba.
+  - Corazón: cristales y círculos de runas flotando.
+  - Todas las alas: montículos en primer plano para dar profundidad.
+
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
 - Subir capturas a `Evidencias`.

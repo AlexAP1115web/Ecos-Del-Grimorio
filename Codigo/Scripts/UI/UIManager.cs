@@ -133,6 +133,21 @@ public class UIManager : MonoBehaviour
         if (EventSystem.current != null && go != null) EventSystem.current.SetSelectedGameObject(go);
     }
 
+    // Título grande que se queda en pantalla (victoria)
+    public void ShowBigTitle(string title, string subtitle)
+    {
+        if (titleGroup == null) return;
+        StopAllCoroutines();
+        titleText.text = $"{title}\n<size=46>{subtitle}</size>";
+        StartCoroutine(FadeInTitle());
+    }
+
+    IEnumerator FadeInTitle()
+    {
+        for (float t = 0; t < 1f; t += Time.unscaledDeltaTime * 1.5f) { titleGroup.alpha = t; yield return null; }
+        titleGroup.alpha = 1f;
+    }
+
     IEnumerator ShowTitle()
     {
         titleGroup.alpha = 0f;

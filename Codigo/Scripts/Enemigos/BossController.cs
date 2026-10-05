@@ -28,6 +28,8 @@ public abstract class BossController : EnemyBase
     [SerializeField] protected Sprite portrait;
     [TextArea(2, 4)]
     [SerializeField] protected string[] defeatLines = new string[0];
+    [Tooltip("Al derrotarlo termina el juego (Eco de la Archimaga Elenora)")]
+    [SerializeField] protected bool finalDelJuego;
 
     public static event Action<BossController> BossActivated;
     public static event Action<string> BossDefeated;
@@ -128,7 +130,12 @@ public abstract class BossController : EnemyBase
 
         BossDefeated?.Invoke(bossName);
 
+        Action alTerminar = null;
+        if (finalDelJuego) alTerminar = () => { if (GameManager.Instance != null) GameManager.Instance.FinishGame(); };
+
         if (defeatLines != null && defeatLines.Length > 0 && UIManager.Instance != null)
-            UIManager.Instance.StartDialogue(bossName, portrait, defeatLines, null);
+            UIManager.Instance.StartDialogue(bossName, portrait, defeatLines, alTerminar);
+        else
+            alTerminar?.Invoke();
     }
 }

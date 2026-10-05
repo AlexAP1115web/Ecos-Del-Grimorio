@@ -158,6 +158,12 @@ public abstract class EnemyBase : MonoBehaviour
             visualBaseScale.z);
     }
 
+    protected void SetBaseColor(Color c)
+    {
+        baseColor = c;
+        if (spriteRenderer != null) spriteRenderer.color = c;
+    }
+
     protected void FaceTowards(float targetX)
     {
         if (spriteRenderer != null) spriteRenderer.flipX = targetX < transform.position.x;

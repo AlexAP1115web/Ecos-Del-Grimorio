@@ -9,7 +9,7 @@ public enum Sfx
     Arcano, Fuego, Hielo, Viento, Combo,
     GolpeEnemigo, MuerteEnemigo, DanoLira,
     Objeto, ObjetoEspecial, Pagina, Checkpoint, Cofre, Romper,
-    MenuMover, MenuAceptar, Logro, Portal, GameOver, JefeAparece, Paso
+    MenuMover, MenuAceptar, Logro, Portal, GameOver, JefeAparece, Paso, Victoria, Geiser, Hielazo, Viento2
 }
 
 public enum VozLira { Dano, Esfuerzo, Caida }
@@ -160,7 +160,7 @@ public class AudioManager : MonoBehaviour
 
         AudioClip clip = musicaMenu;
         string n = scene.name;
-        if (n == GameManager.CreditsScene) clip = musicaCreditos;
+        if (n == GameManager.CreditsScene || n == GameManager.EpilogueScene) clip = musicaCreditos;
         else if (n.StartsWith("Nivel"))
         {
             int idx = n.Length > 5 && char.IsDigit(n[5]) ? n[5] - '1' : 0;

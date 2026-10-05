@@ -11,8 +11,11 @@ public class CreditsScreen : MonoBehaviour
     [SerializeField] private float scrollSpeed = 60f;
     [SerializeField] private float endY = 2400f;
 
+    private float inicio;
+
     void Start()
     {
+        inicio = Time.unscaledTime;
         float percent = GameManager.Instance != null ? GameManager.Instance.CompletionPercent : 0f;
         bool fromGame = GameManager.Instance != null && GameManager.Instance.HasCollectible("Grimorio Completo");
 
@@ -39,7 +42,7 @@ public class CreditsScreen : MonoBehaviour
                 "Docente\nJosé Francisco Espinosa Garita\n\n" +
                 "Música, voces y efectos de sonido\nOriginales, creados por síntesis de audio\n\n" +
                 "Motor\nUnity 6\n\n\n" +
-                "Gracias por jugar\n\n(Enter o X para volver al menú)";
+                "FIN\n\nGracias por jugar\n\n(Enter o X para volver al menú)";
         }
     }
 
@@ -48,7 +51,8 @@ public class CreditsScreen : MonoBehaviour
         if (scrollingText != null && scrollingText.anchoredPosition.y < endY)
             scrollingText.anchoredPosition += Vector2.up * scrollSpeed * Time.deltaTime;
 
-        if (Controles.AceptarPresionado || Controles.PausaPresionado)
+        // Los primeros segundos no se pueden saltar (para no perderse el final por presionar X)
+        if (Time.unscaledTime - inicio > 3f && (Controles.AceptarPresionado || Controles.PausaPresionado))
             SceneManager.LoadScene(GameManager.MenuScene);
     }
 }

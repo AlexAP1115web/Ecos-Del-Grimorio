@@ -19,6 +19,7 @@ public static class CrearJuego
     const float G = -4f; // altura del suelo (parte de arriba)
 
     static Sprite square, circle, ladrillo, tablas, borde, vineta, pagina, vasija, grietas, panelUI, vinetaBlanca;
+    static Sprite estante, cadena, carambanos, carambanoGrande, cristales, enredadera, hierba, runaCirculo, monticulo, llama;
     static PhysicsMaterial2D noFriction;
     static Font font;
     static readonly Dictionary<Elemento, SpellData> spells = new Dictionary<Elemento, SpellData>();
@@ -43,6 +44,7 @@ public static class CrearJuego
             EditorUtility.DisplayProgressBar("Ecos del Grimorio", "Nivel 3", 0.6f); escenas.Add(Nivel3());
             EditorUtility.DisplayProgressBar("Ecos del Grimorio", "Nivel 4", 0.75f); escenas.Add(Nivel4());
             EditorUtility.DisplayProgressBar("Ecos del Grimorio", "Nivel 5", 0.85f); escenas.Add(Nivel5());
+            EditorUtility.DisplayProgressBar("Ecos del Grimorio", "Epílogo", 0.92f); escenas.Add(CrearEpilogo());
             EditorUtility.DisplayProgressBar("Ecos del Grimorio", "Créditos", 0.95f); escenas.Add(CrearCreditos());
 
             var build = new List<EditorBuildSettingsScene>();
@@ -86,6 +88,9 @@ public static class CrearJuego
         grietas = Grietas();
         panelUI = PanelUI();
         vinetaBlanca = VinetaBlanca();
+        estante = Estante(); cadena = Cadena(); carambanos = Carambanos(); carambanoGrande = CarambanoGrande();
+        cristales = Cristales(); enredadera = Enredadera(); hierba = Hierba(); runaCirculo = RunaCirculo();
+        monticulo = Monticulo(); llama = Llama();
         font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         noFriction = AssetDatabase.LoadAssetAtPath<PhysicsMaterial2D>(Data + "/SinFriccion.physicsMaterial2D");
@@ -170,6 +175,22 @@ public static class CrearJuego
         P["Espejo"] = Walker("Guardian_Espejo", "Enemies/Guardian_Espejo.png", 2.1f, espejo,
             ai => Set(ai, "projectilePrefab", P["ProyEnemigo"]), typeof(MirrorEnemyAI));
 
+        // Personajes nuevos (arte de Arte_EcosDelGrimorio/Faltantes)
+        var coloso = Enemy("Coloso de Raíz", 150, 0, 15, 0.9f, 1.3f, 9f, P["Poción Mayor de Vida"], 0.5f);
+        var gargola = Enemy("Gárgola de Runa", 45, 0, 12, 3f, 3f, 8f, P["Cristal de Maná"], 0.4f);
+        P["Coloso"] = Walker("Coloso_de_Raiz", "Enemies/Coloso_De_Raiz.png", 3.0f, coloso, ai =>
+        {
+            ai.GetComponent<Rigidbody2D>().mass = 10f;   // Lira no lo puede empujar
+            SetResistances(ai.GetComponent<Health>(), (Elemento.Fuego, 1.6f), (Elemento.Viento, 0.5f));
+        }, typeof(ColosoAI));
+        {
+            var go = EnemyBody("Gargola_de_Runa", "Enemies/Gargola_De_Runa.png", 1.6f, true, out _);
+            var ai = go.AddComponent<GargolaAI>();
+            Set(ai, "data", gargola);
+            Set(ai, "projectilePrefab", P["ProyEnemigo"]);
+            P["Gargola"] = SavePrefab(go, $"{Prefabs}/Enemigos/Gargola_de_Runa.prefab");
+        }
+
         P["Cristal"] = Ranged("Cristal_Viviente", "Enemies/Cristales_Vivientes.png", 1.5f, cristal);
 
         P["Mota"] = Flyer("Mota_Corrupta", "Enemies/Motas_Corruptas.png", 0.9f, mota,
@@ -199,6 +220,7 @@ public static class CrearJuego
         Derrota("Threnody", "Enemies/Threnody.png",
             "Threnody: Los cuatro guardianes fuimos sus aprendices. Cuando sus hechizos se salieron de control, juramos proteger cada ala.",
             "Threnody: En el corazón del grimorio te espera un guardián que copia todo lo que haces. No repitas el mismo hechizo.");
+        Set(P["Elenora"].GetComponent<ElenoraBoss>(), "finalDelJuego", true);
         Derrota("Elenora", "Enemies/Eco_Archimaga_Elenora.png",
             "Elenora: Por fin... el grimorio vuelve a estar en equilibrio.",
             "Elenora: Quise unir los cuatro elementos y terminé dividida en ecos. Gracias por escucharme, aprendiz.",
@@ -722,7 +744,159 @@ public static class CrearJuego
         n.lira.transform.position = new Vector3(inicio.x, G + 1f, 0f);
 
         HUD(n.lira, titulo);
+        DecorarBioma(n, minX, maxX);
         return n;
+    }
+
+    // Detalles de cada bioma: libreros, cadenas, cristales, runas y montículos en primer plano
+    static void DecorarBioma(Nivel n, float minX, float maxX)
+    {
+        var rnd = new System.Random(Mathf.RoundToInt(maxX * 7f));
+        float R(float a, float b) => a + (float)rnd.NextDouble() * (b - a);
+        var t = n.tema;
+
+        // Primer plano: montículos oscuros abajo de la pantalla que se mueven más rápido (profundidad)
+        Color frente = t == Hielo ? new Color(0.75f, 0.85f, 0.95f, 1f)
+                     : t == Viento ? new Color(0.22f, 0.4f, 0.2f, 1f)
+                     : t.piedra * 0.3f;
+        frente.a = 1f;
+        for (float x = minX + R(2f, 6f); x < maxX + 10f; x += R(9f, 15f))
+        {
+            var m = new GameObject("PrimerPlano");
+            m.transform.SetParent(n.deco, false);
+            var sr = AddSprite(m, monticulo, R(1.1f, 1.6f), 60);
+            m.transform.localScale = new Vector3(m.transform.localScale.x * R(0.8f, 1.3f), m.transform.localScale.y, 1f);
+            m.transform.position = new Vector2(x, G - 1.2f);
+            sr.color = frente;
+            var px = m.AddComponent<Parallax>();
+            Set(px, "factor", -0.25f);
+            Set(px, "factorVertical", 0f);
+        }
+
+        if (t == Aprendizaje)
+        {
+            for (float x = minX + 3f; x < maxX; x += R(7f, 12f))
+            {
+                var e = new GameObject("Librero");
+                e.transform.SetParent(n.deco, false);
+                var sr = AddSprite(e, estante, R(2.6f, 3.4f), -15);
+                e.transform.position = new Vector2(x, G + sr.bounds.extents.y);
+                sr.color = new Color(0.75f, 0.7f, 0.68f, 1f);
+            }
+        }
+        else if (t == Fuego)
+        {
+            for (float x = minX + 2f; x < maxX; x += R(5f, 9f))
+            {
+                float largo = R(3f, 7f);
+                Tiled(n.deco, "Cadena", new Vector2(x, G + 13f - largo / 2f), new Vector2(0.45f, largo), cadena, new Color(0.45f, 0.35f, 0.32f, 1f), -16);
+            }
+        }
+        else if (t == Hielo || t == Corazon)
+        {
+            var color = t == Hielo ? new Color(0.7f, 0.88f, 1f, 0.9f) : new Color(0.75f, 0.55f, 1f, 0.9f);
+            for (float x = minX + 4f; x < maxX; x += R(7f, 12f))
+            {
+                var c = new GameObject("Cristales");
+                c.transform.SetParent(n.deco, false);
+                var sr = AddSprite(c, cristales, R(1.2f, 2.2f), -14);
+                c.transform.position = new Vector2(x, G + sr.bounds.extents.y - 0.05f);
+                sr.color = color;
+                if (rnd.NextDouble() < 0.5) Light(c, 3, color, 0.6f, 2.2f);
+            }
+        }
+
+        if (t == Corazon)
+        {
+            for (float x = minX + 6f; x < maxX; x += R(10f, 15f))
+            {
+                var r = new GameObject("Runa");
+                r.transform.SetParent(n.deco, false);
+                var sr = AddSprite(r, runaCirculo, R(2f, 3.5f), -30);
+                r.transform.position = new Vector2(x, G + R(5f, 10f));
+                sr.color = new Color(0.8f, 0.6f, 1f, 0.55f);
+                var f = r.AddComponent<Flotar>();
+                Set(f, "altura", 0.3f);
+                Set(f, "giro", R(-20f, 20f));
+                Light(r, 3, new Color(0.7f, 0.5f, 1f), 0.7f, 3f);
+            }
+        }
+    }
+
+    // ---------- Peligros de los biomas ----------
+
+    static void Geiser(Nivel n, float x)
+    {
+        var go = new GameObject("Geiser");
+        go.transform.SetParent(n.items, false);
+        go.transform.position = new Vector2(x, G + 0.05f);
+        var boca = AddSprite(new GameObject("Boca"), circle, 0.45f, 3);
+        boca.transform.SetParent(go.transform, false);
+        boca.transform.localScale = new Vector3(boca.transform.localScale.x * 2.6f, boca.transform.localScale.y, 1f);
+        boca.color = new Color(1f, 0.45f, 0.1f, 0.9f);
+        var fuego = new GameObject("Llama");
+        fuego.transform.SetParent(go.transform, false);
+        var sr = fuego.AddComponent<SpriteRenderer>();
+        sr.sprite = llama;
+        sr.sortingOrder = 12;
+        // el sprite de la llama nace en su centro: se sube para que crezca desde el suelo
+        var pivote = new GameObject("Pivote");
+        pivote.transform.SetParent(go.transform, false);
+        fuego.transform.SetParent(pivote.transform, false);
+        fuego.transform.localPosition = new Vector3(0f, llama.bounds.extents.y, 0f);
+        var g = go.AddComponent<GeiserFuego>();
+        Set(g, "llama", sr);
+        Light(go, 3, new Color(1f, 0.5f, 0.1f), 0.9f, 2.5f);
+    }
+
+    static void CarambanoTrampa(Nivel n, float x, float platTop)
+    {
+        var go = new GameObject("Carambano");
+        go.transform.SetParent(n.enemigos, false);
+        var sr = AddSprite(go, carambanoGrande, 1.1f, 6);
+        sr.color = new Color(0.85f, 0.95f, 1f, 1f);
+        go.transform.position = new Vector2(x, platTop - 0.5f - 0.55f);
+        var rb = go.AddComponent<Rigidbody2D>();
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        var col = go.AddComponent<BoxCollider2D>();
+        col.isTrigger = true;
+        col.size = carambanoGrande.bounds.size * 0.7f;
+        go.AddComponent<Carambano>();
+    }
+
+    static void Corriente(Nivel n, float x, float ancho, float alto)
+    {
+        var go = new GameObject("CorrienteViento");
+        go.transform.SetParent(n.items, false);
+        go.transform.position = new Vector2(x, G + alto / 2f);
+        var box = go.AddComponent<BoxCollider2D>();
+        box.isTrigger = true;
+        box.size = new Vector2(ancho, alto);
+        go.AddComponent<CorrienteViento>();
+        var marca = Tiled(go.transform, "Base", new Vector2(x, G + 0.1f), new Vector2(ancho, 0.25f), square, new Color(0.7f, 1f, 0.8f, 0.35f), 4);
+        Light(go, 3, new Color(0.7f, 1f, 0.8f), 0.4f, ancho * 1.2f);
+    }
+
+    // Espíritu de un guardián (Corazón del Grimorio): habla con Lira y le da una bendición
+    static void Espiritu(Nivel n, float x, string quien, string sprite, float altura, Bendicion bendicion, string mensaje, params string[] lineas)
+    {
+        var go = new GameObject("Espiritu_" + FileName(quien));
+        go.transform.SetParent(n.items, false);
+        go.transform.position = new Vector2(x, G + altura / 2f + 0.3f);
+        var vis = new GameObject("Visual");
+        vis.transform.SetParent(go.transform, false);
+        var art = LoadSprite(Sprites + sprite);
+        var sr = AddSprite(vis, art, altura, 8);
+        sr.color = new Color(0.65f, 0.85f, 1f, 0.6f);
+        Set(vis.AddComponent<Flotar>(), "altura", 0.15f);
+        Light(go, 3, new Color(0.6f, 0.8f, 1f), 0.8f, 3f);
+        var d = go.AddComponent<NPCDialogue>();
+        Set(d, "speakerName", quien);
+        Set(d, "portrait", art);
+        SetStrings(d, "lines", lineas);
+        Set(d, "talkRange", 2.1f);
+        Set(d, "bendicion", bendicion);
+        Set(d, "mensajeBendicion", mensaje);
     }
 
     static string Guardar(Nivel n, string nombre)
@@ -761,12 +935,24 @@ public static class CrearJuego
         float w = x2 - x1, cx = (x1 + x2) / 2f;
         Solido(n.geo, $"Suelo_{x1}_{x2}", new Vector2(cx, G - 6f), new Vector2(w, 12f), ladrillo, n.tema.piedra);
         Tiled(n.geo, "Borde", new Vector2(cx, G), new Vector2(w + 0.2f, 0.5f), borde, n.tema.borde, 3);
+        if (n.tema == Viento)
+            Tiled(n.geo, "Hierba", new Vector2(cx, G + 0.38f), new Vector2(w, 0.5f), hierba, n.tema.borde * 1.15f, 4);
     }
 
     static GameObject Plat(Nivel n, float x, float top, float w)
     {
         var go = Solido(n.geo, $"Plataforma_{x}", new Vector2(x, top - 0.25f), new Vector2(w, 0.5f), tablas, n.tema.plataforma);
         go.GetComponent<SpriteRenderer>().sortingOrder = 2;
+
+        // Detalles colgando debajo (se mueven con la plataforma)
+        if (n.tema == Hielo)
+            Tiled(go.transform, "Carambanos", new Vector2(x, top - 0.5f - 0.35f), new Vector2(w - 0.3f, 0.75f), carambanos, new Color(0.8f, 0.92f, 1f, 0.95f), 1);
+        else if (n.tema == Viento)
+            foreach (var dx in new[] { -w * 0.3f, w * 0.22f })
+            {
+                float largo = 1f + Mathf.Abs(Mathf.Sin(x * 3.7f + dx)) * 1.2f;
+                Tiled(go.transform, "Enredadera", new Vector2(x + dx, top - 0.5f - largo / 2f), new Vector2(0.5f, largo), enredadera, Color.white, 1);
+            }
         return go;
     }
 
@@ -852,7 +1038,14 @@ public static class CrearJuego
     }
 
     // Personaje con quien se habla (Maestra Sable) o diálogo automático antes de un jefe
-    static void Dialogo(Nivel n, float x, string quien, string retrato, bool visible, bool automatico, params string[] lineas)
+    static void Dialogo(Nivel n, float x, string quien, string retrato, bool visible, bool automatico, params string[] lineas) =>
+        Dialogo(n, x, quien, retrato, visible, automatico, Color.white, lineas);
+
+    // Proyección mágica de la Maestra Sable en las demás alas (se ve azulada y transparente)
+    static void Proyeccion(Nivel n, float x, params string[] lineas) =>
+        Dialogo(n, x, "Maestra Sable", "Characters/Maestra Sable.png", true, false, new Color(0.7f, 0.85f, 1f, 0.7f), lineas);
+
+    static void Dialogo(Nivel n, float x, string quien, string retrato, bool visible, bool automatico, Color tinte, params string[] lineas)
     {
         var go = new GameObject("Dialogo_" + FileName(quien));
         go.transform.SetParent(n.items, false);
@@ -861,7 +1054,12 @@ public static class CrearJuego
         {
             var vis = new GameObject("Visual");
             vis.transform.SetParent(go.transform, false);
-            AddSprite(vis, sprite, 1.95f, 9);
+            AddSprite(vis, sprite, 1.95f, 9).color = tinte;
+            if (tinte != Color.white)
+            {
+                Set(vis.AddComponent<Flotar>(), "altura", 0.1f);
+                Light(go, 3, new Color(0.6f, 0.8f, 1f), 0.7f, 2.5f);
+            }
         }
         go.transform.position = new Vector2(x, G + 0.975f);
         var d = go.AddComponent<NPCDialogue>();
@@ -1099,6 +1297,11 @@ public static class CrearJuego
         Vasijas(n, 2, 26, 46, 61, 76);
         CofreMadera(n, 85, G, "Poción Menor de Vida", "Cristal de Maná");
         PuntoReaparicion(n, 93);
+        Geiser(n, 20); Geiser(n, 37); Geiser(n, 58);
+        Proyeccion(n, 91.5f,
+            "Maestra Sable: Lira, ¿me escuchas? Te hablo desde la biblioteca, a través del grimorio.",
+            "Maestra Sable: Kaelor resiste el fuego. Usa el hechizo Arcano y combínalo con Fuego para la Explosión Arcana.",
+            "Maestra Sable: Cuando se encienda y embista, atraviésalo con el esquive. Y cuidado con los géiseres de la forja.");
 
         Dialogo(n, 98, "Kaelor", "Enemies/Kaelor.png", false, true,
             "¿Otra aprendiz que despierta el fuego dormido?",
@@ -1129,7 +1332,9 @@ public static class CrearJuego
 
         Enemigo(n, "Escarchado", 4); Enemigo(n, "Cristal", 16); Enemigo(n, "Escarchado", 27);
         Enemigo(n, "Cristal", 43); Enemigo(n, "Escarchado", 51, G, 2); Enemigo(n, "Cristal", 67);
-        Enemigo(n, "Escarchado", 88, G, 2);
+        Enemigo(n, "Escarchado", 86, G, 1.5f);
+        Volador(n, "Gargola", 39f, 2.9f); Volador(n, "Gargola", 81f, G + 3.35f);
+        CarambanoTrampa(n, 10, 0); CarambanoTrampa(n, 34, 0); CarambanoTrampa(n, 56, 0);
 
         Objeto(n, "Cristal de Maná Grande", 10, 0);
         Objeto(n, "Poción Menor de Vida", 34, 0);
@@ -1141,6 +1346,10 @@ public static class CrearJuego
         Vasijas(n, 0, 25, 49, 58, 75);
         CofreMadera(n, 36, G, "Cristal de Maná Grande");
         PuntoReaparicion(n, 92);
+        Proyeccion(n, 89.5f,
+            "Maestra Sable: Isolde controla el hielo, pero el fuego la debilita.",
+            "Maestra Sable: Cuando caigan esquirlas, no te quedes quieta. Y si ves carámbanos sobre tu cabeza, corre.",
+            "Maestra Sable: Ah, y esas estatuas de gárgola... no todas son estatuas.");
 
         Dialogo(n, 98, "Isolde", "Enemies/Isolde.png", false, true,
             "Fui aprendiz de la Archimaga Elenora.",
@@ -1172,11 +1381,13 @@ public static class CrearJuego
             "Lira: El Ala de Viento está abierta al cielo... las plataformas flotan sobre las corrientes.",
             "Lira: Ya tengo cuatro hechizos pero solo puedo llevar tres. Con Q o R2 cambio el que tengo equipado.");
         Narracion(n, 40f, "Eco: Sus aprendices la buscaron... pero nunca miraron dentro del libro...");
-        Narracion(n, 60f, "Lira: Desde aquí arriba se ve toda la Torre... y algo brilla en la plataforma más alta.");
+        Narracion(n, 60f, "Lira: Esa corriente de aire sube hasta lo más alto... y algo brilla en la plataforma de arriba.");
 
         Volador(n, "Ave", 6, 0); Volador(n, "Ave", 23, 1); Volador(n, "Golem", 33, 0);
         Volador(n, "Ave", 43, 2); Volador(n, "Golem", 53, 0); Volador(n, "Ave", 64, 1);
-        Volador(n, "Ave", 84, 1.5f); Volador(n, "Golem", 101, 1f);
+        Volador(n, "Ave", 84, 1.5f); Volador(n, "Golem", 90, 1f);
+        Enemigo(n, "Coloso", 74, G, 0);
+        Corriente(n, 64, 1.6f, 9f); Corriente(n, 124, 2.4f, 8f);
 
         Objeto(n, "Cristal de Maná Grande", 22, -2);
         Objeto(n, "Diario de la Archimaga Elenora", 45, 0);
@@ -1186,8 +1397,12 @@ public static class CrearJuego
         Pagina(n, 75, 5.5f);
         Pagina(n, 96, G);
         Vasijas(n, 0, 20, 39.5f, 68, 90);
-        CofreMadera(n, 103, G, "Cristal de Maná Grande", "Poción Menor de Vida");
+        CofreMadera(n, 100, G, "Cristal de Maná Grande", "Poción Menor de Vida");
         PuntoReaparicion(n, 106);
+        Proyeccion(n, 103,
+            "Maestra Sable: Threnody vuela alto y resiste el viento. El hielo lo frena: mantén arriba para apuntar en diagonal.",
+            "Maestra Sable: En su arena hay una corriente de aire. Úsala para subir y alcanzarlo.",
+            "Maestra Sable: Y el Coloso de Raíz que viste... sus pisotones no te alcanzan si estás en el aire.");
 
         Dialogo(n, 110, "Threnody", "Enemies/Threnody.png", false, true,
             "Los cuatro guardianes fuimos aprendices de la Archimaga Elenora antes de que desapareciera.",
@@ -1222,25 +1437,39 @@ public static class CrearJuego
         Narracion(n, 34f, "Eco: Lo que lances... volverá a ti...");
 
         Enemigo(n, "Eco", 6); Enemigo(n, "Eco", 16, 0, 1); Enemigo(n, "Eco", 30); Enemigo(n, "Espejo", 36, G, 2);
-        Enemigo(n, "Eco", 47); Enemigo(n, "Eco", 64, G, 2); Enemigo(n, "Espejo", 82, G, 2);
+        Enemigo(n, "Eco", 47); Enemigo(n, "Espejo", 58, G, 1.5f); Enemigo(n, "Eco", 64, G, 2);
+        Enemigo(n, "Coloso", 79, G, 0);
+        Volador(n, "Gargola", 24f, -1.15f); Volador(n, "Gargola", 73f, G + 3.35f);
 
-        Objeto(n, "Cristal de Maná Grande", 24, -2);
-        Objeto(n, "Poción Mayor de Vida", 90, G);
+        // Los espíritus de los guardianes ayudan a Lira antes de la batalla final
+        Espiritu(n, 88.5f, "Kaelor", "Enemies/Kaelor.png", 2.4f, Bendicion.Vida, "Bendición de Kaelor: vida restaurada",
+            "Kaelor: Aprendiz... no esperaba volver a verte.",
+            "Kaelor: Elenora fue nuestra maestra. Libérala de ese eco.",
+            "Kaelor: Toma mi fuego: que te devuelva las fuerzas.");
+        Espiritu(n, 93f, "Isolde", "Enemies/Isolde.png", 2.3f, Bendicion.Mana, "Bendición de Isolde: maná completo",
+            "Isolde: Ya no hay frío entre nosotras, Lira.",
+            "Isolde: El eco cambia de elemento en cada fase. Si resiste lo que lanzas, cambia de hechizo.",
+            "Isolde: Llévate mi calma: tu maná está completo.");
+        Espiritu(n, 97.5f, "Threnody", "Enemies/Threnody.png", 2.4f, Bendicion.VidaMaxima, "Bendición de Threnody: +25 de vida máxima",
+            "Threnody: El viento me trajo hasta aquí para despedirme.",
+            "Threnody: Cuando Elenora quede sin fuerzas, combina todo lo que aprendiste.",
+            "Threnody: Que el viento te sostenga.");
+
+        Objeto(n, "Cristal de Maná Grande", 22.5f, -2);
         Objeto(n, "Cristal de Maná Grande", -20, G);
         Pagina(n, -17, G);
         Pagina(n, 61, 4);
         Pagina(n, 73, G);
-        Vasijas(n, 2, 28, 44.5f, 66, 86);
-        CofreMadera(n, 88, G, "Poción Menor de Vida", "Cristal de Maná Grande");
-        PuntoReaparicion(n, 94);
+        Vasijas(n, 2, 28, 44.5f, 66, 77);
+        CofreMadera(n, 85, G, "Poción Mayor de Vida", "Cristal de Maná Grande");
+        PuntoReaparicion(n, 83);
 
-        Dialogo(n, 99, "Eco de Elenora", "Enemies/Eco_Archimaga_Elenora.png", false, true,
+        Dialogo(n, 104, "Eco de Elenora", "Enemies/Eco_Archimaga_Elenora.png", false, true,
             "¿Viniste a terminar lo que yo empecé, aprendiz?",
             "Entonces demuéstrame que entiendes el grimorio mejor que yo.");
-        var elenora = Jefe(n, "Elenora", 114, 2f, 100, 128, 2f);
+        var elenora = Jefe(n, "Elenora", 116, 2f, 101, 128, 2f);
         Set(elenora.GetComponent<ElenoraBoss>(), "groundY", G);
-
-        Salida(n, 130, elenora.GetComponent<Health>(), GameManager.CreditsScene, false, Elemento.Arcano);
+        // Al derrotarla el juego termina solo: victoria, epílogo y créditos
         return Guardar(n, "Nivel5_CorazonDelGrimorio");
     }
 
@@ -1656,7 +1885,26 @@ public static class CrearJuego
         return path;
     }
 
-    static string CrearPrologo()
+    static string CrearPrologo() => CrearHistoria(GameManager.PrologueScene, "", new (string, string)[]
+    {
+        ("Backgrounds/Corazón del Grimorio.jpg", "Hace años, la Archimaga Elenora intentó unir los cuatro elementos en un solo grimorio. Una noche su laboratorio quedó en silencio... y ella desapareció."),
+        ("Backgrounds/ALA_DE_APRENDIZAJE.png", "Los maestros de la Torre de Cristal sellaron sus hechizos y prohibieron hablar de ella. Con el tiempo, su nombre se volvió un rumor entre aprendices."),
+        ("Characters/Lira.png", "Lira, una aprendiz curiosa e impulsiva, encuentra en un baúl olvidado un grimorio de práctica con la cubierta agrietada. Sus páginas laten con una luz tenue."),
+        ("Enemies/Eco_Archimaga_Elenora.png", "Al abrirlo, los hechizos sellados despiertan. Ecos de magia escapan del libro y empiezan a corromper cada ala de la Torre."),
+        ("Backgrounds/Ala de Fuego.jpg", "Para restaurar el equilibrio, Lira tendrá que recorrer las cinco alas, aprender los cuatro elementos y enfrentar a los guardianes que protegen los secretos de Elenora.")
+    });
+
+    // Epílogo: se muestra al derrotar al Eco de la Archimaga Elenora y luego pasa a los créditos
+    static string CrearEpilogo() => CrearHistoria(GameManager.EpilogueScene, GameManager.CreditsScene, new (string, string)[]
+    {
+        ("Backgrounds/Corazón del Grimorio.jpg", "El eco de Elenora se desvanece entre las páginas. Por primera vez en muchos años, el grimorio guarda silencio."),
+        ("Enemies/Eco_Archimaga_Elenora.png", "Antes de desaparecer, la Archimaga sonríe: los cuatro elementos ya no pelean entre sí. Lira logró lo que ella nunca pudo."),
+        ("Characters/Maestra Sable.png", "La Maestra Sable encuentra a Lira en la biblioteca con el grimorio completo entre las manos. Esta vez no le pide que lo suelte."),
+        ("Backgrounds/Ala de Viento.jpg", "Kaelor, Isolde y Threnody por fin pueden descansar. Las alas de la Torre de Cristal vuelven a brillar."),
+        ("Characters/Lira.png", "Y Lira, la aprendiz que se atrevió a abrir el grimorio, se convierte en su nueva guardiana.")
+    });
+
+    static string CrearHistoria(string nombreEscena, string siguiente, (string sprite, string texto)[] escenas)
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         PrefabUtility.InstantiatePrefab(P["GameManager"]);
@@ -1682,15 +1930,6 @@ public static class CrearJuego
         texto.color = Color.white;
         var ayuda = Txt("Ayuda", t, new Vector2(1, 0), new Vector2(-30, 24), new Vector2(800, 40), "", 28, TextAnchor.LowerRight);
 
-        var escenas = new (string sprite, string texto)[]
-        {
-            ("Backgrounds/Corazón del Grimorio.jpg", "Hace años, la Archimaga Elenora intentó unir los cuatro elementos en un solo grimorio. Una noche su laboratorio quedó en silencio... y ella desapareció."),
-            ("Backgrounds/ALA_DE_APRENDIZAJE.png", "Los maestros de la Torre de Cristal sellaron sus hechizos y prohibieron hablar de ella. Con el tiempo, su nombre se volvió un rumor entre aprendices."),
-            ("Characters/Lira.png", "Lira, una aprendiz curiosa e impulsiva, encuentra en un baúl olvidado un grimorio de práctica con la cubierta agrietada. Sus páginas laten con una luz tenue."),
-            ("Enemies/Eco_Archimaga_Elenora.png", "Al abrirlo, los hechizos sellados despiertan. Ecos de magia escapan del libro y empiezan a corromper cada ala de la Torre."),
-            ("Backgrounds/Ala de Fuego.jpg", "Para restaurar el equilibrio, Lira tendrá que recorrer las cinco alas, aprender los cuatro elementos y enfrentar a los guardianes que protegen los secretos de Elenora.")
-        };
-
         var prologo = canvas.gameObject.AddComponent<Prologo>();
         var so = new SerializedObject(prologo);
         var prop = so.FindProperty("escenas");
@@ -1706,8 +1945,9 @@ public static class CrearJuego
         Set(prologo, "texto", texto);
         Set(prologo, "ayuda", ayuda);
         Set(prologo, "grupo", grupo);
+        Set(prologo, "siguienteEscena", siguiente);
 
-        string path = $"{Scenes}/{GameManager.PrologueScene}.unity";
+        string path = $"{Scenes}/{nombreEscena}.unity";
         EditorSceneManager.SaveScene(scene, path);
         return path;
     }

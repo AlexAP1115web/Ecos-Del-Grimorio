@@ -350,6 +350,142 @@ public static class EditorHelpers
         return sprite;
     }
 
+    // ---------- Decoración de los biomas ----------
+
+    // Librero con libros de colores (Ala de Aprendizaje)
+    public static Sprite Estante() => TiledTexture("Estante", (x, y) =>
+    {
+        var madera = new Color(0.42f, 0.27f, 0.16f, 1f);
+        if (x < 4 || x > 59 || y < 3 || y > 92) return madera * (0.8f + Hash(x, y) * 0.1f);
+        int fila = (y - 3) / 22;
+        int yy = (y - 3) % 22;
+        if (yy < 3) return madera * 1.1f;                     // repisa
+        // libros: ancho variable según la posición
+        int libro = (x - 4 + fila * 7) / 5;
+        float alto = 12 + Hash(libro, fila) * 6;
+        if (yy - 3 > alto || Hash(libro, fila + 9) < 0.12f) return new Color(0.12f, 0.08f, 0.07f, 1f);   // hueco
+        Color[] colores = { new Color(0.6f, 0.15f, 0.15f), new Color(0.15f, 0.25f, 0.55f), new Color(0.2f, 0.45f, 0.25f),
+                            new Color(0.5f, 0.35f, 0.15f), new Color(0.4f, 0.2f, 0.5f), new Color(0.7f, 0.6f, 0.3f) };
+        var c = colores[(int)(Hash(libro, fila + 3) * 5.99f)];
+        if ((x - 4 + fila * 7) % 5 == 0) c *= 0.6f;           // lomo
+        if (yy - 3 > alto - 2 || yy == 6) c *= 1.25f;           // detalles dorados
+        c.a = 1f;
+        return c;
+    }, 64, 96, 32);
+
+    // Cadena que cuelga (Ala de Fuego); se repite hacia abajo
+    public static Sprite Cadena() => TiledTexture("Cadena", (x, y) =>
+    {
+        float dx = (x - 7.5f) / 4.5f, dy = (y - 8f) / 6.5f;
+        float d = Mathf.Sqrt(dx * dx + dy * dy);
+        if (d > 0.62f && d < 1f) { float v = 0.55f + 0.3f * (1f - d); return new Color(v, v, v * 0.95f, 1f); }
+        if (y >= 16 && y <= 31 && x >= 6 && x <= 9) { float v = x == 6 ? 0.45f : 0.7f; return new Color(v, v, v, 1f); }
+        return new Color(0, 0, 0, 0);
+    }, 16, 32, 32);
+
+    // Fila de carámbanos pequeños para la parte de abajo de las plataformas (Ala de Hielo)
+    public static Sprite Carambanos() => TiledTexture("Carambanos", (x, y) =>
+    {
+        int k = x / 8;
+        float largo = 8 + Hash(k, 4) * 15;
+        float cx = k * 8 + 4, mitad = 3.5f * Mathf.Pow(Mathf.Clamp01((y - (23 - largo)) / largo), 0.8f);
+        if (y < 23 - largo || Mathf.Abs(x - cx) > mitad) return new Color(0, 0, 0, 0);
+        float v = 0.85f + (x < cx ? 0.15f : 0f);
+        return new Color(v, v, v, 0.9f);
+    }, 32, 24, 32);
+
+    // Carámbano grande que cae
+    public static Sprite CarambanoGrande() => TiledTexture("CarambanoGrande", (x, y) =>
+    {
+        float mitad = 7f * Mathf.Pow(y / 39f, 0.8f);
+        if (Mathf.Abs(x - 7.5f) > mitad) return new Color(0, 0, 0, 0);
+        float v = 0.8f + (x < 7.5f ? 0.2f : 0f) - (Mathf.Abs(x - 7.5f) > mitad - 1f ? 0.25f : 0f);
+        return new Color(v * 0.85f, v * 0.95f, v, 0.95f);
+    }, 16, 40, 32);
+
+    // Racimo de cristales (Ala de Hielo y Corazón)
+    public static Sprite Cristales() => TiledTexture("Cristales", (x, y) =>
+    {
+        float[] cx = { 14, 25, 35 }, w = { 9, 12, 8 }, h = { 30, 44, 26 };
+        foreach (int i in new[] { 1, 0, 2 })   // el cristal alto va al frente
+        {
+            float d = Mathf.Abs(x - cx[i]);
+            float tope = h[i] - d / (w[i] / 2f) * w[i] * 0.9f;
+            if (d < w[i] / 2f && y < tope)
+            {
+                float v = x < cx[i] ? 1f : 0.72f;
+                if (d > w[i] / 2f - 1.2f) v *= 0.7f;
+                return new Color(v, v, v, 0.92f);
+            }
+        }
+        return new Color(0, 0, 0, 0);
+    }, 48, 48, 32);
+
+    // Enredadera que cuelga de las plataformas (Ala de Viento); se repite hacia abajo
+    public static Sprite Enredadera() => TiledTexture("Enredadera", (x, y) =>
+    {
+        float tallo = 7.5f + Mathf.Sin(y * 0.26f) * 2.5f;
+        if (Mathf.Abs(x - tallo) < 1.2f) return new Color(0.25f, 0.45f, 0.18f, 1f);
+        int hoja = y / 8;
+        float hx = tallo + (hoja % 2 == 0 ? 3.5f : -3.5f), hy = hoja * 8 + 4;
+        float dx = (x - hx) / 3.2f, dy = (y - hy) / 2.2f;
+        if (dx * dx + dy * dy < 1f) return new Color(0.35f, 0.65f, 0.25f, 1f) * (0.9f + Hash(hoja, 2) * 0.2f);
+        return new Color(0, 0, 0, 0);
+    }, 16, 48, 32);
+
+    // Pasto sobre el suelo (Ala de Viento); se repite a lo ancho y se pinta del color del borde
+    public static Sprite Hierba() => TiledTexture("Hierba", (x, y) =>
+    {
+        float alto = 5 + Hash(x, 1) * 10 * (0.6f + 0.4f * Mathf.Sin(x * 0.4f));
+        if (y > alto) return new Color(0, 0, 0, 0);
+        float v = 0.6f + 0.4f * (y / 16f);
+        return new Color(v, v, v, 1f);
+    }, 32, 16, 32);
+
+    // Círculo de runas que flota en el Corazón del Grimorio
+    public static Sprite RunaCirculo() => TiledTexture("RunaCirculo", (x, y) =>
+    {
+        float dx = x - 63.5f, dy = y - 63.5f;
+        float r = Mathf.Sqrt(dx * dx + dy * dy);
+        float ang = Mathf.Atan2(dy, dx);
+        float a = 0f;
+        if (r > 56 && r < 60) a = 1f;
+        else if (r > 40 && r < 42) a = 0.8f;
+        else if (r > 44 && r < 53)
+        {
+            float seg = (ang + Mathf.PI) / (Mathf.PI * 2f) * 16f;
+            int i = (int)seg;
+            float f = seg - i;
+            if (f > 0.25f && f < 0.75f && (Hash(i, (int)r / 3) > 0.45f || Mathf.Abs(f - 0.5f) < 0.06f)) a = 0.9f;
+        }
+        else if (r < 38 && (Mathf.Abs(dx) < 1.2f || Mathf.Abs(dy) < 1.2f || Mathf.Abs(Mathf.Abs(dx) - Mathf.Abs(dy)) < 1.5f) && r > 8) a = 0.5f;
+        return new Color(1, 1, 1, a);
+    }, 128, 128, 64);
+
+    // Montículo para el primer plano (rocas, nieve, arbustos según el color)
+    public static Sprite Monticulo() => TiledTexture("Monticulo", (x, y) =>
+    {
+        float borde = Mathf.Pow(Mathf.Sin(Mathf.PI * x / 127f), 0.45f);
+        float alto = (26 + 9 * Mathf.Sin(x * 0.07f) + 6 * Mathf.Sin(x * 0.19f + 1f) + Hash(x, 7) * 2f) * borde;
+        if (y > alto) return new Color(0, 0, 0, 0);
+        float v = 0.8f + (Hash(x / 3, y / 3) - 0.5f) * 0.2f + (y > alto - 3 ? 0.2f : 0f);
+        return new Color(v, v, v, 1f);
+    }, 128, 48, 32);
+
+    // Columna de fuego del géiser (de abajo hacia arriba)
+    public static Sprite Llama() => TiledTexture("Llama", (x, y) =>
+    {
+        float t = y / 95f;
+        float ancho = 15f * (1f - t * 0.55f) + Mathf.Sin(y * 0.35f) * 1.5f;
+        float d = Mathf.Abs(x - 15.5f) / Mathf.Max(ancho, 0.1f);
+        if (d > 1f) return new Color(0, 0, 0, 0);
+        var centro = new Color(1f, 0.95f, 0.6f);
+        var orilla = new Color(1f, 0.35f, 0.05f);
+        var c = Color.Lerp(centro, orilla, d * 0.9f + t * 0.3f);
+        c.a = (1f - d * d) * (1f - t * t);
+        return c;
+    }, 32, 96, 24);
+
     // Luz 2D de URP agregada desde el editor (tipo: 3 = puntual, 4 = global)
     public static Component Light(GameObject go, int type, Color color, float intensity, float radius = 0f)
     {
