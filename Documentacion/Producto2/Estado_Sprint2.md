@@ -20,10 +20,12 @@
 |---|---|
 | `Data` | `Elemento`, `SpellData`, `ItemData`, `EnemyData` |
 | `Player` | `PlayerController`, `SpellCaster`, `SpellProjectile`, `PlayerUpgrades`, `ModoArchimaga` |
-| `Enemigos` | `EnemyBase`, `EnemyAI`, `EcoMenorAI`, `FlyingEnemyAI`, `RangedEnemyAI`, `MirrorEnemyAI`, `EnemyProjectile`, `BossController`, `KaelorBoss`, `IsoldeBoss`, `ThrenodyBoss`, `ElenoraBoss` |
-| `Managers` | `GameManager`, `AchievementManager`, `Health`, `Pickup`, `Checkpoint`, `SecretChest`, `CameraFollow`, `LevelExit`, `KillZone` |
-| `UI` | `HUD`, `NPCDialogue`, `MainMenu`, `CreditsScreen` |
-| `Efectos` | `AreaEffect`, `SlowZone`, `MovingPlatform` |
+| `Enemigos` | `EnemyBase`, `EnemyAI`, `EcoMenorAI`, `FlyingEnemyAI`, `RangedEnemyAI`, `MirrorEnemyAI`, `ColosoAI`, `GargolaAI`, `ArmaEnemigo`, `EnemyProjectile`, `BossController`, `KaelorBoss`, `IsoldeBoss`, `ThrenodyBoss`, `ElenoraBoss` |
+| `Managers` | `GameManager`, `AchievementManager`, `Health`, `Pickup`, `Checkpoint`, `SecretChest`, `Cofre`, `CameraFollow`, `LevelExit`, `KillZone` |
+| `UI` | `UIManager`, `HUD`, `NPCDialogue`, `MainMenu`, `Prologo`, `GrimorioUI`, `AchievementsList`, `CreditsScreen` |
+| `Efectos` | `AreaEffect`, `Particula`, `Parallax`, `ParticulasAmbiente`, `LuzParpadeante`, `EstelaProyectil`, `SlowZone`, `MovingPlatform`, `Rompible`, `Desvanecer`, `Flotar`, `GeiserFuego`, `Carambano`, `CorrienteViento` |
+| `Audio` | `AudioManager`, `SonidoBoton` |
+| `Sistema` | `Controles`, `VibracionControl` |
 | `Editor` | `CrearJuego`, `EditorHelpers`, `ConfigureSprites` |
 
 ## Programación Orientada a Objetos
@@ -39,10 +41,14 @@
 
 | Escena | Contenido |
 |---|---|
-| MenuPrincipal | Nueva Partida, Continuar, Logros, Créditos, Salir |
+| MenuPrincipal | Nueva Partida, Continuar, Controles, Logros, Créditos, Salir |
+| Prologo | Historia inicial con imágenes |
 | Nivel1_AlaDeAprendizaje | Maestra Sable, Espectros de tinta, Motas Corruptas, Espectro Mayor, Llave Rúnica y cofre secreto. Desbloquea Fuego |
 | Nivel2_AlaDeFuego | Centinelas de Ceniza, Salamandras de Forja, Kaelor (2 fases). Desbloquea Hielo |
 | Nivel3_AlaDeHielo | Espectros Escarchados, Cristales Vivientes, Isolde (congela el suelo). Desbloquea Viento |
 | Nivel4_AlaDeViento | Aves de Tormenta, Golems, plataformas móviles, Threnody (vuela, empuja e invoca aves) |
 | Nivel5_CorazonDelGrimorio | Ecos Menores, Guardián Espejo, Eco de la Archimaga Elenora (4 fases elementales + final) |
+| Epilogo | Final de la historia después de vencer a Elenora |
 | Creditos | Epílogo según el porcentaje de coleccionables y créditos |
+
+Las herramientas, paquetes y extensiones que se usaron están en `Documentacion/Herramientas_y_Entorno.md`.

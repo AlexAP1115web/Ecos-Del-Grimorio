@@ -35,6 +35,7 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr√
 | `Codigo` | Scripts C# del juego (copia de `Assets/Scripts` y `Assets/Editor`) |
 | `Codigo/Herramientas/Audio` | Scripts de Python con los que se sintetizan la m√∫sica, las voces y los efectos |
 | `Evidencias` | Capturas del avance en Unity |
+| `Documentacion/Herramientas_y_Entorno.md` | Programas, paquetes, extensiones y herramientas que se usaron |
 | `BITACORA.md` | Registro de avances por fecha |
 
 ## Sprints
