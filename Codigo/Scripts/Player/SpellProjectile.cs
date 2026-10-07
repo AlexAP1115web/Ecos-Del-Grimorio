@@ -55,6 +55,16 @@ public class SpellProjectile : MonoBehaviour
             return;
         }
 
+        // Las puertas rúnicas no se rompen: solo avisan cómo se abren
+        var puerta = other.GetComponentInParent<PuertaRunica>();
+        if (puerta != null)
+        {
+            puerta.Pista();
+            Particula.Rafaga(transform.position, ElementoColor.Get(data.element), 6, 3f, 0.14f, 0.3f);
+            Destroy(gameObject);
+            return;
+        }
+
         if (other.CompareTag("Ground"))
         {
             Particula.Rafaga(transform.position, ElementoColor.Get(data.element), 6, 3f, 0.14f, 0.3f);

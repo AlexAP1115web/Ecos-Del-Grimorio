@@ -8,6 +8,16 @@ public class PuertaRunica : MonoBehaviour
     [SerializeField] private float duracion = 1.2f;
 
     private bool abierta;
+    private float siguientePista;
+
+    // Un hechizo la golpea: no se rompe, pero dice cómo abrirla
+    public void Pista()
+    {
+        if (abierta || Time.time < siguientePista) return;
+        siguientePista = Time.time + 3f;
+        if (GameManager.Instance != null)
+            GameManager.Instance.ShowMessage("La puerta rúnica no se rompe... la abre la placa de presión.", 3f);
+    }
 
     public void Abrir()
     {

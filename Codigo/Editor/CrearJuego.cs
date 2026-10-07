@@ -1298,6 +1298,7 @@ public static class CrearJuego
         var p = plate.AddComponent<PlacaPresion>();
         SetArray(p, "puertas", puertas.ToArray());
         Set(p, "runa", sr);
+        Light(plate, 3, new Color(0.6f, 1f, 0.8f), 0.6f, 1.4f);
     }
 
     // =====================================================================
@@ -1489,9 +1490,10 @@ public static class CrearJuego
         Plat(n, 120, -2, 3); Plat(n, 128, -1, 3); Plat(n, 136, -2, 3);
 
         Escondite(n, -22, -13, true);
-        Tunel(n, 93, 99);
-        AcertijoViento(n, 89.6f, 91.6f, 93.45f, 98.55f);
-        Narracion(n, 86f, "Lira: Una puerta rúnica cierra el pasadizo... si empujo esa caja hasta la placa con mi Viento, quizá se abra.");
+        Tunel(n, 99, 105);
+        AcertijoViento(n, 92.5f, 95.5f, 99.45f, 104.55f);
+        Narracion(n, 89f, "Lira: Unas puertas rúnicas cierran el pasadizo... no se rompen con hechizos.",
+            "Lira: Si me pongo a la izquierda de la caja y la empujo con mi Viento hasta la placa, quizá se abran.");
 
         Narracion(n, -7f,
             "Lira: El Ala de Viento está abierta al cielo... las plataformas flotan sobre las corrientes.",
@@ -1512,11 +1514,11 @@ public static class CrearJuego
         Objeto(n, "Poción Menor de Vida", -20, G);
         Pagina(n, -17, G);
         Pagina(n, 75, 5.5f);
-        Pagina(n, 96, G);
-        Vasijas(n, 0, 20, 39.5f, 68, 90);
-        CofreMadera(n, 100, G, "Cristal de Maná Grande", "Poción Menor de Vida");
-        PuntoReaparicion(n, 106);
-        Proyeccion(n, 103,
+        Pagina(n, 102, G);
+        Vasijas(n, 0, 20, 39.5f, 68);
+        CofreMadera(n, 106.5f, G, "Cristal de Maná Grande", "Poción Menor de Vida");
+        PuntoReaparicion(n, 108);
+        Proyeccion(n, 109,
             "Maestra Sable: Threnody vuela alto y resiste el viento. El hielo lo frena: mantén arriba para apuntar en diagonal.",
             "Maestra Sable: En su arena hay una corriente de aire. Úsala para subir y alcanzarlo.",
             "Maestra Sable: Y el Coloso de Raíz que viste... sus pisotones no te alcanzan si estás en el aire.");

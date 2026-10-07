@@ -9,10 +9,22 @@ public class Empujable : MonoBehaviour
     [SerializeField] private float fuerzaOtros = 0.6f;
 
     private Rigidbody2D rb;
+    private Vector3 inicio;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        inicio = transform.position;
+    }
+
+    // Si la caja se cae del nivel regresa a su lugar, para que el acertijo siempre se pueda resolver
+    void FixedUpdate()
+    {
+        if (transform.position.y > inicio.y - 4f) return;
+        rb.linearVelocity = Vector2.zero;
+        transform.position = inicio;
+        Particula.Rafaga(inicio, new Color(0.8f, 0.75f, 0.65f, 0.8f), 12, 3f, 0.15f, 0.5f);
+        if (GameManager.Instance != null) GameManager.Instance.ShowMessage("La caja regresó a su lugar.", 2.5f);
     }
 
     public void Empujar(Vector2 direccion, Elemento elemento)
