@@ -118,7 +118,11 @@ public abstract class BossController : EnemyBase
 
     protected override void OnDeath()
     {
-        base.OnDeath();
+        // Lo primero es avisar que el juego debe terminar, así un error en los efectos
+        // o en los logros no deja a Lira atorada en la arena del jefe final.
+        if (finalDelJuego && GameManager.Instance != null) GameManager.Instance.JefeFinalDerrotado();
+
+        try { base.OnDeath(); } catch (Exception e) { Debug.LogException(e); }
 
         Vector2 spot = rewardPosition != Vector2.zero ? rewardPosition : (Vector2)transform.position;
         for (int i = 0; i < rewards.Length; i++)
@@ -128,7 +132,7 @@ public abstract class BossController : EnemyBase
             Instantiate(rewards[i], pos, Quaternion.identity);
         }
 
-        BossDefeated?.Invoke(bossName);
+        try { BossDefeated?.Invoke(bossName); } catch (Exception e) { Debug.LogException(e); }
 
         Action alTerminar = null;
         if (finalDelJuego) alTerminar = () => { if (GameManager.Instance != null) GameManager.Instance.FinishGame(); };

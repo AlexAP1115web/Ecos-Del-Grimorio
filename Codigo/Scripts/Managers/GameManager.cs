@@ -236,9 +236,46 @@ public class GameManager : MonoBehaviour
         StartCoroutine(FinalSequence());
     }
 
+    // Respaldo: si por algo el diálogo final no llama a FinishGame, el juego termina
+    // solo en cuanto Lira deja de leer (o a los dos minutos como máximo).
+    public void JefeFinalDerrotado()
+    {
+        if (!finishing) StartCoroutine(EsperarFinal());
+    }
+
+    IEnumerator EsperarFinal()
+    {
+        yield return new WaitForSecondsRealtime(1.5f);
+        float limite = Time.unscaledTime + 120f;
+        while (Time.unscaledTime < limite && UIManager.Instance != null && UIManager.Instance.InDialogue)
+            yield return null;
+        yield return new WaitForSecondsRealtime(0.3f);
+        FinishGame();
+    }
+
     IEnumerator FinalSequence()
     {
         string scene = SceneManager.GetActiveScene().name;
+        try { PrepararFinal(scene); } catch (Exception e) { Debug.LogException(e); }
+        yield return new WaitForSecondsRealtime(5f);
+
+        try { LevelCompleted?.Invoke(scene, Time.time - levelStartTime, tookDamageThisLevel); } catch (Exception e) { Debug.LogException(e); }
+        PlayerPrefs.SetInt("eg_terminado", 1);
+        PlayerPrefs.DeleteKey("eg_nivel");   // la partida terminó: "Continuar" ya no regresa a la batalla final
+        Save();
+        try { GameFinished?.Invoke(); } catch (Exception e) { Debug.LogException(e); }
+
+        finishing = false;
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(Application.CanStreamedLevelBeLoaded(EpilogueScene) ? EpilogueScene : CreditsScene);
+    }
+
+    void PrepararFinal(string scene)
+    {
+        if (UIManager.Instance != null && UIManager.Instance.InDialogue) UIManager.Instance.CerrarDialogo();
+        Time.timeScale = 1f;
+        hitStopUntil = 0f;
+
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
@@ -262,16 +299,6 @@ public class GameManager : MonoBehaviour
         AudioManager.Play(Sfx.Victoria);
         CameraFollow.Shake(0.2f, 0.4f);
         if (UIManager.Instance != null) UIManager.Instance.ShowBigTitle("¡VICTORIA!", "El grimorio vuelve a estar en equilibrio");
-        yield return new WaitForSecondsRealtime(5f);
-
-        LevelCompleted?.Invoke(scene, Time.time - levelStartTime, tookDamageThisLevel);
-        PlayerPrefs.SetInt("eg_terminado", 1);
-        PlayerPrefs.DeleteKey("eg_nivel");   // la partida terminó: "Continuar" ya no regresa a la batalla final
-        Save();
-        GameFinished?.Invoke();
-
-        finishing = false;
-        SceneManager.LoadScene(Application.CanStreamedLevelBeLoaded(EpilogueScene) ? EpilogueScene : CreditsScene);
     }
 
     public void ContinueGame()

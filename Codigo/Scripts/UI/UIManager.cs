@@ -325,6 +325,13 @@ public class UIManager : MonoBehaviour
         else PrepareLine();
     }
 
+    // Cierra el diálogo sin ejecutar lo que tenía pendiente (lo usa el final del juego)
+    public void CerrarDialogo()
+    {
+        onDialogueEnd = null;
+        if (InDialogue) EndDialogue();
+    }
+
     void EndDialogue()
     {
         SetActive(dialoguePanel, false);
