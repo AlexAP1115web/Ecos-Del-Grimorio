@@ -88,6 +88,16 @@ public static class Herramientas
             maxY = so.FindProperty("maxY").floatValue;
         }
 
+        // Los fondos con Parallax solo se acomodan al jugar; aquí se mueven a mano igual que en Parallax.cs
+        Vector3 camInicio = cam.transform.position;
+        var capas = Object.FindObjectsByType<Parallax>()
+            .Select(c =>
+            {
+                var so = new SerializedObject(c);
+                return (t: c.transform, inicio: c.transform.position,
+                        fx: so.FindProperty("factor").floatValue, fy: so.FindProperty("factorVertical").floatValue);
+            }).ToArray();
+
         var rt = new RenderTexture(Ancho, Alto, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
         var tex = new Texture2D(Ancho, Alto, TextureFormat.RGB24, false);
         float alto = cam.orthographicSize;
@@ -103,6 +113,9 @@ public static class Herramientas
                 p.y = Mathf.Clamp(p.y, minY + alto, Mathf.Max(minY + alto, maxY - alto));
             }
             cam.transform.position = p;
+            Vector3 delta = p - camInicio;
+            foreach (var c in capas)
+                c.t.position = new Vector3(c.inicio.x + delta.x * c.fx, c.inicio.y + delta.y * c.fy, c.inicio.z);
 
             cam.targetTexture = rt;
             cam.Render();

@@ -22,11 +22,11 @@
 | `Player` | `PlayerController`, `SpellCaster`, `SpellProjectile`, `PlayerUpgrades`, `ModoArchimaga` |
 | `Enemigos` | `EnemyBase`, `EnemyAI`, `EcoMenorAI`, `FlyingEnemyAI`, `RangedEnemyAI`, `MirrorEnemyAI`, `ColosoAI`, `GargolaAI`, `ArmaEnemigo`, `EnemyProjectile`, `BossController`, `KaelorBoss`, `IsoldeBoss`, `ThrenodyBoss`, `ElenoraBoss` |
 | `Managers` | `GameManager`, `AchievementManager`, `Health`, `Pickup`, `Checkpoint`, `SecretChest`, `Cofre`, `CameraFollow`, `LevelExit`, `KillZone` |
-| `UI` | `UIManager`, `HUD`, `NPCDialogue`, `MainMenu`, `Prologo`, `GrimorioUI`, `AchievementsList`, `CreditsScreen` |
-| `Efectos` | `AreaEffect`, `Particula`, `Parallax`, `ParticulasAmbiente`, `LuzParpadeante`, `EstelaProyectil`, `SlowZone`, `MovingPlatform`, `Rompible`, `Desvanecer`, `Flotar`, `GeiserFuego`, `Carambano`, `CorrienteViento` |
+| `UI` | `UIManager`, `HUD`, `NPCDialogue`, `MainMenu`, `OpcionesUI`, `Prologo`, `GrimorioUI`, `AchievementsList`, `CreditsScreen` |
+| `Efectos` | `AreaEffect`, `Particula`, `Parallax`, `ParticulasAmbiente`, `LuzParpadeante`, `EstelaProyectil`, `SlowZone`, `MovingPlatform`, `Rompible`, `Desvanecer`, `Flotar`, `GeiserFuego`, `Carambano`, `CorrienteViento`, `Empujable`, `PlacaPresion`, `PuertaRunica` |
 | `Audio` | `AudioManager`, `SonidoBoton` |
-| `Sistema` | `Controles`, `VibracionControl` |
-| `Editor` | `CrearJuego`, `EditorHelpers`, `ConfigureSprites` |
+| `Sistema` | `Controles`, `VibracionControl`, `CapturaPantalla` |
+| `Editor` | `CrearJuego`, `EditorHelpers`, `ConfigureSprites`, `Herramientas` |
 
 ## Programación Orientada a Objetos
 
@@ -41,7 +41,7 @@
 
 | Escena | Contenido |
 |---|---|
-| MenuPrincipal | Nueva Partida, Continuar, Controles, Logros, Créditos, Salir |
+| MenuPrincipal | Nueva Partida, Continuar, Opciones, Controles, Logros, Créditos, Salir |
 | Prologo | Historia inicial con imágenes |
 | Nivel1_AlaDeAprendizaje | Maestra Sable, Espectros de tinta, Motas Corruptas, Espectro Mayor, Llave Rúnica y cofre secreto. Desbloquea Fuego |
 | Nivel2_AlaDeFuego | Centinelas de Ceniza, Salamandras de Forja, Kaelor (2 fases). Desbloquea Hielo |
@@ -52,3 +52,5 @@
 | Creditos | Epílogo según el porcentaje de coleccionables y créditos |
 
 Las herramientas, paquetes y extensiones que se usaron están en `Documentacion/Herramientas_y_Entorno.md`.
+
+Las tablas de producción del Sprint 2 (backlog, gráficas, Buglist, pruebas Alfa y Sprint Review) están en `PérezAlcántaraAlejandro_producción_10D_Sprint2.xlsx`.

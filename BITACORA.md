@@ -118,7 +118,15 @@
 - Pantalla de **resultados** al terminar cada ala: tiempo, enemigos derrotados, daño recibido, Páginas Perdidas, salas secretas, fragmentos y el hechizo nuevo.
 - Nueva fuente de la interfaz: **Poppins Bold**, más clara, con DejaVu Sans Bold de respaldo para el símbolo □ del control.
 
+### 7 de octubre
+- El juego ahora siempre termina al derrotar al Eco de Elenora: si falla algo en los logros o en el diálogo final, igual pasa a ¡VICTORIA!, epílogo y créditos.
+- Capturas de pantalla con **F12** (o el botón Share del control) para las evidencias; se guardan en la carpeta `Capturas` del proyecto.
+- Menú **Ecos del Grimorio**: *Capturar niveles para evidencias* y *Compilar juego (.exe)*.
+- El panel de depuración de Unity ya no se abre al presionar los dos sticks del control.
+- Producción del Sprint 2 en Excel: Feature Log actualizado, Sprint Plan replaneado, Sprint Backlog, Daily Huddle, Project Chart, Burn-down Chart, Task Chart, Buglist, Pruebas Alfa, matriz de coherencia con el GDD y Sprint Review.
+
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
-- Subir capturas a `Evidencias`.
+- Terminar las pruebas Alfa pendientes con el ejecutable.
+- Documento del Producto 2 en Word y PDF.
 - Diagrama de Gantt.
