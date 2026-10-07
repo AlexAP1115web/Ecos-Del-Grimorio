@@ -123,6 +123,8 @@
 - Capturas de pantalla con **F12** (o el botón Share del control) para las evidencias; se guardan en la carpeta `Capturas` del proyecto.
 - Menú **Ecos del Grimorio**: *Capturar niveles para evidencias* y *Compilar juego (.exe)*.
 - El panel de depuración de Unity ya no se abre al presionar los dos sticks del control.
+- Acertijo del Ala de Viento: la caja tiene más espacio para empujarla hacia la placa, regresa a su lugar si se cae y las puertas rúnicas dicen cómo se abren.
+- Se probó el final completo: ¡VICTORIA!, epílogo y créditos.
 - Producción del Sprint 2 en Excel: Feature Log actualizado, Sprint Plan replaneado, Sprint Backlog, Daily Huddle, Project Chart, Burn-down Chart, Task Chart, Buglist, Pruebas Alfa, matriz de coherencia con el GDD y Sprint Review.
 
 ### Pendiente
