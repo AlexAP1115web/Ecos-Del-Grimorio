@@ -132,6 +132,7 @@
 - Controles de teclado pensados para laptop: A/D moverse, Espacio saltar, W apuntar arriba, J K L hechizos, I combo rápido, U cambiar hechizo, Shift esquivar, P pausa.
 - Los textos de ayuda muestran las teclas o los botones según lo que esté usando el jugador.
 - Manual del jugador en PDF.
+- Formato de Pruebas Beta para el Sprint 3 y hoja Pruebas Beta en el libro de producción.
 
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
