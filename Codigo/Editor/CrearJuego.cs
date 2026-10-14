@@ -62,8 +62,8 @@ public static class CrearJuego
 
         EditorUtility.DisplayDialog("Ecos del Grimorio",
             "Juego creado: Menú Principal, 5 niveles y Créditos.\n\n" +
-            "Controles (también en el menú > Controles):\nA/D o flechas: moverse    Espacio: saltar    S: agacharse\n" +
-            "1, 2, 3 (o J / clic): hechizos    C: combo rápido    Q: cambiar hechizo\nShift: esquive    E: hablar / abrir    Esc: pausa\n" +
+            "Controles (también en el menú > Controles):\nA/D: moverse    Espacio: saltar    W: apuntar arriba    S: agacharse\n" +
+            "J, K, L: hechizos    I: combo rápido    U: cambiar hechizo\nShift: esquive    E: hablar / abrir    Esc o P: pausa\n" +
             "Control: Cuadrado, R1, L1 hechizos; stick derecho apunta; L2 combo rápido\n\n" +
             "Abre MenuPrincipal y presiona Play.", "OK");
     }
@@ -379,8 +379,9 @@ public static class CrearJuego
         rb.freezeRotation = true;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
+        // El collider se ajusta a la parte visible del dibujo (sin el espacio transparente)
         float k = vis.transform.localScale.x;
-        Vector2 size = sr.sprite.bounds.size * k, center = sr.sprite.bounds.center * k;
+        ParteVisible(sr.sprite, k, out Vector2 size, out Vector2 center);
         if (flying)
         {
             var c = go.AddComponent<CircleCollider2D>();
@@ -491,16 +492,20 @@ public static class CrearJuego
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
+        // La imagen de Lira tiene espacio transparente bajo los pies: el collider se calcula con la
+        // parte visible para que los pies queden pegados al suelo (antes parecía flotar).
         var col = go.AddComponent<CapsuleCollider2D>();
         col.sharedMaterial = noFriction;
-        Bounds b = sprite != null ? sprite.bounds : new Bounds(Vector3.zero, Vector3.one);
-        Vector2 size = b.size * k, center = b.center * k;
-        col.size = new Vector2(size.x * 0.4f, size.y * 0.95f);
-        col.offset = center;
+        float anchoImagen = sprite != null ? sprite.bounds.size.x * k : 1f;
+        Vector2 size = Vector2.one, center = Vector2.zero;
+        if (sprite != null) ParteVisible(sprite, k, out size, out center);
+        float pies = center.y - size.y / 2f;
+        col.size = new Vector2(anchoImagen * 0.4f, size.y * 0.97f);
+        col.offset = new Vector2(center.x, pies + col.size.y / 2f);
 
         var groundCheck = new GameObject("GroundCheck").transform;
         groundCheck.SetParent(go.transform, false);
-        groundCheck.localPosition = new Vector3(center.x, center.y - size.y * 0.475f, 0f);
+        groundCheck.localPosition = new Vector3(center.x, pies, 0f);
 
         var health = go.AddComponent<Health>();
         Set(health, "maxHealth", 150f);
@@ -508,7 +513,9 @@ public static class CrearJuego
         Set(health, "damageTakenMultiplier", 0.65f); // recibe 35% menos daño
         Set(health, "destroyOnDeath", false);
 
-        Set(go.AddComponent<PlayerController>(), "groundCheck", groundCheck);
+        var pc = go.AddComponent<PlayerController>();
+        Set(pc, "groundCheck", groundCheck);
+        Set(pc, "margenPies", MargenesTransparentes(sprite).x);
 
         var caster = go.AddComponent<SpellCaster>();
         SetArray(caster, "spells", new Object[] { spells[Elemento.Arcano], spells[Elemento.Fuego], spells[Elemento.Hielo], spells[Elemento.Viento] });
@@ -1096,18 +1103,20 @@ public static class CrearJuego
         var go = new GameObject("Dialogo_" + FileName(quien));
         go.transform.SetParent(n.items, false);
         var sprite = retrato != null ? LoadSprite(Sprites + retrato) : null;
+        float bajarPies = 0f;
         if (visible && sprite != null)
         {
             var vis = new GameObject("Visual");
             vis.transform.SetParent(go.transform, false);
             AddSprite(vis, sprite, 1.95f, 9).color = tinte;
+            bajarPies = MargenesTransparentes(sprite).x * 1.95f; // que los pies toquen el suelo
             if (tinte != Color.white)
             {
                 Set(vis.AddComponent<Flotar>(), "altura", 0.1f);
                 Light(go, 3, new Color(0.6f, 0.8f, 1f), 0.7f, 2.5f);
             }
         }
-        go.transform.position = new Vector2(x, G + 0.975f);
+        go.transform.position = new Vector2(x, G + 0.975f - bajarPies);
         var d = go.AddComponent<NPCDialogue>();
         Set(d, "speakerName", quien);
         Set(d, "portrait", sprite);
@@ -1334,7 +1343,7 @@ public static class CrearJuego
             "Maestra Sable: Empecemos por lo básico. Repite conmigo el primer sello arcano y saca a esos espectros de la biblioteca.");
         Dialogo(n, -10f, "Maestra Sable", "Characters/Maestra Sable.png", true, false,
             "Muévete con A/D o el stick y salta con Espacio o X.",
-            "Lanza tus hechizos con 1, 2 y 3, o con Cuadrado, R1 y L1. Apunta a cualquier lado con el stick derecho o con el mouse.",
+            "Lanza tus hechizos con J, K y L, o con Cuadrado, R1 y L1. Con W apuntas hacia arriba; con el control, el stick derecho apunta a cualquier lado.",
             "Si un enemigo se acerca demasiado, esquiva con Shift o Círculo: durante el esquive nada te toca.",
             "Agáchate con S o con el stick hacia abajo: así pasas por pasadizos bajos y tus hechizos salen a ras de suelo, contra los enemigos pequeños.",
             "La Torre está llena de secretos. Los muros agrietados se rompen con un hechizo y las vasijas guardan cristales y pociones.",
@@ -1497,7 +1506,7 @@ public static class CrearJuego
 
         Narracion(n, -7f,
             "Lira: El Ala de Viento está abierta al cielo... las plataformas flotan sobre las corrientes.",
-            "Lira: Ya tengo cuatro hechizos pero solo puedo llevar tres. Con Q o R2 cambio el que tengo equipado.",
+            "Lira: Ya tengo cuatro hechizos pero solo puedo llevar tres. Con U o R2 cambio el que tengo equipado.",
             "Lira: Con el Viento también puedo planear: si mantengo saltar mientras caigo, bajo despacio.");
         Narracion(n, 40f, "Eco: Sus aprendices la buscaron... pero nunca miraron dentro del libro...");
         Narracion(n, 60f, "Lira: Esa corriente de aire sube hasta lo más alto... y algo brilla en la plataforma de arriba.");
@@ -2042,17 +2051,17 @@ public static class CrearJuego
         var filas = new (string accion, string teclado, string control)[]
         {
             ("<b>Acción</b>", "<b>Teclado</b>", "<b>Control PS4</b>"),
-            ("Moverse", "A / D o flechas", "Stick o cruceta"),
-            ("Saltar (mantén = más alto)", "Espacio o W", "X"),
-            ("Agacharse", "S o flecha abajo", "Stick abajo"),
-            ("Hechizo 1 / 2 / 3", "1, 2, 3  (J o clic)", "□  /  R1  /  L1"),
-            ("Apuntar a cualquier lado", "Flechas o mouse", "Stick derecho"),
-            ("Combo rápido", "C", "L2"),
-            ("Cambiar hechizo equipado", "Q", "R2"),
-            ("Esquive (invulnerable)", "Shift o K", "Círculo"),
+            ("Moverse", "A / D", "Stick o cruceta"),
+            ("Saltar (mantén = más alto)", "Espacio", "X"),
+            ("Agacharse", "S", "Stick abajo"),
+            ("Hechizo 1 / 2 / 3", "J  /  K  /  L", "□  /  R1  /  L1"),
+            ("Apuntar arriba / en diagonal", "W  (+ A o D)", "Stick derecho"),
+            ("Combo rápido", "I", "L2"),
+            ("Cambiar hechizo equipado", "U", "R2"),
+            ("Esquive (invulnerable)", "Shift", "Círculo"),
             ("Planear (con Viento)", "Mantén Espacio al caer", "Mantén X al caer"),
             ("Hablar / abrir cofres", "E", "Triángulo"),
-            ("Pausa", "Esc", "Options"),
+            ("Pausa", "Esc o P", "Options"),
         };
         for (int i = 0; i < filas.Length; i++)
         {

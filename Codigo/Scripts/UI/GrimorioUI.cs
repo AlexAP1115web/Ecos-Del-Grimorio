@@ -46,7 +46,7 @@ public class GrimorioUI : MonoBehaviour
 
         // ---- Mejoras y habilidades
         Titulo("MEJORAS Y HABILIDADES", izq, -45f);
-        Fila(esquive, "Esquive y planear", Tiene(Elemento.Viento) ? "Esquive: Shift o Círculo.  Planear: mantén saltar al caer"
+        Fila(esquive, "Esquive y planear", Tiene(Elemento.Viento) ? "Esquive: Shift o Círculo.  Planear: mantén Espacio o X al caer"
                                                                   : "Esquive: Shift o Círculo, un instante sin recibir daño", izq, -105f, true);
         string[] efectos = { "+30% de daño con Fuego", "Recibes menos daño de fuego", "Saltas más alto" };
         for (int i = 0; i < mejoras.Length; i++)

@@ -127,6 +127,12 @@
 - Se probó el final completo: ¡VICTORIA!, epílogo y créditos.
 - Producción del Sprint 2 en Excel: Feature Log actualizado, Sprint Plan replaneado, Sprint Backlog, Daily Huddle, Project Chart, Burn-down Chart, Task Chart, Buglist, Pruebas Alfa, matriz de coherencia con el GDD y Sprint Review.
 
+### 13 de octubre
+- Lira ya no flota sobre las plataformas: su collider ahora se ajusta a la parte visible del dibujo (la imagen tenía espacio transparente bajo los pies). Lo mismo para enemigos y la Maestra Sable.
+- Controles de teclado pensados para laptop: A/D moverse, Espacio saltar, W apuntar arriba, J K L hechizos, I combo rápido, U cambiar hechizo, Shift esquivar, P pausa.
+- Los textos de ayuda muestran las teclas o los botones según lo que esté usando el jugador.
+- Manual del jugador en PDF.
+
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
 - Terminar las pruebas Alfa pendientes con el ejecutable.

@@ -20,6 +20,7 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 |---|---|
 | `Documentacion/Producto1` | Documento de diseño (Word y PDF) y documento de producción del Sprint 1 |
 | `Documentacion/Producto2` | Producción con gráficas y estado del Sprint 2 |
+| `Documentacion/EcosDelGrimorio_Manual_del_jugador.pdf` | Manual del jugador: instalación, controles, cómo jugar y cómo está hecho el juego |
 | `Documentacion/Actividades` | Actividades de clase relacionadas con el proyecto |
 | `Arte/Personajes` | Lira y Maestra Sable |
 | `Arte/Enemigos` | Enemigos comunes |
@@ -49,17 +50,17 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 
 | Acción | Teclado | Control PS4 |
 |---|---|---|
-| Moverse | A / D o flechas | Stick izquierdo o cruceta |
-| Saltar | Espacio / W | X |
-| Agacharse | S / flecha abajo | Stick o cruceta abajo |
-| Hechizos equipados | 1, 2, 3 (J o clic lanza el seleccionado) | Cuadrado, R1, L1 |
-| Apuntar | Flechas o mouse | Stick derecho |
-| Combo rápido | C | L2 |
-| Cambiar hechizo equipado | Q | R2 |
-| Esquive | Shift / K | Círculo |
+| Moverse | A / D | Stick izquierdo o cruceta |
+| Saltar | Espacio | X |
+| Agacharse | S | Stick o cruceta abajo |
+| Hechizos equipados | J, K, L (también 1, 2, 3) | Cuadrado, R1, L1 |
+| Apuntar | W arriba (W + A/D en diagonal) o clic con el mouse | Stick derecho |
+| Combo rápido | I (también C) | L2 |
+| Cambiar hechizo equipado | U (también Q) | R2 |
+| Esquive | Shift | Círculo |
 | Planear (con Viento) | Mantener Espacio al caer | Mantener X al caer |
 | Hablar / abrir cofre | E | Triángulo |
-| Pausa | Esc | Options |
+| Pausa | Esc o P | Options |
 | Modo Archimaga (código secreto) | F, H, V, A, Intro | Mantener L1 + R1 y presionar Triángulo |
 
 ## Créditos

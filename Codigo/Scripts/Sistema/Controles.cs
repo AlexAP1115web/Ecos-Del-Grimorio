@@ -5,25 +5,45 @@ using UnityEngine.InputSystem;
 // Todas las entradas del juego en un solo lugar: teclado y control (PS4 / Xbox).
 // El Input System reconoce el DualShock 4 por USB o Bluetooth sin instalar nada.
 //
-//  Acción              Teclado            Control PS4
-//  Moverse             A/D o flechas      Stick izquierdo o cruceta
-//  Saltar              Espacio / W        X
-//  Agacharse           S / flecha abajo   Stick o cruceta abajo
-//  Hechizo 1, 2, 3     1, 2, 3 (J/clic)   Cuadrado, R1, L1
-//  Apuntar             Flechas / mouse    Stick derecho (360°) o stick izq. arriba/abajo
-//  Combo rápido        C                  L2
-//  Cambiar hechizo     Q                  R2
-//  Esquive             Shift / K          Círculo
-//  Hablar / abrir      E                  Triángulo
-//  Pausa               Esc                Options
-//  Modo Archimaga      F H V A + Enter    L1 + R1 + Triángulo (en cualquier orden)
+// El teclado está pensado para laptop: la mano izquierda en W A S D y la derecha en J K L,
+// sin necesitar mouse, flechas ni la fila de números (aunque también funcionan).
+//
+//  Acción              Teclado (laptop)        Control PS4
+//  Moverse             A / D                   Stick izquierdo o cruceta
+//  Saltar / planear    Espacio                 X
+//  Apuntar arriba      W (con A/D = diagonal)  Stick derecho (360°) o stick izq. arriba
+//  Agacharse           S                       Stick o cruceta abajo
+//  Hechizo 1, 2, 3     J, K, L  (o 1, 2, 3)    Cuadrado, R1, L1
+//  Combo rápido        I  (o C)                L2
+//  Cambiar hechizo     U  (o Q)                R2
+//  Esquive             Shift                   Círculo
+//  Hablar / abrir      E                       Triángulo
+//  Pausa               Esc o P                 Options
+//  Modo Archimaga      F H V A + Enter         L1 + R1 + Triángulo (en cualquier orden)
 public static class Controles
 {
     static Keyboard Kb => Keyboard.current;
     static Gamepad Pad => Gamepad.current;
     static Mouse Mouse => Mouse.current;
 
-    public static bool HayControl => Pad != null;
+    // Los textos de ayuda muestran los botones del último dispositivo que se usó:
+    // si hay control conectado pero se juega con el teclado, aparecen las teclas.
+    static bool usandoControl = true;
+    public static bool HayControl => Pad != null && usandoControl;
+
+    // Se llama una vez por cuadro (DetectorEntrada) para saber qué está usando el jugador
+    public static void ActualizarDispositivo()
+    {
+        if (Kb != null && Kb.anyKey.wasPressedThisFrame) usandoControl = false;
+        else if (Mouse != null && Mouse.leftButton.wasPressedThisFrame) usandoControl = false;
+        else if (Pad != null && (Pad.buttonSouth.wasPressedThisFrame || Pad.buttonEast.wasPressedThisFrame ||
+                 Pad.buttonWest.wasPressedThisFrame || Pad.buttonNorth.wasPressedThisFrame ||
+                 Pad.leftShoulder.wasPressedThisFrame || Pad.rightShoulder.wasPressedThisFrame ||
+                 Pad.leftTrigger.wasPressedThisFrame || Pad.rightTrigger.wasPressedThisFrame ||
+                 Pad.startButton.wasPressedThisFrame || Pad.leftStick.ReadValue().magnitude > 0.5f ||
+                 Pad.rightStick.ReadValue().magnitude > 0.5f || Pad.dpad.ReadValue().magnitude > 0.5f))
+            usandoControl = true;
+    }
 
     public static float Horizontal
     {
@@ -47,7 +67,7 @@ public static class Controles
     }
 
     public static bool Arriba =>
-        (Kb != null && (Kb.upArrowKey.isPressed)) ||
+        (Kb != null && (Kb.wKey.isPressed || Kb.upArrowKey.isPressed)) ||
         (Pad != null && (Pad.leftStick.y.ReadValue() > 0.6f || Pad.dpad.up.isPressed));
 
     // Stick derecho para apuntar en cualquier dirección (cero si no se está usando)
@@ -75,11 +95,11 @@ public static class Controles
         (Pad.leftShoulder.wasPressedThisFrame || Pad.rightShoulder.wasPressedThisFrame || Pad.buttonNorth.wasPressedThisFrame);
 
     public static bool SaltarPresionado =>
-        (Kb != null && (Kb.spaceKey.wasPressedThisFrame || Kb.wKey.wasPressedThisFrame)) ||
+        (Kb != null && Kb.spaceKey.wasPressedThisFrame) ||
         (Pad != null && Pad.buttonSouth.wasPressedThisFrame);
 
     public static bool SaltarSostenido =>
-        (Kb != null && (Kb.spaceKey.isPressed || Kb.wKey.isPressed)) ||
+        (Kb != null && Kb.spaceKey.isPressed) ||
         (Pad != null && Pad.buttonSouth.isPressed);
 
     // Avanza diálogos (y en el teclado lanza el hechizo seleccionado)
@@ -88,39 +108,39 @@ public static class Controles
         (Mouse != null && Mouse.leftButton.wasPressedThisFrame) ||
         (Pad != null && Pad.buttonWest.wasPressedThisFrame);
 
-    // J o clic: lanza el hechizo del espacio seleccionado
-    public static bool LanzarSeleccionado =>
-        (Kb != null && Kb.jKey.wasPressedThisFrame) || ClicMouse;
+    // Clic: lanza el hechizo del espacio seleccionado apuntando hacia el mouse
+    public static bool LanzarSeleccionado => ClicMouse;
 
     // Cada espacio tiene su propio botón para poder encadenar combos rápido:
-    // teclado 1, 2, 3 / control Cuadrado, R1, L1
+    // teclado J, K, L (o 1, 2, 3) / control Cuadrado, R1, L1
     public static bool EspacioPresionado(int slot)
     {
         switch (slot)
         {
-            case 0: return (Kb != null && Kb.digit1Key.wasPressedThisFrame) || (Pad != null && Pad.buttonWest.wasPressedThisFrame);
-            case 1: return (Kb != null && Kb.digit2Key.wasPressedThisFrame) || (Pad != null && Pad.rightShoulder.wasPressedThisFrame && !Pad.leftShoulder.isPressed);
-            case 2: return (Kb != null && Kb.digit3Key.wasPressedThisFrame) || (Pad != null && Pad.leftShoulder.wasPressedThisFrame && !Pad.rightShoulder.isPressed);
+            case 0: return (Kb != null && (Kb.jKey.wasPressedThisFrame || Kb.digit1Key.wasPressedThisFrame)) || (Pad != null && Pad.buttonWest.wasPressedThisFrame);
+            case 1: return (Kb != null && (Kb.kKey.wasPressedThisFrame || Kb.digit2Key.wasPressedThisFrame)) || (Pad != null && Pad.rightShoulder.wasPressedThisFrame && !Pad.leftShoulder.isPressed);
+            case 2: return (Kb != null && (Kb.lKey.wasPressedThisFrame || Kb.digit3Key.wasPressedThisFrame)) || (Pad != null && Pad.leftShoulder.wasPressedThisFrame && !Pad.rightShoulder.isPressed);
             default: return false;
         }
     }
 
     // Combo rápido: lanza el combo de dos hechizos equipados con un solo botón
     public static bool ComboRapido =>
-        (Kb != null && Kb.cKey.wasPressedThisFrame) ||
+        (Kb != null && (Kb.iKey.wasPressedThisFrame || Kb.cKey.wasPressedThisFrame)) ||
         (Pad != null && Pad.leftTrigger.wasPressedThisFrame);
 
     public static string TextoEspacio(int slot) =>
-        HayControl ? (slot == 0 ? "□" : slot == 1 ? "R1" : "L1") : (slot + 1).ToString();
+        HayControl ? (slot == 0 ? "□" : slot == 1 ? "R1" : "L1") : (slot == 0 ? "J" : slot == 1 ? "K" : "L");
 
-    public static string TextoCombo => HayControl ? "L2" : "C";
+    public static string TextoCombo => HayControl ? "L2" : "I";
+    public static string TextoCambiar => HayControl ? "R2" : "U";
 
     public static bool CambiarHechizo =>
-        (Kb != null && Kb.qKey.wasPressedThisFrame) ||
+        (Kb != null && (Kb.uKey.wasPressedThisFrame || Kb.qKey.wasPressedThisFrame)) ||
         (Pad != null && Pad.rightTrigger.wasPressedThisFrame);
 
     public static bool EsquivePresionado =>
-        (Kb != null && (Kb.leftShiftKey.wasPressedThisFrame || Kb.kKey.wasPressedThisFrame)) ||
+        (Kb != null && (Kb.leftShiftKey.wasPressedThisFrame || Kb.rightShiftKey.wasPressedThisFrame)) ||
         (Pad != null && Pad.buttonEast.wasPressedThisFrame);
 
     public static bool InteractuarPresionado =>
@@ -128,7 +148,7 @@ public static class Controles
         (Pad != null && Pad.buttonNorth.wasPressedThisFrame);
 
     public static bool PausaPresionado =>
-        (Kb != null && Kb.escapeKey.wasPressedThisFrame) ||
+        (Kb != null && (Kb.escapeKey.wasPressedThisFrame || Kb.pKey.wasPressedThisFrame)) ||
         (Pad != null && Pad.startButton.wasPressedThisFrame);
 
     public static bool AceptarPresionado =>

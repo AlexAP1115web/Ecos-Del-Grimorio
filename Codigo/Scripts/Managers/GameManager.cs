@@ -427,7 +427,7 @@ public class GameManager : MonoBehaviour
         {
             sb.AppendLine();
             sb.Append($"<color=#FFD27F>Nuevo hechizo: {spell}</color>");
-            if (unlockedSpells.Count > 3) sb.Append($"\n<size=26>Solo caben 3 equipados: cámbialo con Q o R2</size>");
+            if (unlockedSpells.Count > 3) sb.Append($"\n<size=26>Solo caben 3 equipados: cámbialo con {Controles.TextoCambiar}</size>");
         }
         return sb.ToString();
     }

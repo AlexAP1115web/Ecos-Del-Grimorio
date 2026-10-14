@@ -573,6 +573,57 @@ public static class EditorHelpers
 
     public static string FileName(string name) => name.Replace(" ", "_");
 
+    // Márgenes transparentes de un sprite (fracción de su alto y ancho): x = abajo, y = arriba,
+    // z = izquierda, w = derecha. Muchas imágenes tienen espacio vacío bajo los pies; si el
+    // collider se calcula con la imagen completa, el personaje parece flotar sobre el suelo.
+    // Se lee el PNG original porque la textura importada no se puede leer desde código.
+    static readonly System.Collections.Generic.Dictionary<string, Vector4> margenes = new System.Collections.Generic.Dictionary<string, Vector4>();
+
+    public static Vector4 MargenesTransparentes(Sprite s)
+    {
+        if (s == null || s.texture == null) return Vector4.zero;
+        string ruta = AssetDatabase.GetAssetPath(s.texture);
+        string clave = ruta + s.rect;
+        if (margenes.TryGetValue(clave, out var guardado)) return guardado;
+        if (string.IsNullOrEmpty(ruta) || !File.Exists(ruta)) return Vector4.zero;
+
+        var tex = new Texture2D(2, 2);
+        Vector4 m = Vector4.zero;
+        if (tex.LoadImage(File.ReadAllBytes(ruta)))
+        {
+            // Si Unity redujo la imagen al importarla, se ajusta la escala del rectángulo
+            float fx = tex.width / (float)s.texture.width, fy = tex.height / (float)s.texture.height;
+            int x0 = Mathf.RoundToInt(s.rect.x * fx), y0 = Mathf.RoundToInt(s.rect.y * fy);
+            int w = Mathf.Min(Mathf.RoundToInt(s.rect.width * fx), tex.width - x0);
+            int h = Mathf.Min(Mathf.RoundToInt(s.rect.height * fy), tex.height - y0);
+            var px = tex.GetPixels32();
+            int minX = w, maxX = -1, minY = h, maxY = -1;
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                    if (px[(y0 + y) * tex.width + x0 + x].a > 20)
+                    {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+            if (maxY >= 0)
+                m = new Vector4(minY / (float)h, (h - 1 - maxY) / (float)h, minX / (float)w, (w - 1 - maxX) / (float)w);
+        }
+        Object.DestroyImmediate(tex);
+        margenes[clave] = m;
+        return m;
+    }
+
+    // Tamaño y centro de la parte visible del sprite, en unidades locales (escala k)
+    public static void ParteVisible(Sprite s, float k, out Vector2 tamano, out Vector2 centro)
+    {
+        var m = MargenesTransparentes(s);
+        Vector2 completo = s.bounds.size * k, min = (Vector2)s.bounds.min * k;
+        tamano = new Vector2(completo.x * (1f - m.z - m.w), completo.y * (1f - m.x - m.y));
+        centro = new Vector2(min.x + completo.x * m.z + tamano.x / 2f, min.y + completo.y * m.x + tamano.y / 2f);
+    }
+
     public static SpriteRenderer AddSprite(GameObject go, Sprite sprite, float height, int order)
     {
         var sr = go.AddComponent<SpriteRenderer>();

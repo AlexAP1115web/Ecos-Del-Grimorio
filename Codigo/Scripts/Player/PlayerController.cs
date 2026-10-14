@@ -48,6 +48,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float caderaIzqX = 0.417f;
     [SerializeField] private float caderaDerX = 0.597f;
     [SerializeField] private float largoPaso = 1.8f;
+    [Tooltip("Parte transparente de la imagen bajo los pies (fracción del alto). La calcula CrearJuego.")]
+    [SerializeField] private float margenPies = 0f;
 
     [Header("Detección de suelo")]
     [SerializeField] private Transform groundCheck;
@@ -113,7 +115,12 @@ public class PlayerController : MonoBehaviour
         {
             visualBaseScale = visual.localScale;
             visualBaseLocalPos = visual.localPosition;
-            if (spriteRenderer.sprite != null) visualBottom = spriteRenderer.sprite.bounds.min.y * visualBaseScale.y;
+            // Altura de los pies respecto al centro del dibujo (sin el espacio transparente de abajo)
+            if (spriteRenderer.sprite != null)
+            {
+                var b = spriteRenderer.sprite.bounds;
+                visualBottom = (b.min.y + b.size.y * margenPies) * visualBaseScale.y;
+            }
         }
         baseGravity = rb.gravityScale;
         capsule = GetComponent<CapsuleCollider2D>();

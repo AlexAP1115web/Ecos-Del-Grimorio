@@ -6,8 +6,8 @@ using UnityEngine.Events;
 
 // Maná, hechizos equipados y combos elementales.
 // Según la mecánica del documento, Lira equipa hasta 3 hechizos:
-//   1, 2, 3 / Cuadrado, R1, L1 -> lanza el hechizo del espacio 1, 2 o 3
-//   J / clic -> lanza el espacio seleccionado (con el clic apunta hacia el mouse)
+//   J, K, L (o 1, 2, 3) / Cuadrado, R1, L1 -> lanza el hechizo del espacio 1, 2 o 3
+//   Clic -> lanza el espacio seleccionado apuntando hacia el mouse
 //   C / L2 -> combo rápido con dos de los hechizos equipados
 //   Q / R2 -> cambia el hechizo del espacio seleccionado por otro desbloqueado
 //   Stick derecho -> apunta en cualquier dirección (360°)
