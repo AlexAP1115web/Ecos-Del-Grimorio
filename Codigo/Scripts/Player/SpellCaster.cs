@@ -13,6 +13,8 @@ using UnityEngine.Events;
 //   Stick derecho -> apunta en cualquier dirección (360°)
 //   Arriba / abajo (en el aire) -> lanza en diagonal o en vertical
 //   Agachada -> el hechizo sale a ras de suelo (para enemigos pequeños)
+// Ayuda para apuntar (se quita en Opciones): si hay un enemigo más o menos hacia donde
+// se apunta, el hechizo sale hacia él y lo va siguiendo.
 // Si se lanzan dos elementos distintos seguidos (dentro de comboWindow) se forma un combo.
 public class SpellCaster : MonoBehaviour
 {
@@ -27,6 +29,13 @@ public class SpellCaster : MonoBehaviour
     [SerializeField] private Vector2 castOffset = new Vector2(0.8f, 0.3f);
     [Tooltip("Cuánto baja el punto de lanzamiento cuando Lira está agachada")]
     [SerializeField] private float crouchCastDrop = 0.75f;
+
+    [Header("Ayuda para apuntar")]
+    [SerializeField] private float alcanceAyuda = 11f;
+    [Tooltip("Qué tan lejos de la mira (en grados) puede estar el enemigo para que lo siga")]
+    [SerializeField] private float anguloAyuda = 50f;
+    [Tooltip("Grados por segundo que puede girar el hechizo para seguir al enemigo")]
+    [SerializeField] private float giroAyuda = 320f;
 
     [Header("Combos")]
     [SerializeField] private float comboWindow = 0.9f;
@@ -53,6 +62,9 @@ public class SpellCaster : MonoBehaviour
     private PlayerController controller;
     private bool inputEnabled = true;
     private bool aimAtMouse;
+    private bool apuntadoManual;   // con el stick derecho o el mouse se apunta con más precisión
+    private float ultimoAvisoMana;
+    private float ultimaVoz;
     private float nextQuickCombo;
 
     public float CurrentMana => currentMana;
@@ -185,7 +197,16 @@ public class SpellCaster : MonoBehaviour
     bool SpendMana(float cost)
     {
         if (archmageMode) return true;
-        if (currentMana < cost) return false;
+        if (currentMana < cost)
+        {
+            // Sin maná: un chasquido para que se note por qué no salió el hechizo
+            if (Time.time - ultimoAvisoMana > 0.4f)
+            {
+                ultimoAvisoMana = Time.time;
+                AudioManager.Play(Sfx.SinMana, 0.6f);
+            }
+            return false;
+        }
         currentMana -= cost;
         OnManaChanged.Invoke(ManaPercent);
         return true;
@@ -288,9 +309,11 @@ public class SpellCaster : MonoBehaviour
     {
         get
         {
+            apuntadoManual = false;
             var stick = Controles.ApuntarStick;
             if (stick != Vector2.zero)
             {
+                apuntadoManual = true;
                 if (controller != null && Mathf.Abs(stick.x) > 0.2f) controller.Face(stick.x);
                 return stick;
             }
@@ -300,6 +323,7 @@ public class SpellCaster : MonoBehaviour
                 Vector2 d = m - (Vector2)transform.position;
                 if (d.sqrMagnitude > 0.01f)
                 {
+                    apuntadoManual = true;
                     if (controller != null && Mathf.Abs(d.x) > 0.1f) controller.Face(d.x);
                     return d.normalized;
                 }
@@ -314,26 +338,84 @@ public class SpellCaster : MonoBehaviour
         }
     }
 
-    Vector2 CastPoint
+    Vector2 CastPoint => PuntoDeLanzamiento(AimDirection);
+
+    Vector2 PuntoDeLanzamiento(Vector2 dir)
     {
-        get
-        {
-            var dir = AimDirection;
-            // Al apuntar hacia arriba o abajo el hechizo sale del centro de Lira
-            float x = Mathf.Abs(dir.x) > 0.5f ? castOffset.x * Mathf.Sign(dir.x) : dir.x * castOffset.x;
-            float y = castOffset.y - (Crouching ? crouchCastDrop : 0f) + dir.y * 0.6f;
-            return (Vector2)transform.position + new Vector2(x, y);
-        }
+        // Al apuntar hacia arriba o abajo el hechizo sale del centro de Lira
+        float x = Mathf.Abs(dir.x) > 0.5f ? castOffset.x * Mathf.Sign(dir.x) : dir.x * castOffset.x;
+        float y = castOffset.y - (Crouching ? crouchCastDrop : 0f) + dir.y * 0.6f;
+        return (Vector2)transform.position + new Vector2(x, y);
     }
 
     void FireProjectile(SpellData spell, float damage, bool pierce, float speedMultiplier)
     {
         if (spell.projectilePrefab == null) return;
-        var go = Instantiate(spell.projectilePrefab, CastPoint, Quaternion.identity);
+        Vector2 dir = AimDirection;
+        Vector2 punto = PuntoDeLanzamiento(dir);
+
+        // Ayuda para apuntar: busca al enemigo más cercano a la mira y sale directo hacia él
+        Collider2D objetivo = Controles.AyudaApuntar ? BuscarObjetivo(punto, dir) : null;
+        if (objetivo != null) dir = ((Vector2)objetivo.bounds.center - punto).normalized;
+
+        var go = Instantiate(spell.projectilePrefab, punto, Quaternion.identity);
         var projectile = go.GetComponent<SpellProjectile>();
-        if (projectile != null) projectile.Init(spell, AimDirection, damage, pierce, speedMultiplier);
-        Particula.Rafaga(CastPoint, ElementoColor.Get(spell.element), 5, 2f, 0.15f, 0.25f);
+        if (projectile != null)
+        {
+            projectile.Init(spell, dir, damage, pierce, speedMultiplier);
+            if (objetivo != null) projectile.Seguir(objetivo, giroAyuda);
+        }
+        Particula.Rafaga(punto, ElementoColor.Get(spell.element), 5, 2f, 0.15f, 0.25f);
         AudioManager.Play(SonidoDe(spell.element), 0.8f);
+        AudioManager.Play(Sfx.Lanzar, 0.45f);
+
+        // De vez en cuando Lira hace un pequeño esfuerzo al lanzar (no en cada hechizo para que no canse)
+        if (Time.time - ultimaVoz > 2.5f && UnityEngine.Random.value < 0.35f)
+        {
+            ultimaVoz = Time.time;
+            AudioManager.Lira(VozLira.Esfuerzo);
+        }
+    }
+
+    // Enemigo vivo dentro del alcance, cerca de la dirección de la mira y sin pared en medio
+    Collider2D BuscarObjetivo(Vector2 origen, Vector2 dir)
+    {
+        float limite = apuntadoManual ? 25f : Crouching ? 20f : anguloAyuda;
+
+        // Si Lira está apuntando a la caja del acertijo de viento no se desvía el hechizo
+        foreach (var hit in Physics2D.RaycastAll(origen, dir, 6f))
+            if (hit.collider.GetComponentInParent<Empujable>() != null) return null;
+        Collider2D mejor = null;
+        float mejorPuntaje = float.MaxValue;
+
+        foreach (var enemigo in FindObjectsByType<EnemyBase>())
+        {
+            var vida = enemigo.GetComponent<Health>();
+            if (vida == null || vida.IsDead) continue;
+            Collider2D col = null;
+            foreach (var c in enemigo.GetComponents<Collider2D>())
+                if (c.enabled && !c.isTrigger) { col = c; break; }
+            if (col == null) continue;
+
+            Vector2 hacia = (Vector2)col.bounds.center - origen;
+            float distancia = hacia.magnitude;
+            if (distancia > alcanceAyuda || distancia < 0.1f) continue;
+            float angulo = Vector2.Angle(dir, hacia);
+            if (angulo > limite) continue;
+            if (HayParedEnMedio(origen, hacia, distancia)) continue;
+
+            // Gana el que está más cerca y más alineado con la mira
+            float puntaje = distancia * (1f + angulo / 30f);
+            if (puntaje < mejorPuntaje) { mejorPuntaje = puntaje; mejor = col; }
+        }
+        return mejor;
+    }
+
+    static bool HayParedEnMedio(Vector2 origen, Vector2 hacia, float distancia)
+    {
+        foreach (var hit in Physics2D.RaycastAll(origen, hacia.normalized, distancia))
+            if (!hit.collider.isTrigger && hit.collider.CompareTag("Ground")) return true;
+        return false;
     }
 
     static Sfx SonidoDe(Elemento e)

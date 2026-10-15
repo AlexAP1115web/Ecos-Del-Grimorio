@@ -14,6 +14,8 @@ public abstract class EnemyBase : MonoBehaviour
     [SerializeField] protected float contactDamage = 10f;
     [SerializeField] protected float moveSpeed = 2f;
     [SerializeField] protected float detectionRange = 5f;
+    [Tooltip("Qué tan fuerte empuja a Lira al tocarla")]
+    [SerializeField] protected float empujeContacto = 9f;
 
     protected Rigidbody2D rb;
     protected Health health;
@@ -102,6 +104,7 @@ public abstract class EnemyBase : MonoBehaviour
     void OnDamaged(float amount)
     {
         punch = 1f;
+        AudioManager.Play(Sfx.Quejido, 0.5f, this is BossController ? 0.7f : Random.Range(0.9f, 1.2f));
         barVisibleUntil = Time.time + 3f;
         if (spriteRenderer != null)
             Particula.Rafaga(spriteRenderer.bounds.center, new Color(1f, 0.95f, 0.8f, 0.9f), 6, 4f, 0.12f, 0.3f);
@@ -224,7 +227,7 @@ public abstract class EnemyBase : MonoBehaviour
         // Empuja a Lira hacia atrás para que el golpe se sienta
         var controller = playerHealth.GetComponent<PlayerController>();
         float dir = Mathf.Sign(playerHealth.transform.position.x - transform.position.x);
-        if (controller != null) controller.Push(new Vector2(dir * 9f, 6f));
+        if (controller != null) controller.Push(new Vector2(dir * empujeContacto, Mathf.Min(6f, empujeContacto * 0.7f)));
     }
 
     protected virtual void OnDeath()

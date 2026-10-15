@@ -2,7 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Pantalla de Opciones (menú principal y pausa, secciones 2.5 y 2.6):
-// volumen de música, efectos y voces, pantalla completa y vibración del control.
+// volumen de música, efectos y voces, pantalla completa, vibración del control
+// y ayuda para apuntar.
 public class OpcionesUI : MonoBehaviour
 {
     [SerializeField] private Slider musica;
@@ -10,6 +11,7 @@ public class OpcionesUI : MonoBehaviour
     [SerializeField] private Slider voces;
     [SerializeField] private Toggle pantallaCompleta;
     [SerializeField] private Toggle vibracion;
+    [SerializeField] private Toggle ayudaApuntar;
     [SerializeField] private Text[] porcentajes = new Text[3];
 
     private bool cargando;
@@ -38,6 +40,7 @@ public class OpcionesUI : MonoBehaviour
             Controles.VibracionActiva = v;
             if (v) Controles.Vibrar(0.5f, 0.5f, 0.25f);
         });
+        if (ayudaApuntar != null) ayudaApuntar.onValueChanged.AddListener(v => { if (!cargando) Controles.AyudaApuntar = v; });
     }
 
     void OnEnable()
@@ -52,6 +55,7 @@ public class OpcionesUI : MonoBehaviour
         }
         if (pantallaCompleta != null) pantallaCompleta.isOn = Screen.fullScreen;
         if (vibracion != null) vibracion.isOn = Controles.VibracionActiva;
+        if (ayudaApuntar != null) ayudaApuntar.isOn = Controles.AyudaApuntar;
         cargando = false;
         Actualizar();
     }

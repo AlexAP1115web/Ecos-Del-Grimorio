@@ -2,6 +2,8 @@ using UnityEngine;
 
 // Proyectil de los hechizos de Lira. Los datos (daño, velocidad, color, efectos)
 // vienen del SpellData con el que se lanza.
+// Con la ayuda para apuntar el proyectil se curva poco a poco hacia un enemigo
+// (sirve sobre todo contra las aves, que se mueven mucho).
 [RequireComponent(typeof(Rigidbody2D))]
 public class SpellProjectile : MonoBehaviour
 {
@@ -10,6 +12,12 @@ public class SpellProjectile : MonoBehaviour
     private Vector2 direction;
     private bool piercing;
     private Rigidbody2D rb;
+    private float velocidad;
+    private SpriteRenderer sr;
+
+    // Enemigo al que sigue (null = va en línea recta)
+    private Collider2D objetivo;
+    private float giro;
 
     public void Init(SpellData spell, Vector2 dir, float finalDamage, bool pierce = false, float speedMultiplier = 1f)
     {
@@ -20,24 +28,48 @@ public class SpellProjectile : MonoBehaviour
 
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0f;
-        rb.linearVelocity = direction * data.projectileSpeed * speedMultiplier;
+        velocidad = data.projectileSpeed * speedMultiplier;
+        rb.linearVelocity = direction * velocidad;
 
-        // El arte de los hechizos ya viene orientado hacia la derecha, solo se voltea
-        // El arte apunta a la derecha: se gira hacia donde va el hechizo (y se voltea para no quedar de cabeza)
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0f, 0f, angle);
-        var sr = GetComponentInChildren<SpriteRenderer>();
+        sr = GetComponentInChildren<SpriteRenderer>();
         if (sr != null)
         {
             sr.color = data.color;
             sr.flipX = false;
-            sr.flipY = direction.x < 0f;
         }
+        Orientar();
 
         var trail = GetComponent<EstelaProyectil>();
         if (trail != null) trail.SetColor(ElementoColor.Get(data.element) * new Color(1f, 1f, 1f, 0.7f));
 
         Destroy(gameObject, data.lifetime);
+    }
+
+    // El arte apunta a la derecha: se gira hacia donde va el hechizo (y se voltea para no quedar de cabeza)
+    void Orientar()
+    {
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0f, 0f, angle);
+        if (sr != null) sr.flipY = direction.x < 0f;
+    }
+
+    // Ayuda para apuntar: el hechizo gira hasta "gradosPorSegundo" para alcanzar al enemigo
+    public void Seguir(Collider2D enemigo, float gradosPorSegundo)
+    {
+        objetivo = enemigo;
+        giro = gradosPorSegundo;
+    }
+
+    void FixedUpdate()
+    {
+        if (objetivo == null || rb == null) return;
+        if (!objetivo.enabled || !objetivo.gameObject.activeInHierarchy) { objetivo = null; return; }
+
+        Vector2 hacia = (Vector2)objetivo.bounds.center - rb.position;
+        if (hacia.sqrMagnitude < 0.04f) return;
+        direction = ((Vector2)Vector3.RotateTowards(direction, hacia.normalized, giro * Mathf.Deg2Rad * Time.fixedDeltaTime, 0f)).normalized;
+        rb.linearVelocity = direction * velocidad;
+        Orientar();
     }
 
     void OnTriggerEnter2D(Collider2D other)

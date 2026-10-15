@@ -50,7 +50,8 @@ public class Pickup : MonoBehaviour
         var gm = GameManager.Instance;
         if (gm != null && IsUnique) gm.MarkPickupTaken(Id);
 
-        AudioManager.Play(item.type == TipoItem.PaginaPerdida ? Sfx.Pagina : IsUnique ? Sfx.ObjetoEspecial : Sfx.Objeto);
+        AudioManager.Play(item.type == TipoItem.PaginaPerdida ? Sfx.Pagina : IsUnique ? Sfx.ObjetoEspecial :
+                          item.type == TipoItem.Vida ? Sfx.Curacion : Sfx.Objeto);
 
         // Los fragmentos, la nota y el diario cuentan parte de la historia de Elenora
         if (item.type == TipoItem.PaginaPerdida)

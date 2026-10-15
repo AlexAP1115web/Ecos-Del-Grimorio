@@ -3,6 +3,8 @@ using UnityEngine;
 // Enemigo aéreo. Flota de forma errática alrededor de su punto de origen y,
 // cuando ve a Lira, se lanza en picada contra ella.
 // - Aves de Tormenta / Golems de Piedra Suspendida: embestida y regreso.
+//   Antes de lanzarse tiemblan un momento (aviso para esquivar) y después de la
+//   picada se quedan quietos un poco: ese es el mejor momento para atacarlos.
 // - Motas Corruptas: activar explodeOnContact (explotan y dañan en área).
 public class FlyingEnemyAI : EnemyBase
 {
@@ -16,6 +18,12 @@ public class FlyingEnemyAI : EnemyBase
     [SerializeField] private float diveSpeed = 8f;
     [SerializeField] private float diveDuration = 0.6f;
     [SerializeField] private float diveCooldown = 2.5f;
+    [Tooltip("Tiempo que tiembla antes de lanzarse")]
+    [SerializeField] private float avisoPicada = 0.45f;
+    [Tooltip("Tiempo que se queda quieto después de la picada")]
+    [SerializeField] private float descansoTrasPicada = 0.8f;
+    [Tooltip("Graznido al prepararse (aves)")]
+    [SerializeField] private bool graznar = false;
 
     [Header("Explosión (Motas Corruptas)")]
     [SerializeField] private bool explodeOnContact = false;
@@ -28,6 +36,9 @@ public class FlyingEnemyAI : EnemyBase
     private float nextDiveTime;
     private Vector2 diveDirection;
     private bool exploded;
+    private bool avisando;
+    private float avisoHasta;
+    private float descansoHasta;
 
     protected override void Awake()
     {
@@ -50,14 +61,43 @@ public class FlyingEnemyAI : EnemyBase
             return;
         }
 
+        // Aviso: tiembla en su lugar y después se lanza hacia donde está Lira en ese momento
+        if (avisando)
+        {
+            if (Time.time < avisoHasta)
+            {
+                rb.linearVelocity = Random.insideUnitCircle * 2f;
+                return;
+            }
+            avisando = false;
+            if (player != null)
+            {
+                diveDirection = ((Vector2)player.position - (Vector2)transform.position).normalized;
+                diveEndTime = Time.time + diveDuration;
+                descansoHasta = diveEndTime + descansoTrasPicada;
+                FaceTowards(player.position.x);
+            }
+            return;
+        }
+
+        // Cansado después de la picada: frena y se queda casi quieto
+        if (Time.time < descansoHasta)
+        {
+            rb.linearVelocity = Vector2.MoveTowards(rb.linearVelocity, Vector2.zero, 25f * Time.deltaTime);
+            return;
+        }
+
         bool seesPlayer = player != null && DistanceToPlayer < detectionRange;
 
         if (seesPlayer && !explodeOnContact && Time.time >= nextDiveTime)
         {
-            diveDirection = ((Vector2)player.position - (Vector2)transform.position).normalized;
-            diveEndTime = Time.time + diveDuration;
-            nextDiveTime = Time.time + diveCooldown;
+            avisando = true;
+            avisoHasta = Time.time + avisoPicada;
+            nextDiveTime = avisoHasta + diveCooldown;
             FaceTowards(player.position.x);
+            if (graznar) AudioManager.Play(Sfx.Graznido, 0.75f);
+            if (spriteRenderer != null)
+                Particula.Rafaga(spriteRenderer.bounds.center, new Color(1f, 1f, 0.85f, 0.8f), 6, 2.5f, 0.1f, 0.3f);
             return;
         }
 

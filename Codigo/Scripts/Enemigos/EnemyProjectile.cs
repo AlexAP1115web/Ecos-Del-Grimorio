@@ -18,6 +18,7 @@ public class EnemyProjectile : MonoBehaviour
     {
         damage = dmg;
         element = elem;
+        AudioManager.Play(Sfx.DisparoEnemigo, 0.45f);
 
         var rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0f;

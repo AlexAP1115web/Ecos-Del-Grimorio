@@ -169,6 +169,13 @@ public static class Controles
         set => PlayerPrefs.SetInt("eg_vibracion", value ? 1 : 0);
     }
 
+    // Ayuda para apuntar: los hechizos buscan al enemigo más cercano a la mira (se cambia en Opciones)
+    public static bool AyudaApuntar
+    {
+        get => PlayerPrefs.GetInt("eg_ayuda_apuntar", 1) == 1;
+        set => PlayerPrefs.SetInt("eg_ayuda_apuntar", value ? 1 : 0);
+    }
+
     public static void Vibrar(float bajo, float alto, float segundos)
     {
         if (Pad == null || !VibracionActiva) return;

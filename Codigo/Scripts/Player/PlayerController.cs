@@ -48,6 +48,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float caderaIzqX = 0.417f;
     [SerializeField] private float caderaDerX = 0.597f;
     [SerializeField] private float largoPaso = 1.8f;
+    [Tooltip("El dibujo de Lira está un poco girado hacia la izquierda (el libro va adelante), por eso es falso")]
+    [SerializeField] private bool arteMiraALaDerecha = false;
+    [Tooltip("Qué tan rápido se da la vuelta (más alto = más rápido)")]
+    [SerializeField] private float velocidadGiro = 11f;
     [Tooltip("Parte transparente de la imagen bajo los pies (fracción del alto). La calcula CrearJuego.")]
     [SerializeField] private float margenPies = 0f;
 
@@ -97,6 +101,11 @@ public class PlayerController : MonoBehaviour
     private SpriteRenderer shadow;
     private SpellCaster caster;
     private float nextGlideFx;
+    private float giroVisual = 1f;   // 1 o -1 cuando ya giró; pasa por 0 mientras se da la vuelta
+    private bool mirabaDerecha = true;
+    private float alturaMaxima;       // punto más alto desde que dejó el suelo (para saber de qué altura cayó)
+    private bool planeabaAntes;
+    private float siguienteLatido;
 
     public bool FacingRight { get; private set; } = true;
     public bool IsGrounded => isGrounded;
@@ -132,6 +141,7 @@ public class PlayerController : MonoBehaviour
         if (spriteRenderer != null) fullSprite = spriteRenderer.sprite;
         SetupParts();
         CreateShadow();
+        giroVisual = LadoDibujo;
     }
 
     void Start()
@@ -230,14 +240,38 @@ public class PlayerController : MonoBehaviour
 
         if (horizontalInput > 0.1f) FacingRight = true;
         else if (horizontalInput < -0.1f) FacingRight = false;
-        if (spriteRenderer != null) spriteRenderer.flipX = legL == null && !FacingRight;
+        if (spriteRenderer != null) spriteRenderer.flipX = legL == null && LadoDibujo < 0f;
+
+        // Al cambiar de dirección corriendo levanta un poco de polvo (como un derrape)
+        if (FacingRight != mirabaDerecha)
+        {
+            mirabaDerecha = FacingRight;
+            if (isGrounded && Mathf.Abs(rb.linearVelocity.x) > 2f)
+                Particula.Polvo((Vector2)transform.position + Vector2.down * 0.8f, new Color(0.9f, 0.85f, 0.75f, 0.5f));
+        }
+
+        // Al empezar a planear suena una ráfaga de viento
+        if (IsGliding && !planeabaAntes) AudioManager.Play(Sfx.Planeo, 0.5f);
+        planeabaAntes = IsGliding;
+
+        // Con poca vida se escucha un latido para avisar que hay que curarse
+        if (health != null && !health.IsDead && health.Percent < 0.25f && Time.time >= siguienteLatido && Time.timeScale > 0f)
+        {
+            siguienteLatido = Time.time + 0.95f;
+            AudioManager.Play(Sfx.Latido, 0.55f);
+        }
 
         AnimateVisual();
     }
 
+    // 1 = el dibujo se ve tal cual, -1 = volteado. Depende de hacia dónde mira el arte original.
+    float LadoDibujo => FacingRight == arteMiraALaDerecha ? 1f : -1f;
+
     void FixedUpdate()
     {
         bool wasGrounded = isGrounded;
+        if (wasGrounded || IsGliding) alturaMaxima = transform.position.y;
+        else alturaMaxima = Mathf.Max(alturaMaxima, transform.position.y);
         CheckGround();
         if (isGrounded) lastGroundedTime = Time.time;
         if (isGrounded && !wasGrounded && rb.linearVelocity.y <= 0.1f) OnLand();
@@ -321,6 +355,7 @@ public class PlayerController : MonoBehaviour
 
     void SetCrouch(bool crouch)
     {
+        if (crouch && !IsCrouching) AudioManager.Play(Sfx.Agacharse, 0.4f);
         IsCrouching = crouch;
         if (crouch)
         {
@@ -353,7 +388,18 @@ public class PlayerController : MonoBehaviour
     void OnLand()
     {
         squash = new Vector2(1.25f, 0.75f);
-        if (landedSoundReady) AudioManager.Play(Sfx.Aterrizaje, 0.5f);
+        // Caída desde muy alto: golpe más fuerte, la cámara tiembla y Lira se queja
+        float caida = alturaMaxima - transform.position.y;
+        if (landedSoundReady && caida > 5.5f)
+        {
+            squash = new Vector2(1.4f, 0.6f);
+            AudioManager.Play(Sfx.CaidaFuerte, 0.8f);
+            AudioManager.Lira(VozLira.Esfuerzo);
+            CameraFollow.Shake(0.1f, 0.12f);
+            Controles.Vibrar(0.3f, 0.1f, 0.1f);
+        }
+        else if (landedSoundReady) AudioManager.Play(Sfx.Aterrizaje, 0.5f);
+        alturaMaxima = transform.position.y;
         landedSoundReady = true;
         Particula.Polvo((Vector2)transform.position + Vector2.down * 0.8f, new Color(0.9f, 0.85f, 0.75f, 0.6f));
         Landed?.Invoke();
@@ -379,7 +425,9 @@ public class PlayerController : MonoBehaviour
         if (IsCrouching) bob *= 0.4f;
 
         float scaleY = squash.y * (1f + bob + stretchY) * crouchY;
-        float facing = legL != null && !FacingRight ? -1f : 1f;
+        // Se da la vuelta en unos cuadros (la escala pasa por 0) en lugar de voltearse de golpe
+        giroVisual = Mathf.MoveTowards(giroVisual, LadoDibujo, velocidadGiro * Time.deltaTime);
+        float facing = legL != null ? giroVisual : 1f;
         visual.localScale = new Vector3(
             facing * visualBaseScale.x * squash.x * (1f - stretchY * 0.5f) * crouchX,
             visualBaseScale.y * scaleY,
@@ -400,7 +448,7 @@ public class PlayerController : MonoBehaviour
         {
             nextGhostTime = Time.time + 0.03f;
             if (legL != null)
-                Particula.Fantasma(fullSprite, visual.position, visual.lossyScale, !FacingRight, spriteRenderer.sortingOrder - 2, new Color(0.7f, 0.5f, 1f, 0.5f), 0.25f);
+                Particula.Fantasma(fullSprite, visual.position, visual.lossyScale, LadoDibujo < 0f, spriteRenderer.sortingOrder - 2, new Color(0.7f, 0.5f, 1f, 0.5f), 0.25f);
             else
                 Particula.Fantasma(spriteRenderer, new Color(0.7f, 0.5f, 1f, 0.5f), 0.25f);
         }

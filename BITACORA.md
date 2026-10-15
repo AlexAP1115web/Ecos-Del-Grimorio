@@ -134,6 +134,13 @@
 - Manual del jugador en PDF.
 - Formato de Pruebas Beta para el Sprint 3 y hoja Pruebas Beta en el libro de producción.
 
+### 15 de octubre
+- Ayuda para apuntar: si hay un enemigo más o menos hacia donde apunto, el hechizo sale hacia él y lo va siguiendo. Se puede quitar en Opciones.
+- Aves de Tormenta más justas: tiemblan y graznan antes de lanzarse en picada, se quedan quietas un momento después y empujan menos a Lira.
+- Lira ahora se voltea bien hacia donde camina (el dibujo original mira un poco a la izquierda) y se da la vuelta con una animación corta.
+- Sentido arcano: cerca de una Página Perdida, un Fragmento o un muro agrietado salen chispas azules, suena un tintineo y aparece un aviso.
+- Sonidos nuevos: al lanzar hechizos, sin maná, quejido de enemigos, graznido de las aves, disparos enemigos, caída fuerte, caída al vacío, planear, agacharse, latido con poca vida, curación y el tintineo de los secretos.
+
 ### Pendiente
 - Probar los cinco niveles en Unity y ajustar dificultad.
 - Terminar las pruebas Alfa pendientes con el ejecutable.

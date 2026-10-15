@@ -283,9 +283,125 @@ EFECTOS = [
     ('JefeDerrotado', jefe_derrotado),
 ]
 
+
+# ---------------- Sonidos agregados después de las pruebas ----------------
+
+def lanzar():
+    # Soplido corto que acompaña a cada hechizo
+    n = int(0.16 * SR)
+    t = t_(0.16)
+    y = bp(ruido(n), 900, 3500) * np.sin(np.pi * t / 0.16) ** 2
+    return efecto(y, 0.1)
+
+
+def sin_mana():
+    # Chispa que se apaga: el hechizo no salió
+    blip = barrido(520, 180, 0.18, 'sq', 0.6) * caida(0.18, 14)
+    chisporroteo = hp(ruido(int(0.18 * SR)), 3000) * (rng.random(int(0.18 * SR)) > 0.97) * 2 * caida(0.18, 12)
+    return efecto(lp(blip, 1800) + chisporroteo, 0.1)
+
+
+def quejido():
+    # Grito corto de criatura al recibir un golpe
+    t = t_(0.16)
+    f = 340 - 140 * t / 0.16
+    y = saw(f, len(t))
+    y = 0.7 * bp(y, 500, 1100) + 0.4 * bp(y, 1300, 2200)
+    return efecto(y * np.sin(np.pi * t / 0.16) ** 0.7, 0.1)
+
+
+def graznido():
+    # Chillido de ave antes de lanzarse en picada (dos chirridos)
+    def chirrido(dur):
+        t = t_(dur)
+        f = 1500 - 700 * (t / dur) ** 0.6
+        ph = np.cumsum(f * (1 + 0.04 * np.sin(2 * np.pi * 45 * t))) / SR
+        y = np.sin(2 * np.pi * ph + 2.5 * np.sin(2 * np.pi * ph * 0.5))
+        return (bp(y, 700, 4000) + bp(ruido(len(t)), 2000, 6000) * 0.25) * np.sin(np.pi * t / dur) ** 0.6
+    y = mezclar(chirrido(0.16), np.concatenate([np.zeros(int(0.13 * SR)), chirrido(0.22)]))
+    return efecto(y, 0.2)
+
+
+def disparo_enemigo():
+    # Proyectil oscuro de los enemigos
+    t = t_(0.24)
+    y = barrido(620, 140, 0.24, 'sin', 0.5) * caida(0.24, 9)
+    y = y + 0.4 * barrido(930, 210, 0.24, 'tri', 0.5) * caida(0.24, 12)
+    soplo = bp(ruido(len(t)), 400, 2000) * caida(0.24, 10) * 0.5
+    return efecto(y + soplo, 0.25)
+
+
+def caida_fuerte():
+    # Golpe pesado al caer desde muy alto
+    t = t_(0.4)
+    grave = np.sin(2 * np.pi * np.cumsum(90 - 45 * t / 0.4) / SR) * caida(0.4, 9) * 1.4
+    polvo = lp(ruido(len(t)), 600) * caida(0.4, 14) * 1.8
+    piedras = bp(ruido(len(t)), 1500, 5000) * caida(0.4, 20) * 0.3
+    return efecto(grave + polvo + piedras, 0.15)
+
+
+def vacio():
+    # Silbido que baja: Lira cae al vacío
+    t = t_(1.0)
+    silbido = barrido(1400, 180, 1.0, 'sin', 0.8) * 0.5
+    viento_ = bp(ruido(len(t)), 300, 1500) * (0.3 + 0.7 * t / 1.0) * 0.6
+    env_ = np.clip(t / 0.05, 0, 1) * np.clip((1.0 - t) / 0.3, 0, 1)
+    return efecto((silbido + viento_) * env_, 0.35)
+
+
+def planeo():
+    # Ráfaga de viento suave al abrir la capa para planear
+    n = int(0.7 * SR)
+    t = t_(0.7)
+    y = 0.7 * bp(ruido(n), 250, 900) + 0.3 * bp(ruido(n), 1200, 2600)
+    return efecto(y * np.sin(np.pi * t / 0.7) ** 1.3, 0.2)
+
+
+def agacharse():
+    # Roce de la capa
+    partes = []
+    for i, dur in enumerate((0.07, 0.09)):
+        n = int(dur * SR)
+        y = bp(ruido(n), 1200, 5000) * np.sin(np.pi * np.arange(n) / n) ** 1.5
+        partes.append(np.concatenate([np.zeros(int(i * 0.06 * SR)), y * (1 - 0.3 * i)]))
+    return efecto(mezclar(*partes), 0.05)
+
+
+def latido():
+    # Corazón (dos golpes graves) cuando a Lira le queda poca vida
+    def golpe(f0, vol):
+        t = t_(0.16)
+        return np.sin(2 * np.pi * np.cumsum(f0 - 25 * t / 0.16) / SR) * caida(0.16, 22) * np.clip(t / 0.004, 0, 1) * vol
+    y = mezclar(golpe(70, 1.0), np.concatenate([np.zeros(int(0.2 * SR)), golpe(60, 0.75)]))
+    return efecto(lp(y, 300), 0.05)
+
+
+def curacion():
+    # Arpegio brillante que sube y un acorde suave
+    arp = notas([midi(x) for x in ('E5', 'G#5', 'B5', 'E6')], lambda f, d: campana(f, d, 1, 1.0, 0.7, 4), 0.06)
+    pad = mezclar(*[cuerdas(mtof(midi(x)), 0.4, brillo=2500) for x in ('E4', 'B4', 'E5')])
+    return efecto(mezclar(arp, pad * 0.5), 0.4)
+
+
+def secreto():
+    # Tintineo misterioso del "sentido arcano"
+    y = notas([midi('D7'), midi('A6')], lambda f, d: campana(f, d, 1, 2.0, 1.2, 4), 0.11)
+    brillo = hp(ruido(int(0.5 * SR)), 7000) * np.exp(-t_(0.5) * 8) * 0.08
+    return efecto(mezclar(y, brillo), 0.5)
+
+
+NUEVOS = [
+    ('Lanzar', lanzar), ('SinMana', sin_mana), ('Quejido', quejido), ('Graznido', graznido),
+    ('DisparoEnemigo', disparo_enemigo), ('CaidaFuerte', caida_fuerte), ('Vacio', vacio), ('Planeo', planeo),
+    ('Agacharse', agacharse), ('Latido', latido), ('Curacion', curacion), ('Secreto', secreto),
+]
+
+
 if __name__ == '__main__':
     destino = sys.argv[1]
-    for nombre, fn in EFECTOS:
+    # "nuevos" genera solo los sonidos agregados después de las pruebas
+    lista = NUEVOS if len(sys.argv) > 2 and sys.argv[2] == 'nuevos' else EFECTOS + NUEVOS
+    for nombre, fn in lista:
         y = fn()
         pcm = (np.clip(y, -1, 1) * 32767).astype(np.int16)
         with wave.open(f'{destino}/{nombre}.wav', 'wb') as w:

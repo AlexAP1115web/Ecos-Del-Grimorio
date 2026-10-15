@@ -207,7 +207,8 @@ public static class CrearJuego
         P["Mota"] = Flyer("Mota_Corrupta", "Enemies/Motas_Corruptas.png", 0.9f, mota,
             ai => { Set(ai, "explodeOnContact", true); Set(ai, "driftTowardsPlayer", true); Set(ai, "hoverRadius", 0.8f); });
         P["Ave"] = Flyer("Ave_de_Tormenta", "Enemies/Aves_De_Tormenta.png", 1.0f, ave,
-            ai => { Set(ai, "diveSpeed", 9f); Set(ai, "diveCooldown", 2.5f); });
+            ai => { Set(ai, "diveSpeed", 9f); Set(ai, "diveCooldown", 2.8f); Set(ai, "graznar", true);
+                    Set(ai, "avisoPicada", 0.55f); Set(ai, "empujeContacto", 5f); });
         P["Golem"] = Flyer("Golem_de_Piedra", "Enemies/Golems_De_Piedra_Suspendida.png", 1.5f, golem,
             ai => { Set(ai, "diveSpeed", 6f); Set(ai, "diveCooldown", 3.5f); Set(ai, "hoverRadius", 0.6f);
                     Arma(ai.gameObject, embestida, TipoGolpe.Embestida, 2.2f, 16f, 3f, 1.6f, 0f, null); });
@@ -2025,7 +2026,8 @@ public static class CrearJuego
         var voces = CrearSlider("Voces", 30, 2);
         var completa = CrearCasilla("Pantalla completa", -60);
         var vibracion = CrearCasilla("Vibración del control", -140);
-        var boton = Boton(t, "Volver", new Vector2(0, -300), volver);
+        var ayuda = CrearCasilla("Ayuda para apuntar", -220);
+        var boton = Boton(t, "Volver", new Vector2(0, -310), volver);
 
         var ui = panel.AddComponent<OpcionesUI>();
         Set(ui, "musica", musica);
@@ -2033,6 +2035,7 @@ public static class CrearJuego
         Set(ui, "voces", voces);
         Set(ui, "pantallaCompleta", completa);
         Set(ui, "vibracion", vibracion);
+        Set(ui, "ayudaApuntar", ayuda);
         SetArray(ui, "porcentajes", porcentajes);
         primero = musica.gameObject;
         return panel;

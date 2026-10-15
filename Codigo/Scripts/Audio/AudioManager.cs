@@ -10,7 +10,9 @@ public enum Sfx
     GolpeEnemigo, MuerteEnemigo, DanoLira,
     Objeto, ObjetoEspecial, Pagina, Checkpoint, Cofre, Romper,
     MenuMover, MenuAceptar, Logro, Portal, GameOver, JefeAparece, Paso, Victoria, Geiser, Hielazo, Viento2,
-    JefeDerrotado
+    JefeDerrotado,
+    // Sonidos agregados en la revisión de pruebas
+    Lanzar, SinMana, Quejido, Graznido, DisparoEnemigo, CaidaFuerte, Vacio, Planeo, Agacharse, Latido, Curacion, Secreto
 }
 
 public enum VozLira { Dano, Esfuerzo, Caida }
@@ -63,7 +65,7 @@ public class AudioManager : MonoBehaviour
     private AudioClip musicaNivel;
     private float duck = 1f, duckObjetivo = 1f;
     private Coroutine fundidoActual;
-    private readonly float[] ultimoSonido = new float[32];
+    private readonly float[] ultimoSonido = new float[64];
     private AudioSource voz;
     private float ultimaQueja;
 
