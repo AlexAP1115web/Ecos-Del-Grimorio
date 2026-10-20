@@ -156,7 +156,7 @@ public static class Herramientas
         // Datos que aparecen en la ventana y en las propiedades del .exe
         PlayerSettings.companyName = "Alejandro Pérez Alcántara";
         PlayerSettings.productName = "Ecos del Grimorio";
-        PlayerSettings.bundleVersion = "0.2";
+        PlayerSettings.bundleVersion = "1.0";
         PlayerSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
         PlayerSettings.defaultScreenWidth = Ancho;
         PlayerSettings.defaultScreenHeight = Alto;

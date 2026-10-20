@@ -19,6 +19,7 @@ using UnityEngine.InputSystem;
 //  Esquive             Shift                   Círculo
 //  Hablar / abrir      E                       Triángulo
 //  Pausa               Esc o P                 Options
+//  Saltar nivel        Mantén N                Mantén L3 + R3 (o en la pausa)
 //  Modo Archimaga      F H V A + Enter         L1 + R1 + Triángulo (en cualquier orden)
 public static class Controles
 {
@@ -154,6 +155,13 @@ public static class Controles
     public static bool AceptarPresionado =>
         (Kb != null && (Kb.enterKey.wasPressedThisFrame || Kb.numpadEnterKey.wasPressedThisFrame)) ||
         (Pad != null && Pad.buttonSouth.wasPressedThisFrame);
+
+    // Saltar nivel: se mantiene presionado (lo revisa GameManager)
+    public static bool SaltarNivelSostenido =>
+        (Kb != null && Kb.nKey.isPressed) ||
+        (Pad != null && Pad.leftStickButton.isPressed && Pad.rightStickButton.isPressed);
+
+    public static string TextoSaltarNivel => HayControl ? "L3 + R3" : "N";
 
     // Texto de ayuda según lo que esté usando el jugador
     public static string TextoInteractuar => HayControl ? "Triángulo" : "E";

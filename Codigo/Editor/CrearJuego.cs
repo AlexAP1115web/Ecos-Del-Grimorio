@@ -64,6 +64,7 @@ public static class CrearJuego
             "Juego creado: Menú Principal, 5 niveles y Créditos.\n\n" +
             "Controles (también en el menú > Controles):\nA/D: moverse    Espacio: saltar    W: apuntar arriba    S: agacharse\n" +
             "J, K, L: hechizos    I: combo rápido    U: cambiar hechizo\nShift: esquive    E: hablar / abrir    Esc o P: pausa\n" +
+            "Mantén N (o L3 + R3 en el control): saltar nivel\n" +
             "Control: Cuadrado, R1, L1 hechizos; stick derecho apunta; L2 combo rápido\n\n" +
             "Abre MenuPrincipal y presiona Play.", "OK");
     }
@@ -1851,14 +1852,15 @@ public static class CrearJuego
         var marcoMenu = LoadSprite(Sprites + "UI/Marco de menú.png");
         var pause = Panel(t, "Pausa", new Color(0, 0, 0, 0.6f));
         Img("Marco", pause.transform, c, Vector2.zero, new Vector2(820, 820), marcoMenu, Color.white);
-        Txt("Titulo", pause.transform, c, new Vector2(0, 300), new Vector2(600, 90), "PAUSA", 58, TextAnchor.MiddleCenter);
-        var reanudar = Boton(pause.transform, "Reanudar", new Vector2(0, 215), ui.BotonReanudar);
-        Boton(pause.transform, "Grimorio", new Vector2(0, 137), ui.BotonGrimorio);
-        Boton(pause.transform, "Controles", new Vector2(0, 59), ui.BotonControles);
-        Boton(pause.transform, "Opciones", new Vector2(0, -19), ui.BotonOpciones);
-        Boton(pause.transform, "Logros", new Vector2(0, -97), ui.BotonLogros);
-        Boton(pause.transform, "Reiniciar nivel", new Vector2(0, -175), ui.BotonReiniciar);
-        Boton(pause.transform, "Menú principal", new Vector2(0, -253), ui.BotonMenu);
+        Txt("Titulo", pause.transform, c, new Vector2(0, 330), new Vector2(600, 90), "PAUSA", 58, TextAnchor.MiddleCenter);
+        var reanudar = Boton(pause.transform, "Reanudar", new Vector2(0, 250), ui.BotonReanudar);
+        Boton(pause.transform, "Grimorio", new Vector2(0, 174), ui.BotonGrimorio);
+        Boton(pause.transform, "Controles", new Vector2(0, 98), ui.BotonControles);
+        Boton(pause.transform, "Opciones", new Vector2(0, 22), ui.BotonOpciones);
+        Boton(pause.transform, "Logros", new Vector2(0, -54), ui.BotonLogros);
+        Boton(pause.transform, "Saltar nivel", new Vector2(0, -130), ui.BotonSaltarNivel);
+        Boton(pause.transform, "Reiniciar nivel", new Vector2(0, -206), ui.BotonReiniciar);
+        Boton(pause.transform, "Menú principal", new Vector2(0, -282), ui.BotonMenu);
 
         var opciones = PanelOpciones(t, true, ui.BotonVolverPausa, out var primeraOpcion);
         Set(ui, "optionsPanel", opciones);
@@ -2065,17 +2067,18 @@ public static class CrearJuego
             ("Planear (con Viento)", "Mantén Espacio al caer", "Mantén X al caer"),
             ("Hablar / abrir cofres", "E", "Triángulo"),
             ("Pausa", "Esc o P", "Options"),
+            ("Saltar nivel (mantén 1.5 s)", "N", "L3 + R3"),
         };
         for (int i = 0; i < filas.Length; i++)
         {
-            float y = 310 - i * 50;
+            float y = 315 - i * 47;
             if (i > 0 && i % 2 == 0)
-                Img("Franja", t, c, new Vector2(0, y), new Vector2(1320, 46), square, new Color(1f, 1f, 1f, 0.05f));
+                Img("Franja", t, c, new Vector2(0, y), new Vector2(1320, 44), square, new Color(1f, 1f, 1f, 0.05f));
             Txt("Accion", t, c, new Vector2(-370, y), new Vector2(560, 46), filas[i].accion, 28, TextAnchor.MiddleLeft);
             Txt("Teclado", t, c, new Vector2(150, y), new Vector2(420, 46), filas[i].teclado, 28, TextAnchor.MiddleLeft).color = Color.white;
             Txt("Control", t, c, new Vector2(510, y), new Vector2(300, 46), filas[i].control, 28, TextAnchor.MiddleLeft).color = Color.white;
         }
-        Txt("Consejos", t, c, new Vector2(0, -322), new Vector2(1300, 90),
+        Txt("Consejos", t, c, new Vector2(0, -330), new Vector2(1300, 90),
             "Combos: lanza dos elementos distintos seguidos (menos de 1 segundo) o usa el combo rápido.\n" +
             "Rompe vasijas y muros agrietados con tus hechizos: esconden objetos y Páginas Perdidas.",
             27, TextAnchor.MiddleCenter);

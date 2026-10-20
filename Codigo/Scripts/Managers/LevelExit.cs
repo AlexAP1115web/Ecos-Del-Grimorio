@@ -40,4 +40,15 @@ public class LevelExit : MonoBehaviour
         if (GameManager.Instance != null)
             GameManager.Instance.CompleteLevel(nextScene, spellToUnlock, unlocksSpell);
     }
+
+    // Saltar nivel: pasa al siguiente aunque el guardián siga vivo (sí da el hechizo del ala
+    // para que el siguiente nivel se pueda jugar)
+    public void Saltar()
+    {
+        if (used) return;
+        used = true;
+        AudioManager.Play(Sfx.Portal);
+        if (GameManager.Instance != null)
+            GameManager.Instance.CompleteLevel(nextScene, spellToUnlock, unlocksSpell);
+    }
 }

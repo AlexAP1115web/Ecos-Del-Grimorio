@@ -373,6 +373,11 @@ public class UIManager : MonoBehaviour
         if (GameManager.Instance != null) GameManager.Instance.GoToMenu();
     }
 
+    public void BotonSaltarNivel()
+    {
+        if (GameManager.Instance != null) GameManager.Instance.SaltarNivel();
+    }
+
     public void BotonLogros()
     {
         SetActive(pausePanel, false);

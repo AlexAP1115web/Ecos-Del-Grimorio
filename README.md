@@ -44,7 +44,9 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 | Sprint | Fechas | Objetivo |
 |---|---|---|
 | 1 | 1 al 18 de septiembre de 2026 | Preproducción: documento de diseño, arte conceptual y producción |
-| 2 | 19 de septiembre en adelante | Producción: importar arte a Unity, código C#, menú, 5 niveles, jefes, logros y créditos |
+| 2 | 19 de septiembre al 30 de octubre de 2026 | Producción: importar arte a Unity, código C#, menú, 5 niveles, jefes, logros, créditos y pruebas Alfa |
+| 3 | 31 de octubre al 20 de noviembre de 2026 | Pruebas Beta, corrección de errores, balance y borrador del Postmortem |
+| 4 | 21 al 30 de noviembre de 2026 | Gold Master y Postmortem final |
 
 ## Controles del prototipo
 
@@ -62,6 +64,7 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 | Hablar / abrir cofre | E | Triángulo |
 | Pausa | Esc o P | Options |
 | Modo Archimaga (código secreto) | F, H, V, A, Intro | Mantener L1 + R1 y presionar Triángulo |
+| Saltar nivel | Mantener N 1.5 s (o Pausa > Saltar nivel) | Mantener L3 + R3 1.5 s |
 
 ## Créditos
 

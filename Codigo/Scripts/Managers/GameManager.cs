@@ -55,6 +55,9 @@ public class GameManager : MonoBehaviour
 
     private float levelStartTime;
     private bool tookDamageThisLevel;
+    private bool nivelSaltado;          // el nivel se saltó: no cuenta para logros
+    private float saltarDesde = -1f;    // desde cuándo se mantiene el atajo de saltar nivel
+    const float TiempoSaltar = 1.5f;
     private string checkpointScene;
     private Vector3 checkpointPosition;
     private float hitStopUntil;
@@ -109,6 +112,8 @@ public class GameManager : MonoBehaviour
         if (GameObject.FindGameObjectWithTag("Player") == null) { SetState(GameState.MenuPrincipal); return; }
 
         SetState(GameState.Jugando);
+        nivelSaltado = false;
+        saltarDesde = -1f;
         levelStartTime = Time.time;
         tookDamageThisLevel = false;
         enemigosDerrotados = 0;
@@ -143,9 +148,53 @@ public class GameManager : MonoBehaviour
             if (State == GameState.Jugando && !reading) Time.timeScale = 1f;
         }
 
+        RevisarAtajoSaltar();
+
         if (!Controles.PausaPresionado) return;
         if (State == GameState.Jugando) Pause();
         else if (State == GameState.Pausa) Resume();
+    }
+
+    // ---------- Saltar nivel ----------
+    // Para las demostraciones: opción "Saltar nivel" en la pausa, o mantener N (teclado)
+    // o L3 + R3 (control) durante 1.5 segundos. Se mantiene para que no pase por accidente.
+
+    void RevisarAtajoSaltar()
+    {
+        bool enNivel = State == GameState.Jugando || State == GameState.Pausa;
+        if (!enNivel || !Controles.SaltarNivelSostenido)
+        {
+            saltarDesde = -1f;
+            return;
+        }
+        if (saltarDesde < 0f)
+        {
+            saltarDesde = Time.unscaledTime;
+            ShowMessage($"Mantén {Controles.TextoSaltarNivel} para saltar el nivel...", TiempoSaltar);
+            return;
+        }
+        if (Time.unscaledTime - saltarDesde >= TiempoSaltar)
+        {
+            saltarDesde = -1f;
+            SaltarNivel();
+        }
+    }
+
+    public void SaltarNivel()
+    {
+        if (finishing || nivelSaltado) return;
+        if (State != GameState.Jugando && State != GameState.Pausa) return;
+        if (!SceneManager.GetActiveScene().name.StartsWith("Nivel")) return;
+
+        nivelSaltado = true;
+        if (UIManager.Instance != null) UIManager.Instance.CerrarDialogo();
+        Time.timeScale = 1f;
+        hitStopUntil = 0f;
+        SetState(GameState.Jugando);
+
+        var salida = FindFirstObjectByType<LevelExit>();
+        if (salida != null) salida.Saltar();
+        else FinishGame();   // el Corazón del Grimorio no tiene portal: se pasa directo al final
     }
 
     // Congela el juego una fracción de segundo para dar peso a un golpe
@@ -371,7 +420,9 @@ public class GameManager : MonoBehaviour
         float segundos = Time.time - levelStartTime;
 
         // Si algún script que escucha estos eventos falla, el nivel debe terminar de todos modos
-        try { LevelCompleted?.Invoke(current, segundos, tookDamageThisLevel); } catch (Exception e) { Debug.LogException(e); }
+        // Un nivel saltado no cuenta para logros como Velocista Arcana o Sin Un Rasguño
+        if (!nivelSaltado)
+            try { LevelCompleted?.Invoke(current, segundos, tookDamageThisLevel); } catch (Exception e) { Debug.LogException(e); }
         try { if (unlocksSpell) UnlockSpell(spellToUnlock); } catch (Exception e) { Debug.LogException(e); }
         checkpointScene = null;
         if (nextScene == CreditsScene) { try { GameFinished?.Invoke(); } catch (Exception e) { Debug.LogException(e); } }
@@ -417,6 +468,7 @@ public class GameManager : MonoBehaviour
     {
         int min = Mathf.FloorToInt(segundos / 60f), seg = Mathf.FloorToInt(segundos % 60f);
         var sb = new System.Text.StringBuilder();
+        if (nivelSaltado) sb.AppendLine("<color=#9FD7FF>Nivel saltado</color>");
         sb.AppendLine($"Tiempo:  {min:00}:{seg:00}");
         sb.AppendLine($"Enemigos derrotados:  {enemigosDerrotados}");
         sb.AppendLine(tookDamageThisLevel ? $"Daño recibido:  {Mathf.RoundToInt(danoRecibido)}" : "Daño recibido:  ninguno  ★");

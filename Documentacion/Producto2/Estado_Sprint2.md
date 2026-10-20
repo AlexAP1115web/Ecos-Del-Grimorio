@@ -25,7 +25,7 @@
 | `UI` | `UIManager`, `HUD`, `NPCDialogue`, `MainMenu`, `OpcionesUI`, `Prologo`, `GrimorioUI`, `AchievementsList`, `CreditsScreen` |
 | `Efectos` | `AreaEffect`, `Particula`, `Parallax`, `ParticulasAmbiente`, `LuzParpadeante`, `EstelaProyectil`, `SlowZone`, `MovingPlatform`, `Rompible`, `Desvanecer`, `Flotar`, `GeiserFuego`, `Carambano`, `CorrienteViento`, `Empujable`, `PlacaPresion`, `PuertaRunica` |
 | `Audio` | `AudioManager`, `SonidoBoton` |
-| `Sistema` | `Controles`, `VibracionControl`, `CapturaPantalla` |
+| `Sistema` | `Controles`, `DetectorEntrada`, `VibracionControl`, `CapturaPantalla`, `SentidoArcano` |
 | `Editor` | `CrearJuego`, `EditorHelpers`, `ConfigureSprites`, `Herramientas` |
 
 ## Programación Orientada a Objetos

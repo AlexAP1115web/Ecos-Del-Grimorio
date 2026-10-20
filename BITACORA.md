@@ -141,8 +141,14 @@
 - Sentido arcano: cerca de una Página Perdida, un Fragmento o un muro agrietado salen chispas azules, suena un tintineo y aparece un aviso.
 - Sonidos nuevos: al lanzar hechizos, sin maná, quejido de enemigos, graznido de las aves, disparos enemigos, caída fuerte, caída al vacío, planear, agacharse, latido con poca vida, curación y el tintineo de los secretos.
 
+### 20 de octubre
+- Saltar nivel: opción en el menú de pausa, o mantener N (teclado) o L3 + R3 (control) durante 1.5 segundos. Lira aprende el hechizo del ala que se salta y el nivel no cuenta para logros.
+- Versión 1.0 del ejecutable compilada y comprimida para compartir.
+- Manual del jugador actualizado: mejoras después de las pruebas, dónde están los secretos y los botones nuevos.
+- Libro de producción del Sprint 2 actualizado (tareas T40 a T46, bugs B-016 a B-018) y libro del Sprint 3 con backlog, Pruebas Beta, Buglist y diagrama de Gantt.
+- Borrador del Postmortem.
+
 ### Pendiente
-- Probar los cinco niveles en Unity y ajustar dificultad.
-- Terminar las pruebas Alfa pendientes con el ejecutable.
-- Documento del Producto 2 en Word y PDF.
-- Diagrama de Gantt.
+- Pruebas Beta con compañeros (formato en Documentacion/Producto3) y capturar los resultados.
+- Terminar las pruebas Alfa pendientes y probar el .exe en otra computadora.
+- Completar el Postmortem y compilar el Gold Master.
