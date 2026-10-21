@@ -148,6 +148,12 @@
 - Libro de producción del Sprint 2 actualizado (tareas T40 a T46, bugs B-016 a B-018) y libro del Sprint 3 con backlog, Pruebas Beta, Buglist y diagrama de Gantt.
 - Borrador del Postmortem.
 
+### 21 de octubre
+- Fondos con más capas en las cinco alas: niebla que se mueve, rayos de luz, estandartes, velas flotantes (Aprendizaje), resplandor de los hornos y humo (Fuego), aurora y copos de nieve (Hielo), nubes y bandadas de aves (Viento), libros flotantes y estrellas (Corazón), y una sombra sobre la cara del suelo.
+- Los adornos se dibujan con código en EditorHelpers.cs y cada capa usa Parallax; Deriva.cs mueve la niebla, las nubes y las aves.
+- Ejecutable 1.0 compilado otra vez con los fondos nuevos y capturas de los niveles actualizadas.
+- Documento "Cómo hice el juego" con mis notas para explicar el proyecto.
+
 ### Pendiente
 - Pruebas Beta con compañeros (formato en Documentacion/Producto3) y capturar los resultados.
 - Terminar las pruebas Alfa pendientes y probar el .exe en otra computadora.

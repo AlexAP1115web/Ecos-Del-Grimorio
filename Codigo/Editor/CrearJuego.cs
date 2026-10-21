@@ -21,6 +21,7 @@ public static class CrearJuego
     static Sprite square, circle, ladrillo, tablas, borde, vineta, pagina, vasija, grietas, panelUI, vinetaBlanca;
     static Sprite estante, cadena, carambanos, carambanoGrande, cristales, enredadera, hierba, runaCirculo, monticulo, llama;
     static Sprite zarzas, muroHielo, caja, placa;
+    static Sprite degradado, rayo, niebla, estandarte, aveLejana, libro, vela;
     static PhysicsMaterial2D noFriction;
     static Font font;
     static readonly Dictionary<Elemento, SpellData> spells = new Dictionary<Elemento, SpellData>();
@@ -95,6 +96,8 @@ public static class CrearJuego
         cristales = Cristales(); enredadera = Enredadera(); hierba = Hierba(); runaCirculo = RunaCirculo();
         monticulo = Monticulo(); llama = Llama();
         zarzas = Zarzas(); muroHielo = MuroHielo(); caja = Caja(); placa = Placa();
+        degradado = Degradado(); rayo = Rayo(); niebla = Niebla(); estandarte = Estandarte();
+        aveLejana = Ave(); libro = Libro(); vela = Vela();
         font = Fuente();
 
         noFriction = AssetDatabase.LoadAssetAtPath<PhysicsMaterial2D>(Data + "/SinFriccion.physicsMaterial2D");
@@ -800,6 +803,7 @@ public static class CrearJuego
 
         HUD(n.lira, titulo);
         DecorarBioma(n, minX, maxX);
+        DecorarFondo(n, minX, maxX);
         return n;
     }
 
@@ -874,6 +878,202 @@ public static class CrearJuego
                 Set(f, "altura", 0.3f);
                 Set(f, "giro", R(-20f, 20f));
                 Light(r, 3, new Color(0.7f, 0.5f, 1f), 0.7f, 3f);
+            }
+        }
+    }
+
+    // Sprite estirado al tamaño pedido (para degradados, rayos y niebla, que no deben repetirse)
+    static GameObject Estirado(Transform parent, string name, Vector2 center, Vector2 size, Sprite sprite, Color color, int order, float angulo = 0f)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        go.transform.position = center;
+        go.transform.rotation = Quaternion.Euler(0f, 0f, angulo);
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = sprite;
+        sr.color = color;
+        sr.sortingOrder = order;
+        go.transform.localScale = new Vector3(size.x / sprite.bounds.size.x, size.y / sprite.bounds.size.y, 1f);
+        return go;
+    }
+
+    // Capa con efecto de profundidad: lo que se ponga dentro se mueve más lento que el nivel
+    static Transform Capa(Nivel n, string nombre, float factor, float factorVertical)
+    {
+        var go = new GameObject(nombre);
+        go.transform.SetParent(n.deco, false);
+        var px = go.AddComponent<Parallax>();
+        Set(px, "factor", factor);
+        Set(px, "factorVertical", factorVertical);
+        return go.transform;
+    }
+
+    // Más capas de fondo para cada ala: niebla, rayos de luz, estandartes, velas, nubes,
+    // aves, aurora y libros flotantes. Todo se dibuja por código y cada ala le da su color.
+    static void DecorarFondo(Nivel n, float minX, float maxX)
+    {
+        var rnd = new System.Random(Mathf.RoundToInt(maxX * 13f));
+        float R(float a, float b) => a + (float)rnd.NextDouble() * (b - a);
+        var t = n.tema;
+
+        // Niebla: una banda lejana a media altura y otra cerca del suelo
+        Color tonoNiebla = t == Fuego ? new Color(1f, 0.45f, 0.15f, 0.32f)
+                         : t == Hielo ? new Color(0.85f, 0.95f, 1f, 0.4f)
+                         : t == Viento ? new Color(1f, 1f, 1f, 0.35f)
+                         : t == Corazon ? new Color(0.65f, 0.4f, 0.95f, 0.35f)
+                         : new Color(1f, 0.9f, 0.7f, 0.22f);
+        var lejana = Capa(n, "NieblaLejana", 0.55f, 0.3f);
+        var cercana = Capa(n, "NieblaCercana", 0.15f, 0.05f);
+        for (float x = minX - 6f; x < maxX + 12f; x += 14f)
+        {
+            var c1 = tonoNiebla; c1.a *= 0.6f;
+            Estirado(lejana, "Niebla", new Vector2(x + R(-2f, 2f), G + R(2.5f, 4f)), new Vector2(R(18f, 24f), R(2.5f, 3.5f)), niebla, c1, -55);
+            var b = Estirado(cercana, "Niebla", new Vector2(x + R(-2f, 2f), G + R(0.5f, 1f)), new Vector2(R(16f, 22f), R(2f, 3f)), niebla, tonoNiebla, -13);
+            var d = b.AddComponent<Deriva>();
+            Set(d, "velocidad", R(0.15f, 0.35f)); Set(d, "desde", minX - 12f); Set(d, "hasta", maxX + 14f);
+        }
+
+        // Rayos de luz que bajan desde arriba (ventanas, grietas del techo o el cielo)
+        if (t != Fuego)
+        {
+            Color luzRayo = t == Hielo ? new Color(0.7f, 0.9f, 1f, 0.2f)
+                          : t == Viento ? new Color(1f, 0.95f, 0.75f, 0.18f)
+                          : t == Corazon ? new Color(0.75f, 0.5f, 1f, 0.2f)
+                          : new Color(1f, 0.88f, 0.6f, 0.24f);
+            var rayos = Capa(n, "RayosDeLuz", 0.5f, 0.35f);
+            for (float x = minX + R(2f, 6f); x < maxX + 10f; x += R(11f, 17f))
+                Estirado(rayos, "Rayo", new Vector2(x, G + 6f), new Vector2(R(1.8f, 3f), R(9f, 12f)), rayo, luzRayo, -40, R(-24f, -14f));
+        }
+
+        // Estandartes colgando arriba (interiores de la Torre)
+        if (t == Aprendizaje || t == Fuego || t == Corazon)
+        {
+            Color[] colores = t == Aprendizaje ? new[] { new Color(0.7f, 0.18f, 0.18f), new Color(0.2f, 0.32f, 0.7f) }
+                            : t == Fuego ? new[] { new Color(0.55f, 0.12f, 0.08f), new Color(0.85f, 0.4f, 0.1f) }
+                            : new[] { new Color(0.45f, 0.2f, 0.65f), new Color(0.75f, 0.6f, 0.25f) };
+            var capa = Capa(n, "Estandartes", 0.25f, 0.15f);
+            int i = 0;
+            for (float x = minX + R(4f, 8f); x < maxX + 6f; x += R(10f, 14f), i++)
+            {
+                var e = new GameObject("Estandarte");
+                e.transform.SetParent(capa, false);
+                var sr = AddSprite(e, estandarte, R(2.2f, 2.8f), -20);
+                e.transform.position = new Vector2(x, G + 8.8f - sr.bounds.extents.y);
+                sr.color = colores[i % colores.Length];
+            }
+        }
+
+        if (t == Aprendizaje)
+        {
+            // Velas que flotan con una luz cálida
+            for (float x = minX + R(3f, 6f); x < maxX; x += R(6f, 10f))
+            {
+                var v = new GameObject("VelaFlotante");
+                v.transform.SetParent(n.deco, false);
+                v.transform.position = new Vector2(x, G + R(4f, 7f));
+                var hijo = new GameObject("Vela");
+                hijo.transform.SetParent(v.transform, false);
+                AddSprite(hijo, vela, 0.55f, -12);
+                var f = hijo.AddComponent<Flotar>();
+                Set(f, "altura", R(0.15f, 0.3f)); Set(f, "velocidad", R(0.8f, 1.4f));
+                Light(hijo, 3, new Color(1f, 0.75f, 0.4f), 0.55f, 2.2f);
+            }
+        }
+        else if (t == Fuego)
+        {
+            // Resplandor de los hornos al fondo: luces naranjas que palpitan
+            for (float x = minX + R(5f, 10f); x < maxX; x += R(14f, 20f))
+            {
+                var h = new GameObject("ResplandorHorno");
+                h.transform.SetParent(n.deco, false);
+                h.transform.position = new Vector2(x, G + R(1f, 2.5f));
+                Light(h, 3, new Color(1f, 0.45f, 0.1f), 0.7f, R(4f, 6f));
+                var p = h.AddComponent<LuzParpadeante>();
+                Set(p, "intensidadBase", 0.7f); Set(p, "variacion", 0.25f); Set(p, "velocidad", 2f);
+                Set(p, "colorChispa", new Color(1f, 0.55f, 0.15f, 0.9f));
+            }
+            // Columnas de humo oscuro que suben
+            var humo = Capa(n, "Humo", 0.4f, 0.25f);
+            for (float x = minX + R(3f, 8f); x < maxX + 8f; x += R(12f, 18f))
+                Estirado(humo, "Humo", new Vector2(x, G + 6f), new Vector2(R(2.5f, 3.5f), R(10f, 13f)), rayo, new Color(0.15f, 0.1f, 0.1f, 0.35f), -45, 180f + R(-6f, 6f));
+        }
+        else if (t == Hielo)
+        {
+            // Aurora en lo alto y carámbanos colgando del techo
+            var aurora = Capa(n, "Aurora", 0.75f, 0.5f);
+            for (float x = minX; x < maxX + 20f; x += 22f)
+            {
+                var a = Estirado(aurora, "Aurora", new Vector2(x, G + R(9f, 11f)), new Vector2(26f, R(2.5f, 3.5f)), niebla,
+                                 rnd.NextDouble() < 0.5 ? new Color(0.4f, 1f, 0.75f, 0.28f) : new Color(0.45f, 0.75f, 1f, 0.3f), -90, R(-6f, 6f));
+                Set(a.AddComponent<Deriva>(), "ondulacion", 0.3f);
+            }
+            // Copos grandes y lentos cerca de la cámara (además de la nieve de ambiente)
+            var copos = Capa(n, "CoposCercanos", -0.15f, 0f);
+            for (int k = 0; k < 40; k++)
+            {
+                var c = new GameObject("Copo");
+                c.transform.SetParent(copos, false);
+                var sr = AddSprite(c, circle, R(0.12f, 0.22f), 55);
+                sr.color = new Color(1f, 1f, 1f, R(0.35f, 0.7f));
+                c.transform.localPosition = new Vector2(R(minX, maxX + 20f), G + R(0f, 8f));
+                var d = c.AddComponent<Deriva>();
+                Set(d, "velocidad", R(-0.5f, -0.2f)); Set(d, "desde", minX - 10f); Set(d, "hasta", maxX + 20f); Set(d, "ondulacion", R(0.2f, 0.5f));
+            }
+        }
+        else if (t == Viento)
+        {
+            // Nubes lejanas que pasan despacio (el fondo pintado ya tiene las islas)
+            var nubes = Capa(n, "NubesLejanas", 0.8f, 0.5f);
+            for (int k = 0; k < 10; k++)
+            {
+                var c = Estirado(nubes, "Nube", new Vector2(R(minX, maxX + 20f), G + R(6f, 10f)), new Vector2(R(8f, 14f), R(1.5f, 2.5f)), niebla,
+                                 new Color(1f, 0.97f, 0.9f, R(0.35f, 0.55f)), -88);
+                var d = c.AddComponent<Deriva>();
+                Set(d, "velocidad", R(0.2f, 0.5f)); Set(d, "desde", minX - 20f); Set(d, "hasta", maxX + 25f);
+            }
+            // Bandadas de aves a lo lejos
+            var aves = Capa(n, "Aves", 0.7f, 0.5f);
+            for (int b = 0; b < 4; b++)
+            {
+                float bx = R(minX, maxX), by = G + R(7f, 10f), vel = R(0.8f, 1.6f) * (rnd.NextDouble() < 0.5 ? -1f : 1f);
+                int cuantas = rnd.Next(3, 7);
+                for (int k = 0; k < cuantas; k++)
+                {
+                    var a = new GameObject("Ave");
+                    a.transform.SetParent(aves, false);
+                    var sr = AddSprite(a, aveLejana, R(0.18f, 0.28f), -80);
+                    sr.color = new Color(0.25f, 0.3f, 0.4f, 0.75f);
+                    a.transform.localPosition = new Vector2(bx - k * 0.7f * Mathf.Sign(vel), by - Mathf.Abs(k - cuantas / 2f) * 0.35f);
+                    var d = a.AddComponent<Deriva>();
+                    Set(d, "velocidad", vel); Set(d, "desde", minX - 15f); Set(d, "hasta", maxX + 15f);
+                    Set(d, "ondulacion", 0.08f); Set(d, "aletea", true);
+                }
+            }
+        }
+        else if (t == Corazon)
+        {
+            // Libros y páginas que flotan girando despacio, y estrellas al fondo
+            for (float x = minX + R(3f, 6f); x < maxX; x += R(7f, 11f))
+            {
+                var b = new GameObject("LibroFlotante");
+                b.transform.SetParent(n.deco, false);
+                b.transform.position = new Vector2(x, G + R(4.5f, 8f));
+                var hijo = new GameObject("Libro");
+                hijo.transform.SetParent(b.transform, false);
+                var sr = AddSprite(hijo, rnd.NextDouble() < 0.6 ? libro : pagina, R(0.5f, 0.8f), -18);
+                sr.color = new Color(0.95f, 0.88f, 1f, 0.9f);
+                var f = hijo.AddComponent<Flotar>();
+                Set(f, "altura", R(0.2f, 0.4f)); Set(f, "velocidad", R(0.6f, 1.1f)); Set(f, "giro", R(-15f, 15f));
+                if (rnd.NextDouble() < 0.5) Light(hijo, 3, new Color(0.75f, 0.55f, 1f), 0.5f, 1.8f);
+            }
+            var estrellas = Capa(n, "Estrellas", 0.85f, 0.7f);
+            for (int k = 0; k < 70; k++)
+            {
+                var e = new GameObject("Estrella");
+                e.transform.SetParent(estrellas, false);
+                var sr = AddSprite(e, circle, R(0.05f, 0.12f), -95);
+                sr.color = new Color(0.9f, 0.85f, 1f, R(0.35f, 0.8f));
+                e.transform.localPosition = new Vector2(R(minX, maxX + 20f), G + R(5f, 12f));
             }
         }
     }
@@ -990,6 +1190,8 @@ public static class CrearJuego
         float w = x2 - x1, cx = (x1 + x2) / 2f;
         Solido(n.geo, $"Suelo_{x1}_{x2}", new Vector2(cx, G - 6f), new Vector2(w, 12f), ladrillo, n.tema.piedra);
         Tiled(n.geo, "Borde", new Vector2(cx, G), new Vector2(w + 0.2f, 0.5f), borde, n.tema.borde, 3);
+        // Sombra sobre la cara del suelo: más oscuro hacia abajo para que no se vea plano
+        Estirado(n.geo, "SombraSuelo", new Vector2(cx, G - 2.3f), new Vector2(w, 4f), degradado, new Color(0f, 0f, 0f, 0.9f), 2);
         if (n.tema == Viento)
             Tiled(n.geo, "Hierba", new Vector2(cx, G + 0.38f), new Vector2(w, 0.5f), hierba, n.tema.borde * 1.15f, 4);
     }

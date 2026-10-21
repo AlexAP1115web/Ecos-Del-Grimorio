@@ -472,6 +472,78 @@ public static class EditorHelpers
         return new Color(v, v, v, 1f);
     }, 128, 48, 32);
 
+    // ---------- Adornos de fondo (se dibujan en gris/blanco y cada ala les da su color) ----------
+
+    // Degradado vertical: transparente arriba y opaco abajo (sombra sobre la cara del suelo)
+    public static Sprite Degradado() => TiledTexture("SombraDegradado", (x, y) =>
+        new Color(1, 1, 1, Mathf.Pow(1f - y / 63f, 0.6f)), 4, 64, 64);
+
+    // Rayo de luz que entra desde arriba: más fuerte arriba y más ancho abajo
+    public static Sprite Rayo() => TiledTexture("Rayo", (x, y) =>
+    {
+        float t = y / 127f;
+        float ancho = 0.55f + 0.45f * (1f - t);
+        float dx = (x - 15.5f) / 16f / ancho;
+        float a = Mathf.Exp(-dx * dx * 4f) * Mathf.Pow(t, 0.7f);
+        return new Color(1, 1, 1, a);
+    }, 32, 128, 32);
+
+    // Banda de niebla suave (se repite a lo largo del nivel)
+    public static Sprite Niebla() => TiledTexture("Niebla", (x, y) =>
+    {
+        float dy = (y - 15.5f) / 16f;
+        float ondas = 0.75f + 0.15f * Mathf.Sin(x * 0.147f) + 0.1f * Mathf.Sin(x * 0.4f + 1.3f);
+        float orillas = Mathf.Pow(Mathf.Sin(Mathf.PI * x / 127f), 0.6f);
+        return new Color(1, 1, 1, Mathf.Exp(-dy * dy * 3f) * ondas * orillas);
+    }, 128, 32, 32);
+
+    // Estandarte de tela que cuelga de una barra, con orilla, emblema y punta en V
+    public static Sprite Estandarte() => TiledTexture("Estandarte", (x, y) =>
+    {
+        float cx = 11.5f;
+        if (y >= 60) return x >= 1 && x <= 22 ? new Color(0.3f, 0.3f, 0.3f, 1f) : new Color(0, 0, 0, 0); // barra
+        if (x < 3 || x > 20) return new Color(0, 0, 0, 0);
+        float punta = 12f * (1f - Mathf.Abs(x - cx) / 9f);
+        if (y < punta) return new Color(0, 0, 0, 0);
+        bool orilla = x < 5 || x > 18 || y < punta + 2f;
+        float d = Vector2.Distance(new Vector2(x, y), new Vector2(cx, 38f));
+        bool emblema = (d < 5f && d > 3.3f) || d < 1.6f;
+        float pliegue = 0.08f * Mathf.Sin(x * 0.9f);
+        float v = orilla || emblema ? 1f : 0.62f + pliegue;
+        return new Color(v, v, v, 1f);
+    }, 24, 64, 32);
+
+    // Ave lejana (silueta en V) para las bandadas del Ala de Viento
+    public static Sprite Ave() => TiledTexture("Ave", (x, y) =>
+    {
+        float linea = 6.5f - Mathf.Abs(x - 7.5f) * 0.55f + (Mathf.Abs(x - 7.5f) > 5f ? (Mathf.Abs(x - 7.5f) - 5f) * 0.6f : 0f);
+        return Mathf.Abs(y - linea) < 1.1f && x > 0 && x < 15 ? new Color(1, 1, 1, 1) : new Color(0, 0, 0, 0);
+    }, 16, 8, 16);
+
+    // Libro abierto que flota en el Corazón del Grimorio
+    public static Sprite Libro() => TiledTexture("Libro", (x, y) =>
+    {
+        float cx = 15.5f;
+        float dx = Mathf.Abs(x - cx);
+        if (dx > 15f) return new Color(0, 0, 0, 0);
+        float curva = 3f * Mathf.Sin(Mathf.PI * dx / 15f);
+        float baseY = 2f + dx * 0.12f, tope = 15f + curva;
+        if (y < baseY || y > tope + 1f) return new Color(0, 0, 0, 0);
+        if (y < baseY + 2f || y > tope) return new Color(0.45f, 0.45f, 0.45f, 1f);   // pasta
+        if (dx < 0.8f) return new Color(0.5f, 0.5f, 0.5f, 1f);                      // lomo
+        bool renglon = ((int)(y - baseY) % 3 == 0) && dx > 3f && dx < 13f;
+        float v = renglon ? 0.72f : 1f;
+        return new Color(v, v, v, 1f);
+    }, 32, 20, 32);
+
+    // Vela con su llama (flotan en el Ala de Aprendizaje)
+    public static Sprite Vela() => TiledTexture("Vela", (x, y) =>
+    {
+        if (y < 15) return Mathf.Abs(x - 3.5f) < 2.2f ? new Color(0.95f, 0.92f, 0.85f, 1f) : new Color(0, 0, 0, 0);
+        float dx = (x - 3.5f) / 2.2f, dy = (y - 19.5f) / 4f;
+        return dx * dx + dy * dy < 1f ? new Color(1f, 0.75f, 0.3f, 1f) : new Color(0, 0, 0, 0);
+    }, 8, 24, 32);
+
     // Columna de fuego del géiser (de abajo hacia arriba)
     public static Sprite Llama() => TiledTexture("Llama", (x, y) =>
     {
