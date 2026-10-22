@@ -160,6 +160,7 @@
 - Plantilla web propia con pantalla de carga, ícono de Lira y modo app (PWA): se instala en el celular y después abre sin internet.
 - Publicado en GitHub Pages desde la carpeta docs: https://alexap1115web.github.io/Ecos-Del-Grimorio/
 - Manual del jugador y notas "Cómo hice el juego" actualizados con la versión para celular.
+- Después de probarlo en mi celular: botones más grandes, el menú ya no se corta en pantallas anchas (AjustePantalla.cs), el truco también se activa en el celular (Combo + Cambiar + Usar) y quité el mensaje extra de la pantalla de carga.
 
 ### Pendiente
 - Pruebas Beta con compañeros (formato en Documentacion/Producto3) y capturar los resultados.

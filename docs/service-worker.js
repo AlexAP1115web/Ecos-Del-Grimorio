@@ -2,7 +2,7 @@
 // Guarda el juego en el celular la primera vez que se abre, así la siguiente
 // vez carga rápido y se puede jugar aunque no haya internet.
 // La versión cambia cada vez que se compila para que se descargue la nueva.
-const version = "ecos-del-grimorio-20261022-0711";
+const version = "ecos-del-grimorio-20261022-1245";
 
 const archivos = [
   "./",

@@ -73,7 +73,7 @@ public class ControlesTactiles : MonoBehaviour
                 for (int i = 0; i < Total; i++)
                 {
                     if (botones[i] == null || !botones[i].gameObject.activeInHierarchy) continue;
-                    if (RectTransformUtility.RectangleContainsScreenPoint(botones[i], pos, null))
+                    if (DentroDelCirculo(botones[i], pos))
                     {
                         ahora[i] = true;
                         sobreBoton = true;
@@ -121,20 +121,20 @@ public class ControlesTactiles : MonoBehaviour
         Vector2 abajoIzq = new Vector2(0, 0), abajoDer = new Vector2(1, 0), arribaDer = new Vector2(1, 1);
         // Cruceta a la izquierda
         // (las flechas se dibujan con un triángulo porque la fuente de Unity no trae esos símbolos)
-        Boton(BotonTactil.Izquierda, "", abajoIzq, new Vector2(150, 230), 170, 90f);
-        Boton(BotonTactil.Derecha, "", abajoIzq, new Vector2(400, 230), 170, -90f);
-        Boton(BotonTactil.Arriba, "", abajoIzq, new Vector2(275, 400), 140, 0f);
-        Boton(BotonTactil.Abajo, "", abajoIzq, new Vector2(275, 75), 130, 180f);
+        Boton(BotonTactil.Izquierda, "", abajoIzq, new Vector2(160, 250), 205, 90f);
+        Boton(BotonTactil.Derecha, "", abajoIzq, new Vector2(450, 250), 205, -90f);
+        Boton(BotonTactil.Arriba, "", abajoIzq, new Vector2(305, 445), 170, 0f);
+        Boton(BotonTactil.Abajo, "", abajoIzq, new Vector2(305, 75), 155, 180f);
         // Acciones a la derecha
-        Boton(BotonTactil.Saltar, "Saltar", abajoDer, new Vector2(-180, 190), 230);
-        Boton(BotonTactil.Hechizo1, "1", abajoDer, new Vector2(-420, 150), 160);
-        Boton(BotonTactil.Hechizo2, "2", abajoDer, new Vector2(-380, 350), 160);
-        Boton(BotonTactil.Hechizo3, "3", abajoDer, new Vector2(-190, 440), 160);
-        Boton(BotonTactil.Esquivar, "Esquivar", abajoDer, new Vector2(-620, 110), 150);
-        Boton(BotonTactil.Combo, "Combo", abajoDer, new Vector2(-590, 290), 140);
-        Boton(BotonTactil.Cambiar, "Cambiar", abajoDer, new Vector2(-560, 450), 120);
-        Boton(BotonTactil.Usar, "Usar", abajoDer, new Vector2(-380, 560), 120);
-        Boton(BotonTactil.Pausa, "II", arribaDer, new Vector2(-90, -230), 110);
+        Boton(BotonTactil.Saltar, "Saltar", abajoDer, new Vector2(-200, 200), 275);
+        Boton(BotonTactil.Hechizo1, "1", abajoDer, new Vector2(-470, 150), 190);
+        Boton(BotonTactil.Hechizo2, "2", abajoDer, new Vector2(-430, 375), 190);
+        Boton(BotonTactil.Hechizo3, "3", abajoDer, new Vector2(-215, 470), 190);
+        Boton(BotonTactil.Esquivar, "Esquivar", abajoDer, new Vector2(-700, 110), 180);
+        Boton(BotonTactil.Combo, "Combo", abajoDer, new Vector2(-680, 320), 170);
+        Boton(BotonTactil.Cambiar, "Cambiar", abajoDer, new Vector2(-640, 500), 145);
+        Boton(BotonTactil.Usar, "Usar", abajoDer, new Vector2(-430, 600), 145);
+        Boton(BotonTactil.Pausa, "II", arribaDer, new Vector2(-100, -230), 130);
 
         // Aviso para girar el celular
         avisoGirar = new GameObject("GiraTuCelular");
@@ -172,9 +172,18 @@ public class ControlesTactiles : MonoBehaviour
             frt.sizeDelta = new Vector2(tamano * 0.42f, tamano * 0.42f);
             frt.localEulerAngles = new Vector3(0f, 0f, flecha);
         }
-        else Texto(go.transform, etiqueta, etiqueta.Length > 2 ? 30 : 56);
+        else Texto(go.transform, etiqueta, etiqueta.Length > 2 ? 34 : 64);
         botones[(int)cual] = rt;
         imagenes[(int)cual] = img;
+    }
+
+    // El dedo cuenta si cae dentro del círculo del botón (un poco más grande que el dibujo,
+    // para que sea fácil atinarle sin ver la pantalla)
+    static bool DentroDelCirculo(RectTransform rt, Vector2 pos)
+    {
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rt, pos, null, out var local)) return false;
+        float radio = rt.rect.width * 0.5f * 1.12f;
+        return (local - rt.rect.center).sqrMagnitude <= radio * radio;
     }
 
     static void Texto(Transform padre, string texto, int tamano)

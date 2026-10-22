@@ -26,6 +26,13 @@ public class MainMenu : MonoBehaviour
         var salir = mainPanel != null ? mainPanel.transform.Find("Boton_Salir") : null;
         if (salir != null) salir.gameObject.SetActive(false);
 #endif
+        // En el celular la ayuda de abajo habla de tocar, no del teclado
+        var ayuda = mainPanel != null ? mainPanel.transform.Find("Ayuda") : null;
+        if (ayuda != null && ControlesTactiles.Activo)
+        {
+            var texto = ayuda.GetComponent<Text>();
+            if (texto != null) texto.text = "Toca una opción para elegirla";
+        }
         ShowMain();
     }
 
