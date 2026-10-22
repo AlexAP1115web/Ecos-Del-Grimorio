@@ -78,7 +78,7 @@ public class CreditsScreen : MonoBehaviour
         }
 
         // Los primeros segundos no se pueden saltar (para no perderse el final por presionar X)
-        if (Time.unscaledTime - inicio > 3f && (Controles.AceptarPresionado || Controles.PausaPresionado))
+        if (Time.unscaledTime - inicio > 3f && (Controles.AceptarPresionado || Controles.PausaPresionado || ControlesTactiles.ToqueLibre))
             SceneManager.LoadScene(GameManager.MenuScene);
     }
 }

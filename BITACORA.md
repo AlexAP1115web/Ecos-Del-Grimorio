@@ -154,6 +154,13 @@
 - Ejecutable 1.0 compilado otra vez con los fondos nuevos y capturas de los niveles actualizadas.
 - Documento "Cómo hice el juego" con mis notas para explicar el proyecto.
 
+### 22 de octubre
+- Versión para celular: el juego ahora también se juega en el navegador y en el celular. Se compila para WebGL con el menú "Compilar para web (celular)".
+- Botones en pantalla (ControlesTactiles.cs): cruceta, Saltar, hechizos 1, 2 y 3, Combo, Cambiar, Esquivar, Usar y Pausa. Se pueden presionar varios a la vez y solo aparecen en pantallas táctiles.
+- Plantilla web propia con pantalla de carga, ícono de Lira y modo app (PWA): se instala en el celular y después abre sin internet.
+- Publicado en GitHub Pages desde la carpeta docs: https://alexap1115web.github.io/Ecos-Del-Grimorio/
+- Manual del jugador y notas "Cómo hice el juego" actualizados con la versión para celular.
+
 ### Pendiente
 - Pruebas Beta con compañeros (formato en Documentacion/Producto3) y capturar los resultados.
 - Terminar las pruebas Alfa pendientes y probar el .exe en otra computadora.

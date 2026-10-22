@@ -1,0 +1,130 @@
+/* Estilo de la página del juego (versión web) */
+@font-face {
+  font-family: "Poppins";
+  src: url("Poppins-Bold.ttf") format("truetype");
+  font-weight: 700;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #120a1f;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#juego {
+  position: fixed;
+  inset: 0;
+  background: #120a1f;
+}
+
+#unity-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #120a1f;
+  touch-action: none;
+  outline: none;
+}
+
+#carga, #tocar {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  box-sizing: border-box;
+  color: #f3e9ff;
+  font-family: "Poppins", Arial, sans-serif;
+  text-align: center;
+  background: radial-gradient(circle at 50% 40%, #3a2366 0%, #120a1f 70%);
+}
+
+#tocar {
+  background: rgba(18, 10, 31, 0.88);
+  cursor: pointer;
+}
+#tocar[hidden] { display: none; }
+
+#carga-lira {
+  height: min(36vh, 240px);
+  filter: drop-shadow(0 0 18px rgba(150, 110, 255, 0.55));
+  animation: flotar 2.4s ease-in-out infinite;
+}
+
+#tocar img {
+  width: 96px;
+  height: 96px;
+  border-radius: 22px;
+  box-shadow: 0 0 24px rgba(150, 110, 255, 0.6);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(22px, 5vw, 42px);
+  letter-spacing: 1px;
+  color: #ffd98a;
+  text-shadow: 0 2px 0 #4a2a00, 0 0 18px rgba(255, 200, 100, 0.35);
+}
+
+#tocar p:first-of-type {
+  margin: 0;
+  font-size: 28px;
+  animation: latir 1.4s ease-in-out infinite;
+}
+
+#barra {
+  width: min(70vw, 420px);
+  height: 14px;
+  border: 2px solid #c9a24a;
+  border-radius: 8px;
+  background: #1d1233;
+  overflow: hidden;
+}
+
+#barra-llena {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #6d48c9, #a98cff);
+  transition: width 0.2s;
+}
+
+#carga-texto { margin: 0; font-size: 16px; }
+
+.nota {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.7;
+  font-family: Arial, sans-serif;
+}
+
+#aviso {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  transform: translateX(-50%);
+  display: none;
+  max-width: 90%;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+#aviso .error { background: #b3261e; color: white; padding: 10px; border-radius: 6px; }
+#aviso .advertencia { background: #ffd54f; color: #222; padding: 10px; border-radius: 6px; }
+
+@keyframes flotar {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes latir {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}

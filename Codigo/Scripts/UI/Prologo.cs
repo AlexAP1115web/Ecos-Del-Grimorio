@@ -41,7 +41,9 @@ public class Prologo : MonoBehaviour
         fade = 0f;
         imagen.sprite = escenas[i].imagen;
         imagen.enabled = escenas[i].imagen != null;
-        ayuda.text = $"{Controles.TextoAceptar} continuar     {(Controles.HayControl ? "Options" : "Esc")} saltar";
+        ayuda.text = Controles.UsandoTactil
+            ? "Toca la pantalla para continuar"
+            : $"{Controles.TextoAceptar} continuar     {(Controles.HayControl ? "Options" : "Esc")} saltar";
     }
 
     void Update()

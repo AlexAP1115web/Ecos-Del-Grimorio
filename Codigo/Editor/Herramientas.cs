@@ -9,6 +9,8 @@ using UnityEngine;
 // Herramientas del menú "Ecos del Grimorio" para las entregas:
 //  - Capturar niveles: abre cada nivel y guarda imágenes del inicio, un personaje, enemigos y el jefe.
 //  - Compilar juego: genera el .exe para Windows en la carpeta Build del proyecto.
+//  - Compilar para web: genera la versión que se abre en el navegador y en el celular
+//    (carpeta BuildWeb). Usa la plantilla Assets/WebGLTemplates/EcosDelGrimorio.
 public static class Herramientas
 {
     const int Ancho = 1920;
@@ -186,6 +188,73 @@ public static class Herramientas
         else
         {
             EditorUtility.DisplayDialog("Compilar", $"La compilación terminó con {resumen.totalErrors} errores. Revisa la consola.", "Aceptar");
+        }
+    }
+
+    [MenuItem("Ecos del Grimorio/Compilar para web (celular)")]
+    static void CompilarWeb()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+
+        string[] escenas = EditorBuildSettings.scenes.Where(e => e.enabled).Select(e => e.path).ToArray();
+        if (escenas.Length == 0)
+        {
+            EditorUtility.DisplayDialog("Compilar para web", "No hay escenas en Build Settings. Primero usa \"Crear juego completo\".", "Aceptar");
+            return;
+        }
+        if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.WebGL, BuildTarget.WebGL))
+        {
+            EditorUtility.DisplayDialog("Compilar para web",
+                "Falta el módulo \"Web Build Support\". Instálalo desde Unity Hub > Installs > Add modules.", "Aceptar");
+            return;
+        }
+
+        PlayerSettings.companyName = "Alejandro Pérez Alcántara";
+        PlayerSettings.productName = "Ecos del Grimorio";
+        PlayerSettings.bundleVersion = "1.0";
+
+        // Plantilla propia: pantalla de carga, ícono y modo app (PWA) para instalarlo en el celular
+        PlayerSettings.WebGL.template = "PROJECT:EcosDelGrimorio";
+        // GitHub Pages no manda los archivos comprimidos con el encabezado correcto,
+        // por eso se activa la descompresión dentro del navegador.
+        PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
+        PlayerSettings.WebGL.decompressionFallback = true;
+        PlayerSettings.WebGL.nameFilesAsHashes = false;
+        // El guardado sin internet lo hace el service worker de la plantilla
+        PlayerSettings.WebGL.dataCaching = false;
+
+        string proyecto = Directory.GetParent(Application.dataPath).FullName;
+        string carpeta = Path.Combine(proyecto, "BuildWeb");
+        if (Directory.Exists(carpeta)) Directory.Delete(carpeta, true);
+
+        var opciones = new BuildPlayerOptions
+        {
+            scenes = escenas,
+            locationPathName = carpeta,
+            target = BuildTarget.WebGL,
+            options = BuildOptions.None
+        };
+
+        BuildReport reporte = BuildPipeline.BuildPlayer(opciones);
+        var resumen = reporte.summary;
+
+        if (resumen.result == BuildResult.Succeeded)
+        {
+            // Versión nueva del service worker para que los celulares bajen la actualización
+            string sw = Path.Combine(carpeta, "service-worker.js");
+            if (File.Exists(sw))
+                File.WriteAllText(sw, File.ReadAllText(sw).Replace("__VERSION__", System.DateTime.Now.ToString("yyyyMMdd-HHmm")));
+
+            float mb = Directory.GetFiles(carpeta, "*", SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length) / (1024f * 1024f);
+            EditorUtility.DisplayDialog("Compilar para web",
+                $"Listo. La versión web quedó en:\n{carpeta}\n\nTamaño: {mb:0.0} MB\nTiempo: {resumen.totalTime.TotalMinutes:0.0} min\n\n" +
+                "Copia el contenido a la carpeta docs del repositorio y súbelo a GitHub para jugar desde el celular.\n\n" +
+                "Para volver a sacar el .exe usa \"Compilar juego (.exe)\".", "Aceptar");
+            EditorUtility.RevealInFinder(Path.Combine(carpeta, "index.html"));
+        }
+        else
+        {
+            EditorUtility.DisplayDialog("Compilar para web", $"La compilación terminó con {resumen.totalErrors} errores. Revisa la consola.", "Aceptar");
         }
     }
 }

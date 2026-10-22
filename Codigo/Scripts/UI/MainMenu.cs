@@ -21,6 +21,11 @@ public class MainMenu : MonoBehaviour
         Time.timeScale = 1f;
         if (continueButton != null)
             continueButton.interactable = GameManager.Instance != null && GameManager.Instance.HasSavedGame;
+#if UNITY_WEBGL && !UNITY_EDITOR
+        // En la versión web (navegador/celular) no se puede cerrar la pestaña desde el juego
+        var salir = mainPanel != null ? mainPanel.transform.Find("Boton_Salir") : null;
+        if (salir != null) salir.gameObject.SetActive(false);
+#endif
         ShowMain();
     }
 

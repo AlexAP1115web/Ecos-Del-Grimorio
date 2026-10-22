@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Ecos del Grimorio</title>
+    <meta name="description" content="Ecos del Grimorio: plataformas 2D de magia. Juega en la computadora o en el celular.">
+    <meta name="theme-color" content="#120a1f">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ecos del Grimorio">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" href="TemplateData/favicon.png">
+    <link rel="apple-touch-icon" href="TemplateData/icono-180.png">
+    <link rel="stylesheet" href="TemplateData/estilo.css">
+  </head>
+  <body>
+    <div id="juego">
+      <canvas id="unity-canvas" tabindex="-1"></canvas>
+
+      <!-- Pantalla de carga -->
+      <div id="carga">
+        <img id="carga-lira" src="TemplateData/lira.png" alt="Lira">
+        <h1>Ecos del Grimorio</h1>
+        <div id="barra"><div id="barra-llena"></div></div>
+        <p id="carga-texto">Cargando... 0%</p>
+        <p class="nota">La primera vez tarda un poco. Después se abre más rápido.</p>
+      </div>
+
+      <!-- En el celular: un toque para entrar en pantalla completa y activar el sonido -->
+      <div id="tocar" hidden>
+        <img src="TemplateData/icono-192.png" alt="">
+        <p>Toca para jugar</p>
+        <p class="nota">Pon el celular de lado (horizontal)</p>
+      </div>
+
+      <div id="aviso"></div>
+    </div>
+
+    <script>
+      // ---------- Ecos del Grimorio - versión web ----------
+      // Esta página carga el juego compilado por Unity (carpeta Build) y lo pone
+      // a pantalla completa. También registra el service worker para que se pueda
+      // instalar como app (PWA) y jugar sin internet después de la primera vez.
+
+      var esCelular = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+                      (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+
+      var contenedor = document.querySelector("#juego");
+      var canvas = document.querySelector("#unity-canvas");
+      var carga = document.querySelector("#carga");
+      var barraLlena = document.querySelector("#barra-llena");
+      var cargaTexto = document.querySelector("#carga-texto");
+      var tocar = document.querySelector("#tocar");
+      var aviso = document.querySelector("#aviso");
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("service-worker.js");
+        });
+      }
+
+      // Mensajes de Unity (errores o advertencias)
+      function mostrarAviso(mensaje, tipo) {
+        var div = document.createElement("div");
+        div.innerHTML = mensaje;
+        div.className = tipo == "error" ? "error" : "advertencia";
+        aviso.appendChild(div);
+        aviso.style.display = "block";
+        if (tipo != "error") {
+          setTimeout(function () {
+            aviso.removeChild(div);
+            if (!aviso.children.length) aviso.style.display = "none";
+          }, 5000);
+        }
+      }
+
+      // Pantalla completa y orientación horizontal (en Android funciona; en iPhone
+      // se recomienda "Agregar a pantalla de inicio")
+      function pantallaCompleta() {
+        var el = document.documentElement;
+        var pedir = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (pedir && !document.fullscreenElement && !document.webkitFullscreenElement) {
+          try {
+            var p = pedir.call(el, { navigationUI: "hide" });
+            if (p && p.then) p.then(bloquearHorizontal).catch(function () {});
+          } catch (e) {}
+        } else {
+          bloquearHorizontal();
+        }
+      }
+
+      function bloquearHorizontal() {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock("landscape").catch(function () {});
+        }
+      }
+
+      tocar.addEventListener("click", function () {
+        tocar.hidden = true;
+        pantallaCompleta();
+        canvas.focus();
+      });
+
+      // Evita el menú del clic derecho / toque largo y el gesto de "jalar para recargar"
+      canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+      document.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/BuildWeb.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/BuildWeb.data.unityweb",
+        frameworkUrl: buildUrl + "/BuildWeb.framework.js.unityweb",
+        codeUrl: buildUrl + "/BuildWeb.wasm.unityweb",
+        streamingAssetsUrl: "StreamingAssets",
+        fullscreenElementID: "juego",
+        companyName: "Alejandro Pérez Alcántara",
+        productName: "Ecos del Grimorio",
+        productVersion: "1.0",
+        showBanner: mostrarAviso,
+      };
+
+      // En el celular la pantalla tiene muchos píxeles (densidad 3x). Se limita a 1.5x
+      // para que el juego vaya fluido sin que se vea borroso.
+      if (esCelular) config.devicePixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = function () {
+        createUnityInstance(canvas, config, function (progreso) {
+          var p = Math.round(progreso * 100);
+          barraLlena.style.width = p + "%";
+          cargaTexto.textContent = p < 100 ? "Cargando... " + p + "%" : "Preparando el grimorio...";
+        }).then(function (unityInstance) {
+          carga.style.display = "none";
+          if (esCelular) tocar.hidden = false;
+        }).catch(function (mensaje) {
+          cargaTexto.textContent = "No se pudo cargar el juego.";
+          mostrarAviso(mensaje, "error");
+        });
+      };
+      script.onerror = function () {
+        cargaTexto.textContent = "No se pudo cargar el juego. Revisa tu conexión.";
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
