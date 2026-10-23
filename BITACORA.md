@@ -162,6 +162,8 @@
 - Manual del jugador y notas "Cómo hice el juego" actualizados con la versión para celular.
 - Después de probarlo en mi celular: botones más grandes, el menú ya no se corta en pantallas anchas (AjustePantalla.cs), el truco también se activa en el celular (Combo + Cambiar + Usar) y quité el mensaje extra de la pantalla de carga.
 
+- Todos los sprints juntos en un solo libro de producción (PérezAlcántaraAlejandro_producción_10D.xlsx); los libros separados quedan en Documentacion/Anteriores_Excel.
+
 ### Pendiente
 - Pruebas Beta con compañeros (formato en Documentacion/Producto3) y capturar los resultados.
 - Terminar las pruebas Alfa pendientes y probar el .exe en otra computadora.

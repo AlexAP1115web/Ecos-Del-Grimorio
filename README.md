@@ -25,7 +25,10 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 | Carpeta | Qué tiene |
 |---|---|
 | `Documentacion/Producto1` | Documento de diseño (Word y PDF) y documento de producción del Sprint 1 |
-| `Documentacion/Producto2` | Producción con gráficas y estado del Sprint 2 |
+| `Documentacion/PérezAlcántaraAlejandro_producción_10D.xlsx` | Libro de producción con todos los sprints: Feature Log, Sprint Plan, Sprint Backlog, Daily Huddle, Burn-down, Task Chart, Buglist, Pruebas Alfa y Beta, Gantt y Sprint Review |
+| `Documentacion/Producto2` | Documento del Producto 2 y estado del Sprint 2 |
+| `Documentacion/Producto3` | Formato de Pruebas Beta y Postmortem |
+| `Documentacion/Anteriores_Excel` | Libros de producción separados por sprint (versiones anteriores) |
 | `Documentacion/EcosDelGrimorio_Manual_del_jugador.pdf` | Manual del jugador: instalación, controles, cómo jugar y cómo está hecho el juego |
 | `Documentacion/Actividades` | Actividades de clase relacionadas con el proyecto |
 | `Arte/Personajes` | Lira y Maestra Sable |
