@@ -164,6 +164,11 @@
 
 - Todos los sprints juntos en un solo libro de producción (PérezAlcántaraAlejandro_producción_10D.xlsx); los libros separados quedan en Documentacion/Anteriores_Excel.
 
+### 23 de octubre
+- Libro de producción completo: portada con los datos del proyecto, resumen por sprint e índice; tareas del Sprint 4 (Gold Master) planeadas, Burn-down y Task Chart de los cuatro sprints y Sprint Review con una columna por sprint.
+- Se registraron las tareas del 22 de octubre (ajustes del celular y libro único) y el Daily Huddle del 23 de octubre.
+- Postmortem con los datos actualizados.
+
 ### Pendiente
 - Pruebas Beta con compañeros (formato en Documentacion/Producto3) y capturar los resultados.
 - Terminar las pruebas Alfa pendientes y probar el .exe en otra computadora.
