@@ -160,7 +160,7 @@
 - Plantilla web propia con pantalla de carga, ícono de Lira y modo app (PWA): se instala en el celular y después abre sin internet.
 - Publicado en GitHub Pages desde la carpeta docs: https://alexap1115web.github.io/Ecos-Del-Grimorio/
 - Manual del jugador y notas "Cómo hice el juego" actualizados con la versión para celular.
-- Después de probarlo en mi celular: botones más grandes, el menú ya no se corta en pantallas anchas (AjustePantalla.cs), el truco también se activa en el celular (Combo + Cambiar + Usar) y quité el mensaje extra de la pantalla de carga.
+- Después de probarlo en mi celular: botones más grandes, el menú ya no se corta en pantallas anchas (AjustePantalla.cs), el truco también se activa en el celular (Combo + Cambiar) y quité el mensaje extra de la pantalla de carga.
 
 - Todos los sprints juntos en un solo libro de producción (PérezAlcántaraAlejandro_producción_10D.xlsx); los libros separados quedan en Documentacion/Anteriores_Excel.
 
@@ -168,6 +168,10 @@
 - Libro de producción completo: portada con los datos del proyecto, resumen por sprint e índice; tareas del Sprint 4 (Gold Master) planeadas, Burn-down y Task Chart de los cuatro sprints y Sprint Review con una columna por sprint.
 - Se registraron las tareas del 22 de octubre (ajustes del celular y libro único) y el Daily Huddle del 23 de octubre.
 - Postmortem con los datos actualizados.
+
+### 26 de octubre
+- Truco en el celular con dos botones (Combo + Cambiar al mismo tiempo); con tres dedos algunos celulares toman captura de pantalla.
+- Versión web compilada otra vez y libro de producción ajustado a la Evaluación Beta del 28 de octubre (matriz de cumplimiento de la rúbrica y pruebas de compatibilidad).
 
 ### Pendiente
 - Pruebas Beta con compañeros (formato en Documentacion/Producto3) y capturar los resultados.

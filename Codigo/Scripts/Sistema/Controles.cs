@@ -98,16 +98,17 @@ public static class Controles
         (Pad != null && (Pad.leftStick.y.ReadValue() < -0.6f || Pad.dpad.down.isPressed)) ||
         ControlesTactiles.Sostenido(BotonTactil.Abajo);
 
-    // Truco con el control: L1 + R1 + Triángulo juntos, en cualquier orden (en el celular: Combo + Cambiar + Usar)
+    // Truco con el control: L1 + R1 + Triángulo juntos, en cualquier orden (en el celular: Combo + Cambiar)
     public static bool TrucoControl =>
         (Pad != null && Pad.leftShoulder.isPressed && Pad.rightShoulder.isPressed && Pad.buttonNorth.isPressed &&
          (Pad.leftShoulder.wasPressedThisFrame || Pad.rightShoulder.wasPressedThisFrame || Pad.buttonNorth.wasPressedThisFrame)) ||
         TrucoTactil;
 
-    // Truco en el celular: tocar Combo + Cambiar + Usar al mismo tiempo (tres dedos), igual que L1 + R1 + Triángulo
+    // Truco en el celular: tocar Combo + Cambiar al mismo tiempo (dos dedos), igual que L1 + R1 + Triángulo.
+    // Son dos botones porque en algunos celulares tocar con tres dedos activa la captura de pantalla.
     static bool TrucoTactil =>
-        ControlesTactiles.Sostenido(BotonTactil.Combo) && ControlesTactiles.Sostenido(BotonTactil.Cambiar) && ControlesTactiles.Sostenido(BotonTactil.Usar) &&
-        (ControlesTactiles.Presionado(BotonTactil.Combo) || ControlesTactiles.Presionado(BotonTactil.Cambiar) || ControlesTactiles.Presionado(BotonTactil.Usar));
+        ControlesTactiles.Sostenido(BotonTactil.Combo) && ControlesTactiles.Sostenido(BotonTactil.Cambiar) &&
+        (ControlesTactiles.Presionado(BotonTactil.Combo) || ControlesTactiles.Presionado(BotonTactil.Cambiar));
 
     public static bool SaltarPresionado =>
         (Kb != null && Kb.spaceKey.wasPressedThisFrame) ||
