@@ -24,6 +24,7 @@ Lira, una joven aprendiz de la Torre de Cristal, descubre que su grimorio de pr�
 
 | Carpeta | Qué tiene |
 |---|---|
+| `Documentacion/PérezAlcántaraAlejandro_documento_final_10D` (.docx y .pdf) | Documento final del proyecto: diseño, producción en Unity, manual del jugador, versión para celular (PWA), sprints, pruebas, errores, Postmortem y entrega |
 | `Documentacion/Producto1` | Documento de diseño (Word y PDF) y documento de producción del Sprint 1 |
 | `Documentacion/PérezAlcántaraAlejandro_producción_10D.xlsx` | Libro de producción con todos los sprints: Feature Log, Sprint Plan, Sprint Backlog, Daily Huddle, Burn-down, Task Chart, Buglist, Pruebas Alfa y Beta, Gantt y Sprint Review |
 | `Documentacion/Producto2` | Documento del Producto 2 y estado del Sprint 2 |
